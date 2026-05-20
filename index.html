@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valkey Performance Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --text: #e2e8f0;
+      --card: #1a1d2e;
+      --border: #2d3148;
+      --accent: #6366f1;
+      --muted: #64748b;
+      --ok: #22c55e;
+      --warn: #eab308;
+      --danger: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 1.5rem; }
+    h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .controls { display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
+    .controls select, .controls button { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; cursor: pointer; }
+    .controls button.active { background: var(--accent); border-color: var(--accent); }
+    .chart-container { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+    .annotations { display: grid; gap: 0.5rem; }
+    .annotation { background: var(--card); border-radius: 6px; padding: 0.7rem 1rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .annotation.regression { border-left: 3px solid var(--danger); }
+    .annotation.improvement { border-left: 3px solid var(--ok); }
+    .annotation .delta { font-weight: 600; white-space: nowrap; }
+    .annotation .delta.neg { color: var(--danger); }
+    .annotation .delta.pos { color: var(--ok); }
+    .annotation .meta { color: var(--muted); font-size: 0.75rem; margin-top: 0.2rem; }
+    .annotation .note { color: var(--muted); font-size: 0.75rem; font-style: italic; margin-top: 0.2rem; }
+    .annotation a { color: var(--accent); text-decoration: none; }
+    .stats { display: flex; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 1rem; }
+    .stat .label { color: var(--muted); font-size: 0.7rem; text-transform: uppercase; }
+    .stat .value { font-size: 1.1rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Valkey Unstable — Performance History</h1>
+  <p class="subtitle">Adaptive sweep: progressive bisection identifies impactful PRs</p>
+
+  <div class="controls">
+    <select id="platformSelect"></select>
+    <select id="workloadSelect"></select>
+    <button id="toggleAnnotations" class="active">Show Annotations</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="chart-container">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <h2 style="font-size:1rem; margin-bottom:0.75rem;">Notable Changes</h2>
+  <div class="annotations" id="annotations"></div>
+
+  <script>
+    const PLATFORMS = ['arm64', 'amd64', 'intel'];
+    const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
+    let chart = null;
+    let currentData = null;
+    let showAnnotations = true;
+
+    async function loadPlatform(platform) {
+      try {
+        const resp = await fetch(`data/series-${platform}.json`);
+        if (!resp.ok) return null;
+        return await resp.json();
+      } catch { return null; }
+    }
+
+    async function init() {
+      const platformSelect = document.getElementById('platformSelect');
+      // Discover available platforms
+      for (const p of PLATFORMS) {
+        const data = await loadPlatform(p);
+        if (data) {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = PLATFORM_LABELS[p] || p;
+          platformSelect.appendChild(opt);
+        }
+      }
+      platformSelect.addEventListener('change', () => render(platformSelect.value));
+      document.getElementById('toggleAnnotations').addEventListener('click', (e) => {
+        showAnnotations = !showAnnotations;
+        e.target.classList.toggle('active', showAnnotations);
+        render(platformSelect.value);
+      });
+      if (platformSelect.options.length > 0) render(platformSelect.value);
+    }
+
+    async function render(platform) {
+      const data = await loadPlatform(platform);
+      if (!data) return;
+      currentData = data;
+
+      const workload = data.workloads[0];
+      const points = data.points.filter(p => p.results[workload]);
+      const labels = points.map(p => p.date);
+      const rpsValues = points.map(p => p.results[workload].rps);
+
+      // Stats
+      const statsEl = document.getElementById('stats');
+      const maxRps = Math.max(...rpsValues);
+      const minRps = Math.min(...rpsValues);
+      const latestRps = rpsValues[rpsValues.length - 1];
+      statsEl.innerHTML = `
+        <div class="stat"><div class="label">Points</div><div class="value">${points.length}</div></div>
+        <div class="stat"><div class="label">Latest</div><div class="value">${(latestRps/1000).toFixed(0)}K</div></div>
+        <div class="stat"><div class="label">Peak</div><div class="value">${(maxRps/1000).toFixed(0)}K</div></div>
+        <div class="stat"><div class="label">Range</div><div class="value">±${(((maxRps-minRps)/((maxRps+minRps)/2))*100/2).toFixed(1)}%</div></div>
+        <div class="stat"><div class="label">Annotations</div><div class="value">${data.annotations.length}</div></div>
+      `;
+
+      // Point colors
+      const annotationMap = {};
+      data.annotations.forEach(a => { annotationMap[a.commit] = a; });
+      const pointColors = points.map(p => {
+        const a = annotationMap[p.commit];
+        if (a && a.type === 'regression') return getComputedStyle(document.documentElement).getPropertyValue('--danger').trim();
+        if (a && a.type === 'improvement') return getComputedStyle(document.documentElement).getPropertyValue('--ok').trim();
+        return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      });
+      const pointRadii = points.map(p => annotationMap[p.commit] ? 6 : 3);
+
+      // Landmark annotations for chart
+      const chartAnnotations = {};
+      if (showAnnotations) {
+        data.landmarks.forEach((lm, i) => {
+          const idx = points.findIndex(p => p.commit === lm.commit);
+          if (idx >= 0) {
+            chartAnnotations[`lm${i}`] = {
+              type: 'line', xMin: idx, xMax: idx,
+              borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
+              label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
+            };
+          }
+        });
+      }
+
+      // Chart
+      if (chart) chart.destroy();
+      const ctx = document.getElementById('chart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'ops/sec',
+            data: rpsValues,
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.1)',
+            fill: true,
+            pointBackgroundColor: pointColors,
+            pointRadius: pointRadii,
+            pointHoverRadius: 8,
+            tension: 0.2,
+          }]
+        },
+        options: {
+          responsive: true,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: { display: false },
+            annotation: { annotations: chartAnnotations },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  const p = points[items[0].dataIndex];
+                  let t = `${p.date} — ${p.commit.slice(0,8)}`;
+                  if (p.pr) t += ` (PR #${p.pr})`;
+                  return t;
+                },
+                label: (item) => {
+                  const rps = item.raw;
+                  const p = points[item.dataIndex];
+                  const cv = p.results[workload].cv;
+                  return `${(rps/1000).toFixed(1)}K ops/sec (CV ${cv}%)`;
+                },
+                afterLabel: (item) => {
+                  const p = points[item.dataIndex];
+                  const a = annotationMap[p.commit];
+                  if (a) return `${a.type}: ${(a.delta*100).toFixed(1)}% — ${a.pr_title}`;
+                  return '';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              title: { display: true, text: 'ops/sec', color: '#64748b' },
+              ticks: { color: '#64748b', callback: v => (v/1000)+'K' },
+              grid: { color: '#2d3148' }
+            },
+            x: {
+              ticks: { color: '#64748b', maxRotation: 45 },
+              grid: { color: '#2d3148' }
+            }
+          }
+        }
+      });
+
+      // Annotations list
+      const annEl = document.getElementById('annotations');
+      const sorted = [...data.annotations].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+      annEl.innerHTML = sorted.map(a => `
+        <div class="annotation ${a.type}">
+          <div>
+            <div><strong>${a.pr_title || a.commit.slice(0,8)}</strong></div>
+            ${a.note ? `<div class="note">📝 ${a.note}</div>` : ''}
+            <div class="meta">${a.commit.slice(0,8)} · ${a.workload}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="delta ${a.delta < 0 ? 'neg' : 'pos'}">${a.delta > 0 ? '+' : ''}${(a.delta*100).toFixed(1)}%</div>
+            ${a.pr ? `<a href="https://github.com/valkey-io/valkey/pull/${a.pr}" target="_blank">PR #${a.pr}</a>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    init();
+  </script>
+</body>
+</html>
