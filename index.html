@@ -63,7 +63,7 @@
   <div class="annotations" id="annotations"></div>
 
   <h2 style="font-size:1rem; margin:1.5rem 0 0.75rem;">Recent Data Points</h2>
-  <div id="datapoints" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;"></div>
+  <div id="datapoints" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;max-height:400px;overflow-y:auto;"></div>
 
   <script>
     const PLATFORMS = ['amd64', 'arm64', 'intel'];
@@ -199,6 +199,17 @@
         options: {
           responsive: true,
           interaction: { intersect: false, mode: 'index' },
+          onClick: (evt, elements) => {
+            if (elements.length && elements[0].datasetIndex === 2) {
+              const p = points[elements[0].index];
+              const row = document.getElementById('row-' + p.commit.slice(0,10));
+              if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                row.style.background = 'var(--accent)';
+                setTimeout(() => row.style.background = '', 2000);
+              }
+            }
+          },
           plugins: {
             legend: { display: false },
             annotation: { annotations: chartAnnotations },
@@ -263,13 +274,13 @@
       // Data points table
       const tableEl = document.getElementById('datapoints');
       if (tableEl) {
-        const rows = points.slice().reverse().slice(0, 50).map(p => {
+        const rows = points.slice().reverse().map(p => {
           const r = p.results[workload];
           const link = p.pr
             ? `<a href="https://github.com/valkey-io/valkey/pull/${p.pr}" target="_blank">PR #${p.pr}</a>`
             : `<a href="https://github.com/valkey-io/valkey/commit/${p.commit}" target="_blank">${p.commit.slice(0,10)}</a>`;
           const title = p.pr_title ? `<span style="color:var(--text)">${p.pr_title.slice(0,50)}</span>` : '';
-          return `<tr><td>${p.date}</td><td>${link}</td><td>${title}</td><td>${(r.rps/1000).toFixed(0)}K</td><td>${(r.cv||0).toFixed(2)}%</td></tr>`;
+          return `<tr id="row-${p.commit.slice(0,10)}"><td>${p.date}</td><td>${link}</td><td>${title}</td><td>${(r.rps/1000).toFixed(0)}K</td><td>${(r.cv||0).toFixed(2)}%</td></tr>`;
         }).join('');
         tableEl.innerHTML = `<table style="width:100%;font-size:0.8rem;border-collapse:collapse;">
           <thead><tr style="color:var(--muted);text-align:left;"><th>Date</th><th>PR</th><th>Title</th><th>RPS</th><th>CV</th></tr></thead>
