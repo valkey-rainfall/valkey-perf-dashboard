@@ -49,8 +49,6 @@
 
   <div class="controls">
     <select id="platformSelect"></select>
-    <select id="workloadSelect"></select>
-    <button id="toggleAnnotations" class="active">Show Annotations</button>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -70,7 +68,6 @@
     const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
     let chart = null;
     let currentData = null;
-    let showAnnotations = true;
 
     async function loadPlatform(platform) {
       try {
@@ -93,11 +90,6 @@
         }
       }
       platformSelect.addEventListener('change', () => render(platformSelect.value));
-      document.getElementById('toggleAnnotations').addEventListener('click', (e) => {
-        showAnnotations = !showAnnotations;
-        e.target.classList.toggle('active', showAnnotations);
-        render(platformSelect.value);
-      });
       if (platformSelect.options.length > 0) render(platformSelect.value);
     }
 
@@ -137,15 +129,13 @@
 
       // Landmark annotations for chart
       const chartAnnotations = {};
-      if (showAnnotations) {
-        data.landmarks.forEach((lm, i) => {
+      data.landmarks.forEach((lm, i) => {
           chartAnnotations[`lm${i}`] = {
             type: 'line', xMin: lm.date, xMax: lm.date,
             borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
             label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
           };
         });
-      }
 
       // Build datasets: main line + CV band
       const chartData = points.map(p => ({ x: p.date, y: p.results[workload].rps }));
