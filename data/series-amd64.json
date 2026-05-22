@@ -1,0 +1,144 @@
+{
+  "metadata": {
+    "repo": "valkey-io/valkey",
+    "branch": "unstable",
+    "platform": "amd64/epyc-9r14/zen4",
+    "workload": "GET_16B_t1_p1",
+    "generated": "2026-05-22T08:02:30.772839+00:00"
+  },
+  "workloads": [
+    "GET_16B_t1_p1"
+  ],
+  "points": [
+    {
+      "commit": "e1a1d904dec30ccec2ee17d634d97b72f1b23fb0",
+      "date": "2013-11-06",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1994316.9502777772,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "62e4956936717aaf192e2ca8b42d6eed464edba5",
+      "date": "2013-12-12",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1995142.5222222223,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "b0335287ac1ff54c302a2eb1bcfc0df99f1360af",
+      "date": "2014-02-03",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1994193.940277778,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "1d7d1d9b1fb27b23321c7a9e8adac7d6c1122d2a",
+      "date": "2014-02-21",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1937686.4913888893,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "55e36e1132e0d13e788629f72ccb5d92e6fc6ae2",
+      "date": "2014-02-25",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1933597.2047222222,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "b74c899da39dc52ce38801a447ef15459ae02466",
+      "date": "2014-03-06",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1943035.318888889,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "32c917964efb7c617597a409e02deef9952763f8",
+      "date": "2014-04-23",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1933875.8388888887,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "3ac1dad77a1c06c063de06946bc0cff2dc9b8934",
+      "date": "2014-06-11",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1925200.0591666666,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "54c46bafa36fc997d55695439b01f7abe906cd0d",
+      "date": "2014-06-23",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1988009.4002777776,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "f231edc672830143324bfffa70b176883e43fe2d",
+      "date": "2014-07-28",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1971676.0019444448,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "10c35b584edb9534240a99b82721fd90847120fc",
+      "date": "2014-11-28",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1957627.1925000001,
+          "cv": 0.0,
+          "reps": 3
+        }
+      }
+    }
+  ],
+  "landmarks": [],
+  "annotations": [
+    {
+      "commit": "1d7d1d9b1fb27b23321c7a9e8adac7d6c1122d2a",
+      "delta": -0.0283,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    }
+  ]
+}
