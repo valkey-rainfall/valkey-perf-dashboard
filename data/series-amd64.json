@@ -4,7 +4,7 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "GET_16B_t1_p1",
-    "generated": "2026-05-22T23:28:44.368602+00:00"
+    "generated": "2026-05-22T23:48:33.031302+00:00"
   },
   "workloads": [
     "GET_16B_t1_p1"
@@ -22,6 +22,32 @@
       },
       "pr": 851,
       "pr_title": "Update replica version comparison to handle version 8 RC candidates"
+    },
+    {
+      "commit": "150c197bdd5f5474671cc7705b62be799c6f6e4c",
+      "date": "2024-10-02",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1156316.250277778,
+          "cv": 0.6322022531112663,
+          "reps": 3
+        }
+      },
+      "pr": 1115,
+      "pr_title": "Apply CVE patches for CVE-2024-31449, CVE-2024-31227, CVE-2024-31228"
+    },
+    {
+      "commit": "a2fe6af457e353425d39c858b8cf68f1b4d6a9b7",
+      "date": "2024-12-07",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1198211.4700000002,
+          "cv": 0.8727219114991059,
+          "reps": 3
+        }
+      },
+      "pr": 1403,
+      "pr_title": "Fix Module Update Args test when other modules are loaded"
     },
     {
       "commit": "25ef0b3aff50864eba89f4ca6d8b56f8ff07690c",
@@ -74,6 +100,69 @@
       },
       "pr": 2434,
       "pr_title": "Skip failure reports for already failed nodes"
+    },
+    {
+      "commit": "2db4eeb1fcd8316a792476c3023e705be24fdd70",
+      "date": "2025-08-21",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1244287.4263888886,
+          "cv": 0.423858391290095,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "a68040789e7566ab2aabad28459fa07dad43db60",
+      "date": "2025-08-21",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1236607.9605555555,
+          "cv": 0.09674914704625025,
+          "reps": 3
+        }
+      },
+      "pr": 2442,
+      "pr_title": "Adds benchmark on demand workflow"
+    },
+    {
+      "commit": "ac515159a1e79ada6e43ed49c9ed9cb11178c50d",
+      "date": "2025-08-22",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1255056.9544444445,
+          "cv": 1.4904686712298922,
+          "reps": 3
+        }
+      },
+      "pr": 2535,
+      "pr_title": "Remove debug logging from cluster-flush-slot.tcl"
+    },
+    {
+      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
+      "date": "2025-08-22",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1937529.5450000002,
+          "cv": 2.4598139746259284,
+          "reps": 3
+        }
+      },
+      "pr": 2092,
+      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
+    },
+    {
+      "commit": "9aeab8ccbac0ca4923676c749c98d0de4718c872",
+      "date": "2025-08-24",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1954594.8272222222,
+          "cv": 2.8276143016961806,
+          "reps": 3
+        }
+      },
+      "pr": 2538,
+      "pr_title": "Consistently use static_assert across code"
     },
     {
       "commit": "5ccedafe3ff3895f73ef69084e9cdf042750d0f8",
@@ -141,5 +230,18 @@
       "type": "release"
     }
   ],
-  "annotations": []
+  "annotations": [
+    {
+      "commit": "ac515159a1e79ada6e43ed49c9ed9cb11178c50d",
+      "delta": 0.0149,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
+      "delta": 0.5438,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    }
+  ]
 }
