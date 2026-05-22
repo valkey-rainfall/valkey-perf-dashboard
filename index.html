@@ -62,6 +62,9 @@
   <h2 style="font-size:1rem; margin-bottom:0.75rem;">Notable Changes</h2>
   <div class="annotations" id="annotations"></div>
 
+  <h2 style="font-size:1rem; margin:1.5rem 0 0.75rem;">Recent Data Points</h2>
+  <div id="datapoints" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;"></div>
+
   <script>
     const PLATFORMS = ['amd64', 'arm64', 'intel'];
     const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
@@ -247,7 +250,7 @@
           <div>
             <div><strong>${a.pr_title || a.commit.slice(0,8)}</strong></div>
             ${a.note ? `<div class="note">📝 ${a.note}</div>` : ''}
-            <div class="meta">${a.commit.slice(0,8)} · ${a.workload}</div>
+            <div class="meta"><a href="https://github.com/valkey-io/valkey/commit/${a.commit}" target="_blank">${a.commit.slice(0,8)}</a> · ${a.workload}</div>
           </div>
           <div style="text-align:right">
             <div class="delta ${a.delta < 0 ? 'neg' : 'pos'}">${a.delta > 0 ? '+' : ''}${(a.delta*100).toFixed(1)}%</div>
@@ -255,6 +258,21 @@
           </div>
         </div>
       `).join('');
+
+      // Data points table
+      const tableEl = document.getElementById('datapoints');
+      if (tableEl) {
+        const rows = points.slice().reverse().slice(0, 50).map(p => {
+          const r = p.results[workload];
+          const link = p.pr
+            ? `<a href="https://github.com/valkey-io/valkey/pull/${p.pr}" target="_blank">PR #${p.pr}</a>`
+            : `<a href="https://github.com/valkey-io/valkey/commit/${p.commit}" target="_blank">${p.commit.slice(0,10)}</a>`;
+          return `<tr><td>${p.date}</td><td>${link}</td><td>${(r.rps/1000).toFixed(0)}K</td><td>${(r.cv||0).toFixed(2)}%</td></tr>`;
+        }).join('');
+        tableEl.innerHTML = `<table style="width:100%;font-size:0.8rem;border-collapse:collapse;">
+          <thead><tr style="color:var(--muted);text-align:left;"><th>Date</th><th>Commit/PR</th><th>RPS</th><th>CV</th></tr></thead>
+          <tbody>${rows}</tbody></table>`;
+      }
     }
 
     init();
