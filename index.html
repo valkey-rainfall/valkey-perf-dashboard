@@ -6,6 +6,7 @@
   <title>Valkey Performance Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
     :root {
       --bg: #0f1117;
@@ -62,7 +63,7 @@
   <div class="annotations" id="annotations"></div>
 
   <script>
-    const PLATFORMS = ['arm64', 'amd64', 'intel'];
+    const PLATFORMS = ['amd64', 'arm64', 'intel'];
     const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
     let chart = null;
     let currentData = null;
@@ -135,16 +136,24 @@
       const chartAnnotations = {};
       if (showAnnotations) {
         data.landmarks.forEach((lm, i) => {
-          const idx = points.findIndex(p => p.commit === lm.commit);
-          if (idx >= 0) {
-            chartAnnotations[`lm${i}`] = {
-              type: 'line', xMin: idx, xMax: idx,
-              borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
-              label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
-            };
-          }
+          chartAnnotations[`lm${i}`] = {
+            type: 'line', xMin: lm.date, xMax: lm.date,
+            borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
+            label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
+          };
         });
       }
+
+      // Build datasets: main line + CV band
+      const chartData = points.map(p => ({ x: p.date, y: p.results[workload].rps }));
+      const cvUpper = points.map(p => {
+        const r = p.results[workload];
+        return { x: p.date, y: r.rps * (1 + (r.cv || 0) / 100) };
+      });
+      const cvLower = points.map(p => {
+        const r = p.results[workload];
+        return { x: p.date, y: r.rps * (1 - (r.cv || 0) / 100) };
+      });
 
       // Chart
       if (chart) chart.destroy();
@@ -152,17 +161,38 @@
       chart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels,
-          datasets: [{
-            label: 'ops/sec',
-            data: rpsValues,
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99,102,241,0.1)',
-            fill: true,
-            pointBackgroundColor: pointColors,
-            pointRadius: pointRadii,
-            pointHoverRadius: 8,
-            tension: 0.2,
+          datasets: [
+            {
+              label: 'CV upper',
+              data: cvUpper,
+              borderColor: 'transparent',
+              backgroundColor: 'rgba(99,102,241,0.08)',
+              fill: '+1',
+              pointRadius: 0,
+              tension: 0.2,
+            },
+            {
+              label: 'CV lower',
+              data: cvLower,
+              borderColor: 'transparent',
+              backgroundColor: 'rgba(99,102,241,0.08)',
+              fill: false,
+              pointRadius: 0,
+              tension: 0.2,
+            },
+            {
+              label: 'ops/sec',
+              data: chartData,
+              borderColor: '#6366f1',
+              backgroundColor: 'transparent',
+              fill: false,
+              pointBackgroundColor: pointColors,
+              pointRadius: pointRadii,
+              pointHoverRadius: 8,
+              tension: 0.2,
+            }
+          ]
+        },
           }]
         },
         options: {
@@ -172,6 +202,7 @@
             legend: { display: false },
             annotation: { annotations: chartAnnotations },
             tooltip: {
+              filter: (item) => item.datasetIndex === 2, // only show tooltip for main line
               callbacks: {
                 title: (items) => {
                   const p = points[items[0].dataIndex];
@@ -180,10 +211,10 @@
                   return t;
                 },
                 label: (item) => {
-                  const rps = item.raw;
+                  const rps = item.raw.y;
                   const p = points[item.dataIndex];
                   const cv = p.results[workload].cv;
-                  return `${(rps/1000).toFixed(1)}K ops/sec (CV ${cv}%)`;
+                  return `${(rps/1000).toFixed(1)}K ops/sec (CV ${cv.toFixed(2)}%)`;
                 },
                 afterLabel: (item) => {
                   const p = points[item.dataIndex];
@@ -201,7 +232,9 @@
               grid: { color: '#2d3148' }
             },
             x: {
-              ticks: { color: '#64748b', maxRotation: 45 },
+              type: 'time',
+              time: { unit: 'month', displayFormats: { month: 'MMM yyyy' } },
+              ticks: { color: '#64748b', maxRotation: 0 },
               grid: { color: '#2d3148' }
             }
           }
