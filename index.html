@@ -221,6 +221,7 @@
                   const p = points[item.dataIndex];
                   const a = annotationMap[p.commit];
                   if (a) return `${a.type}: ${(a.delta*100).toFixed(1)}% — ${a.pr_title}`;
+                  if (p.pr_title) return p.pr_title;
                   return '';
                 }
               }
@@ -267,10 +268,11 @@
           const link = p.pr
             ? `<a href="https://github.com/valkey-io/valkey/pull/${p.pr}" target="_blank">PR #${p.pr}</a>`
             : `<a href="https://github.com/valkey-io/valkey/commit/${p.commit}" target="_blank">${p.commit.slice(0,10)}</a>`;
-          return `<tr><td>${p.date}</td><td>${link}</td><td>${(r.rps/1000).toFixed(0)}K</td><td>${(r.cv||0).toFixed(2)}%</td></tr>`;
+          const title = p.pr_title ? `<span style="color:var(--text)">${p.pr_title.slice(0,50)}</span>` : '';
+          return `<tr><td>${p.date}</td><td>${link}</td><td>${title}</td><td>${(r.rps/1000).toFixed(0)}K</td><td>${(r.cv||0).toFixed(2)}%</td></tr>`;
         }).join('');
         tableEl.innerHTML = `<table style="width:100%;font-size:0.8rem;border-collapse:collapse;">
-          <thead><tr style="color:var(--muted);text-align:left;"><th>Date</th><th>Commit/PR</th><th>RPS</th><th>CV</th></tr></thead>
+          <thead><tr style="color:var(--muted);text-align:left;"><th>Date</th><th>PR</th><th>Title</th><th>RPS</th><th>CV</th></tr></thead>
           <tbody>${rows}</tbody></table>`;
       }
     }
