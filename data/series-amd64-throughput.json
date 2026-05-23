@@ -4,7 +4,7 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "throughput",
-    "generated": "2026-05-23T16:53:08.466755+00:00",
+    "generated": "2026-05-23T18:54:32.956652+00:00",
     "total_commits": 1974
   },
   "workloads": [
@@ -992,6 +992,48 @@
       "pr_title": "Add missing REDIS_STATIC in quicklist"
     },
     {
+      "commit": "7b070423b8e20cf14a9ab80dfa7bea5ba88c54a3",
+      "date": "2024-03-18",
+      "commit_index": 270,
+      "results": {
+        "throughput": {
+          "rps": 1931665.9583333337,
+          "cv": 0.4772570829177504,
+          "reps": 3
+        }
+      },
+      "pr": 13135,
+      "pr_title": "Fix dictionary use-after-free in active expire and make kvstore iter to respect EMPTY flag"
+    },
+    {
+      "commit": "aeada20140570643cda084d374056469a5c27bf2",
+      "date": "2024-03-19",
+      "commit_index": 271,
+      "results": {
+        "throughput": {
+          "rps": 1188600.8322619048,
+          "cv": 1.3557174495269064,
+          "reps": 7
+        }
+      },
+      "pr": 13143,
+      "pr_title": "Avoid unnecessary dict shrink in zremrangeGenericCommand"
+    },
+    {
+      "commit": "e04d41d78dcdc4f2b332cdcf168521257ab0024e",
+      "date": "2024-03-19",
+      "commit_index": 272,
+      "results": {
+        "throughput": {
+          "rps": 759531.0654761904,
+          "cv": 0.7602544647595955,
+          "reps": 7
+        }
+      },
+      "pr": 13141,
+      "pr_title": "Prevent lua error_reply abuse from causing errorstats to become larger"
+    },
+    {
       "commit": "bad33f8738b4be5f58c4439a0c78312e4afbe432",
       "date": "2024-03-19",
       "commit_index": 273,
@@ -1006,6 +1048,19 @@
       "pr_title": "fix wrong data type conversion in zrangeResultBeginStore"
     },
     {
+      "commit": "38632278fd06fe186f7707e4fa099f666d805547",
+      "date": "2024-03-21",
+      "commit_index": 275,
+      "results": {
+        "throughput": {
+          "rps": 763787.6813888887,
+          "cv": 0.21014983206438645,
+          "reps": 3
+        }
+      },
+      "pr_title": "A single commit to get stuff building"
+    },
+    {
       "commit": "ee107481e5621f0de3c2bbb617c72efa7ca7c2ef",
       "date": "2024-03-21",
       "commit_index": 277,
@@ -1017,6 +1072,72 @@
         }
       },
       "pr_title": "Refactor some tests to reference new executable"
+    },
+    {
+      "commit": "35864853559560b9144faf3202e97b35b11b14f1",
+      "date": "2024-03-21",
+      "commit_index": 278,
+      "results": {
+        "throughput": {
+          "rps": 757424.1047222223,
+          "cv": 0.34938544479793276,
+          "reps": 3
+        }
+      },
+      "pr_title": "Moved to correct cli and benchmark"
+    },
+    {
+      "commit": "9a6721bd11ca9454b425a695c9455434564c2dd5",
+      "date": "2024-03-21",
+      "commit_index": 279,
+      "results": {
+        "throughput": {
+          "rps": 1965686.1161904763,
+          "cv": 2.1471194305755357,
+          "reps": 7
+        }
+      },
+      "pr_title": "Fix check aof"
+    },
+    {
+      "commit": "2e9855fbd099f73e08644c1db56f667261648675",
+      "date": "2024-03-21",
+      "commit_index": 281,
+      "results": {
+        "throughput": {
+          "rps": 1991077.8233333332,
+          "cv": 2.468511767656055,
+          "reps": 7
+        }
+      },
+      "pr_title": "Disable some workflows since I don't want to burn through the free tier"
+    },
+    {
+      "commit": "084ab10e17c50dd15d6488ff5ac48a2476001021",
+      "date": "2024-03-21",
+      "commit_index": 282,
+      "results": {
+        "throughput": {
+          "rps": 762531.1086111111,
+          "cv": 0.018559005896292922,
+          "reps": 3
+        }
+      },
+      "pr_title": "Disabled some workflows for now"
+    },
+    {
+      "commit": "0e9a25fb59753b38a7b64753e76b0f9287130cf9",
+      "date": "2024-03-21",
+      "commit_index": 283,
+      "results": {
+        "throughput": {
+          "rps": 754657.8405555554,
+          "cv": 0.1925546398591326,
+          "reps": 3
+        }
+      },
+      "pr": 2,
+      "pr_title": "Merge pull request #2 from madolson/test-pr"
     },
     {
       "commit": "75929f46c5ffccd72b3e6eb90cbee74f9968d726",
@@ -3372,6 +3493,58 @@
       "type": "improvement",
       "pr": 13147,
       "pr_title": "Add missing REDIS_STATIC in quicklist"
+    },
+    {
+      "commit": "aeada20140570643cda084d374056469a5c27bf2",
+      "delta": -0.3847,
+      "workload": "throughput",
+      "type": "regression",
+      "pr": 13143,
+      "pr_title": "Avoid unnecessary dict shrink in zremrangeGenericCommand"
+    },
+    {
+      "commit": "e04d41d78dcdc4f2b332cdcf168521257ab0024e",
+      "delta": -0.361,
+      "workload": "throughput",
+      "type": "regression",
+      "pr": 13141,
+      "pr_title": "Prevent lua error_reply abuse from causing errorstats to become larger"
+    },
+    {
+      "commit": "bad33f8738b4be5f58c4439a0c78312e4afbe432",
+      "delta": 0.5149,
+      "workload": "throughput",
+      "type": "improvement",
+      "pr": 13148,
+      "pr_title": "fix wrong data type conversion in zrangeResultBeginStore"
+    },
+    {
+      "commit": "35864853559560b9144faf3202e97b35b11b14f1",
+      "delta": -0.3203,
+      "workload": "throughput",
+      "type": "regression",
+      "pr_title": "Moved to correct cli and benchmark"
+    },
+    {
+      "commit": "9a6721bd11ca9454b425a695c9455434564c2dd5",
+      "delta": 1.5952,
+      "workload": "throughput",
+      "type": "improvement",
+      "pr_title": "Fix check aof"
+    },
+    {
+      "commit": "084ab10e17c50dd15d6488ff5ac48a2476001021",
+      "delta": -0.617,
+      "workload": "throughput",
+      "type": "regression",
+      "pr_title": "Disabled some workflows for now"
+    },
+    {
+      "commit": "75929f46c5ffccd72b3e6eb90cbee74f9968d726",
+      "delta": 0.6622,
+      "workload": "throughput",
+      "type": "improvement",
+      "pr_title": "Update README.md"
     },
     {
       "commit": "af205e7d86156b07b71aafb71e32e526882805cc",

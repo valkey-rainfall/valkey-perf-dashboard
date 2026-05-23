@@ -4,7 +4,7 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "memory",
-    "generated": "2026-05-23T16:53:08.471748+00:00",
+    "generated": "2026-05-23T18:54:32.959944+00:00",
     "total_commits": 1976
   },
   "workloads": [
@@ -334,6 +334,20 @@
       "pr_title": "Fix loading rdb opcode RDB_OPCODE_SLOT_INFO"
     },
     {
+      "commit": "33ea432585fa3d7ca3da1de98b64e7267110ad4b",
+      "date": "2024-03-03",
+      "commit_index": 254,
+      "results": {
+        "memory": {
+          "rps": 84.14748320000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 13101,
+      "pr_title": "Call finalizerProc when free the aeTimeEvent in ae"
+    },
+    {
       "commit": "75929f46c5ffccd72b3e6eb90cbee74f9968d726",
       "date": "2024-03-21",
       "commit_index": 284,
@@ -345,6 +359,20 @@
         }
       },
       "pr_title": "Update README.md"
+    },
+    {
+      "commit": "0ba2f1b14e03172f51c0b6ec2fed6af0d8378191",
+      "date": "2024-04-01",
+      "commit_index": 314,
+      "results": {
+        "memory": {
+          "rps": 84.14748320000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 127,
+      "pr_title": "Update coverity to reflect project name"
     },
     {
       "commit": "598b951fb509a53037b7a43b863c06e53a35909b",
@@ -361,6 +389,20 @@
       "pr_title": "rename redisServer to valkeyServer"
     },
     {
+      "commit": "ebfb44062982d29fc031e20c916be68c127f5ddc",
+      "date": "2024-04-08",
+      "commit_index": 374,
+      "results": {
+        "memory": {
+          "rps": 84.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 52,
+      "pr_title": "Pass extensions to node if extension processing is handled by it"
+    },
+    {
       "commit": "1221b3951ae4faf49923dfbb623a7aca6ccf9b26",
       "date": "2024-04-15",
       "commit_index": 404,
@@ -373,6 +415,20 @@
       },
       "pr": 318,
       "pr_title": "Fix typo in comment"
+    },
+    {
+      "commit": "2e926b2de17eaf8f62036103eb20bc504ab2e706",
+      "date": "2024-04-25",
+      "commit_index": 435,
+      "results": {
+        "memory": {
+          "rps": 84.14748320000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 372,
+      "pr_title": "Fix command line formatting in TLS.md"
     },
     {
       "commit": "cde8ec1b414e5da00ee90cbaf21c1c7ae37e93e9",
@@ -389,6 +445,20 @@
       "pr_title": "Don't try to set SO_REUSEADDR on sockets of AF_UNIX"
     },
     {
+      "commit": "efa8ba519b2d54f68fe05d03cac5b0d5352400ad",
+      "date": "2024-05-17",
+      "commit_index": 495,
+      "results": {
+        "memory": {
+          "rps": 84.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 501,
+      "pr_title": "Finish postponed SCAN changes"
+    },
+    {
       "commit": "30f277a86d35e3f70314f50ca7b59562838bd429",
       "date": "2024-06-02",
       "commit_index": 525,
@@ -401,6 +471,20 @@
       },
       "pr": 588,
       "pr_title": "Enable debug asserts for cluster and sentinel tests"
+    },
+    {
+      "commit": "93123f97a086c625171d65c1cadf4549cb7b0983",
+      "date": "2024-06-14",
+      "commit_index": 555,
+      "results": {
+        "memory": {
+          "rps": 84.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 615,
+      "pr_title": "Format yaml files"
     },
     {
       "commit": "b59762f734897cc511d3c68a219bed5e99752123",
@@ -864,6 +948,20 @@
       "pr_title": "Add support for Atomic Slot Migration to CLI"
     },
     {
+      "commit": "ff7395a90cf53b1756340c658e4bf8f460981b2e",
+      "date": "2026-01-19",
+      "commit_index": 1685,
+      "results": {
+        "memory": {
+          "rps": 54.922611200000006,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3071,
+      "pr_title": "Fix flaky tests related to deferring client timing issues"
+    },
+    {
       "commit": "cfbe0937fb3b275e735a061c811f07482cdf7904",
       "date": "2026-02-02",
       "commit_index": 1726,
@@ -876,6 +974,20 @@
       },
       "pr": 3142,
       "pr_title": "Extend hashtableGetStatsMsg to always show empty table and rehash index"
+    },
+    {
+      "commit": "385895a965fb0c9e586a253e7ffcb9b6a5c8c7b6",
+      "date": "2026-02-17",
+      "commit_index": 1768,
+      "results": {
+        "memory": {
+          "rps": 54.91984640000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3160,
+      "pr_title": "[BUG][issue-2797] Block module unload when ACL references module subcommands"
     },
     {
       "commit": "cb9e7c94e98f364e4536cb00483174fe6248e0f5",
@@ -1004,6 +1116,20 @@
       "pr_title": "Improve COB memory tracking with copy avoidance"
     },
     {
+      "commit": "8891441ab9fd3a75c3023ab87383793d9c5704fe",
+      "date": "2026-05-03",
+      "commit_index": 1934,
+      "results": {
+        "memory": {
+          "rps": 30.925824000000006,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3583,
+      "pr_title": "Fix checkPrefixCollisionsOrReply returning non-zero on self-overlap"
+    },
+    {
       "commit": "c59b247132a5ee5a9bc476b8e195e59e41b3cb73",
       "date": "2026-05-23",
       "commit_index": 1975,
@@ -1067,7 +1193,7 @@
       "commit": "965dc90b72a710b2400184e123316c8d1c8d4cf5",
       "delta": 0.776,
       "workload": "memory",
-      "type": "improvement",
+      "type": "regression",
       "pr": 12479,
       "pr_title": "change return type to be consistant"
     },
@@ -1075,7 +1201,7 @@
       "commit": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
       "delta": -0.4371,
       "workload": "memory",
-      "type": "regression",
+      "type": "improvement",
       "pr": 12924,
       "pr_title": "Fix possible corruption in sdsResize (CVE-2023-41056)"
     },
@@ -1083,7 +1209,7 @@
       "commit": "b351a04b1ef5aa409b0fbe2b31fcadca07421400",
       "delta": 1.7219,
       "workload": "memory",
-      "type": "improvement",
+      "type": "regression",
       "pr": 12927,
       "pr_title": "Add announced-endpoints test to all_tests and fix tls related tests"
     },
@@ -1091,7 +1217,7 @@
       "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
       "delta": -0.0951,
       "workload": "memory",
-      "type": "regression",
+      "type": "improvement",
       "pr": 541,
       "pr_title": "Embed key into dict entry"
     },
@@ -1099,14 +1225,14 @@
       "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
       "delta": -0.2787,
       "workload": "memory",
-      "type": "regression",
+      "type": "improvement",
       "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
     },
     {
       "commit": "034d16ac44e8f722b26d30ea7be9422427092d05",
       "delta": -0.4371,
       "workload": "memory",
-      "type": "regression",
+      "type": "improvement",
       "pr": 3397,
       "pr_title": "Increase embedded string threshold from 64 to 128 bytes"
     }
