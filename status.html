@@ -87,7 +87,7 @@ function renderHost(data, label, subtitle) {
     let resultsHtml = '';
     if (data.recent_results?.length) {
         const rows = data.recent_results.slice(0, 5).map(r =>
-            `<tr><td>${r.commit || '—'}</td><td>${r.method || ''}</td><td class="score">${formatScore(r.score)}</td></tr>`
+            `<tr><td>${r.commit || '—'}</td><td>${r.method || ''}</td><td class="score">${formatScore(r.score)}</td><td style="color:#8b949e">${timeAgo(r.completed)}</td></tr>`
         ).join('');
         resultsHtml = `<table class="results-table">${rows}</table>`;
     }
