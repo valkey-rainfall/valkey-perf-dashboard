@@ -34,7 +34,7 @@
     </style>
 </head>
 <body>
-    <div class="nav"><a href="index.html">← Performance Dashboard</a></div>
+    <div class="nav"><a href="index.html">← Performance Dashboard</a> <label style="float:right;font-size:0.8rem;cursor:pointer"><input type="checkbox" id="autoRefresh" checked> Auto-refresh (5m)</label></div>
     <h1>🎵 Conductress — Host Status</h1>
     <div class="hosts" id="hosts"></div>
     <script>
@@ -125,7 +125,11 @@ async function loadStatus() {
 }
 
 loadStatus();
-setInterval(loadStatus, 60000);
+let refreshTimer = setInterval(loadStatus, 300000);
+document.getElementById('autoRefresh').addEventListener('change', (e) => {
+    if (e.target.checked) { refreshTimer = setInterval(loadStatus, 300000); loadStatus(); }
+    else { clearInterval(refreshTimer); }
+});
     </script>
 </body>
 </html>
