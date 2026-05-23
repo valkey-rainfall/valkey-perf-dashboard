@@ -38,7 +38,11 @@
     <h1>🎵 Conductress — Host Status</h1>
     <div class="hosts" id="hosts"></div>
     <script>
-const HOSTS = ['arm', 'x86', 'intel'];
+const HOSTS = [
+    {id: 'arm', label: 'armbench', subtitle: 'Graviton 3 · 64 cores'},
+    {id: 'x86', label: 'bench', subtitle: 'AMD EPYC 9R14 · 192 cores'},
+    {id: 'intel', label: 'intelbench', subtitle: 'Xeon 8488C · 48 cores'},
+];
 const STATUS_BASE = 'data/status';
 
 function formatScore(score) {
@@ -57,7 +61,7 @@ function timeAgo(isoStr) {
     return Math.floor(diff / 86400) + 'd ago';
 }
 
-function renderHost(data) {
+function renderHost(data, label, subtitle) {
     const state = data.runner?.state || 'unreachable';
     const stale = data.timestamp && (Date.now() - new Date(data.timestamp).getTime()) > 300000;
 
@@ -89,8 +93,9 @@ function renderHost(data) {
     }
 
     return `<div class="host-card">
-        <h2><span class="status-dot ${state}"></span>${data.host || 'unknown'}</h2>
+        <h2><span class="status-dot ${state}"></span>${label}</h2>
         <div class="meta">
+            <span style="color:#8b949e">${subtitle}</span><br>
             Updated ${timeAgo(data.timestamp)}
             ${stale ? '<span class="stale-warning">⚠ stale</span>' : ''}
             ${data.eta_minutes > 0 ? `· <span class="eta">ETA ${data.eta_minutes}m</span>` : ''}
@@ -106,14 +111,14 @@ async function loadStatus() {
     const cards = [];
     for (const host of HOSTS) {
         try {
-            const resp = await fetch(`${STATUS_BASE}/${host}.json?t=${Date.now()}`);
+            const resp = await fetch(`${STATUS_BASE}/${host.id}.json?t=${Date.now()}`);
             if (resp.ok) {
-                cards.push(renderHost(await resp.json()));
+                cards.push(renderHost(await resp.json(), host.label, host.subtitle));
             } else {
-                cards.push(renderHost({host, runner: {state: 'unreachable'}, timestamp: new Date().toISOString()}));
+                cards.push(renderHost({runner: {state: 'unreachable'}, timestamp: new Date().toISOString()}, host.label, host.subtitle));
             }
         } catch {
-            cards.push(renderHost({host, runner: {state: 'unreachable'}, timestamp: new Date().toISOString()}));
+            cards.push(renderHost({runner: {state: 'unreachable'}, timestamp: new Date().toISOString()}, host.label, host.subtitle));
         }
     }
     container.innerHTML = cards.join('');
