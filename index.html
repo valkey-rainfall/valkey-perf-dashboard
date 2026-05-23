@@ -108,7 +108,7 @@
       currentData = data;
 
       const workload = data.workloads[0];
-      const points = data.points.filter(p => p.results[workload]).sort((a, b) => a.date.localeCompare(b.date));
+      const points = data.points.filter(p => p.results[workload]).sort((a, b) => a.commit_index - b.commit_index);
       const labels = points.map(p => p.date);
       const rpsValues = points.map(p => p.results[workload].rps);
 
