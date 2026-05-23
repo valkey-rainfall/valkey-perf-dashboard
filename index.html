@@ -68,7 +68,7 @@
   </div>
 
   <h2 style="font-size:1rem; margin:1.5rem 0 0.5rem;">Memory Overhead</h2>
-  <div class="chart-container">
+  <div class="chart-container" style="height:250px">
     <canvas id="memoryChart"></canvas>
   </div>
 
@@ -290,40 +290,39 @@
       };
 
       // Memory chart
-      try {
-        const memResp = await fetch(`data/series-${platform}-memory.json`);
-        if (memResp.ok) {
-          const memData = await memResp.json();
-          const memWorkload = memData.workloads[0];
-          const memPoints = memData.points.filter(p => p.results[memWorkload]).sort((a, b) => a.commit_index - b.commit_index);
-          if (memPoints.length > 0) {
-            const memCtx = document.getElementById('memoryChart').getContext('2d');
-            if (window.memoryChart) window.memoryChart.destroy();
-            window.memoryChart = new Chart(memCtx, {
-              type: 'line',
-              data: {
-                datasets: [{
-                  label: 'bytes/item',
-                  data: memPoints.map(p => ({ x: p.commit_index, y: p.results[memWorkload].rps })),
-                  borderColor: '#10b981',
-                  backgroundColor: 'transparent',
-                  pointRadius: 3,
-                  pointBackgroundColor: '#10b981',
-                  tension: 0,
-                }]
-              },
-              options: {
-                responsive: true,
-                plugins: { legend: { display: false }, zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x' } } },
-                scales: {
-                  y: { title: { display: true, text: 'bytes/item', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: '#2d3148' } },
-                  x: { type: 'linear', min: 0, max: memData.metadata.total_commits || memPoints[memPoints.length-1].commit_index, ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: '#2d3148' } }
-                }
+      const memResp = await fetch(`data/series-${platform}-memory.json`).catch(() => null);
+      if (memResp && memResp.ok) {
+        const memData = await memResp.json();
+        const memWorkload = memData.workloads[0];
+        const memPoints = memData.points.filter(p => p.results[memWorkload]).sort((a, b) => a.commit_index - b.commit_index);
+        if (memPoints.length > 0) {
+          const memCtx = document.getElementById('memoryChart').getContext('2d');
+          if (window.memoryChart) window.memoryChart.destroy();
+          window.memoryChart = new Chart(memCtx, {
+            type: 'line',
+            data: {
+              datasets: [{
+                label: 'bytes/item',
+                data: memPoints.map(p => ({ x: p.commit_index, y: p.results[memWorkload].rps })),
+                borderColor: '#10b981',
+                backgroundColor: 'transparent',
+                pointRadius: 3,
+                pointBackgroundColor: '#10b981',
+                tension: 0,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false }, zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x' } } },
+              scales: {
+                y: { title: { display: true, text: 'bytes/item', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: '#2d3148' } },
+                x: { type: 'linear', min: 0, max: memData.metadata.total_commits || memPoints[memPoints.length-1].commit_index, ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: '#2d3148' } }
               }
-            });
-          }
+            }
+          });
         }
-      } catch(e) { /* memory data not available yet */ }
+      }
 
       // Annotations list
       const annEl = document.getElementById('annotations');
