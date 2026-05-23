@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-23T23:39:49.991292Z",
+  "timestamp": "2026-05-23T23:42:59.039675Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 2523523,
@@ -7,23 +7,16 @@
     "uptime_hours": 494218.7
   },
   "current_task": {
-    "id": "2026.05.23_23.36.37.318757",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 46.9,
-    "elapsed_sec": 193,
-    "steps": "115/245"
+    "id": "2026.05.23_23.36.37.332875",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 28,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.23_23.36.37.318757",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 3.1% regression between a89e5299 and 6c2e4f95",
-        "source": "valkey",
-        "specifier": "8131c2b07bcff0dd62c79f8495e45563eacadec1"
-      },
       {
         "id": "2026.05.23_23.36.37.332875",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.23_23.36.37.318757",
+      "method": "perf-get",
+      "score": 1194045.3429761906,
+      "commit": "8131c2b0",
+      "source": "valkey",
+      "specifier": "8131c2b07bcff0dd62c79f8495e45563eacadec1",
+      "note": "[sweep] Bisecting 3.1% regression between a89e5299 and 6c2e4f95",
+      "completed": "2026.05.23_23.42.30.396382"
+    },
     {
       "task_id": "2026.05.23_23.29.38.258567",
       "method": "perf-get",
@@ -73,17 +76,7 @@
       "specifier": "0422fc66cfcced854f4fe30515467fb258dd9e61",
       "note": "[sweep] Bisecting 5.4% improvement between 4ad7628d and 1fd6d715",
       "completed": "2026.05.23_23.14.27.257686"
-    },
-    {
-      "task_id": "2026.05.23_22.59.43.942924",
-      "method": "perf-get",
-      "score": 754798.1514285714,
-      "commit": "0aaae734",
-      "source": "valkey",
-      "specifier": "0aaae734f46101e621f9d56d76c42d04029d3c99",
-      "note": "[sweep] Bisecting 43.9% regression between e64d91c3 and 57789d4d",
-      "completed": "2026.05.23_23.05.12.285126"
     }
   ],
-  "eta_minutes": 8.6
+  "eta_minutes": 5.0
 }
