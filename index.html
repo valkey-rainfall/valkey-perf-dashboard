@@ -50,6 +50,7 @@
 <body>
   <h1>Valkey Unstable — Performance History</h1>
   <p class="subtitle">Adaptive sweep: progressive bisection identifies impactful PRs</p>
+  <p class="subtitle" id="workload-label"></p>
 
   <div class="controls">
     <select id="platformSelect"></select>
@@ -108,6 +109,7 @@
       currentData = data;
 
       const workload = data.workloads[0];
+      document.getElementById('workload-label').textContent = 'Workload: ' + workload.replace(/_/g, ' ').replace(/\bt(\d+)\b/, 'io-threads=$1').replace(/\bp(\d+)\b/, 'P=$1');
       const points = data.points.filter(p => p.results[workload]).sort((a, b) => a.commit_index - b.commit_index);
       const labels = points.map(p => p.date);
       const rpsValues = points.map(p => p.results[workload].rps);
@@ -290,7 +292,7 @@
           <div>
             <div><strong>${a.pr_title || a.commit.slice(0,8)}</strong></div>
             ${a.note ? `<div class="note">📝 ${a.note}</div>` : ''}
-            <div class="meta"><a href="https://github.com/valkey-io/valkey/commit/${a.commit}" target="_blank">${a.commit.slice(0,8)}</a> · ${a.workload}</div>
+            <div class="meta"><a href="https://github.com/valkey-io/valkey/commit/${a.commit}" target="_blank">${a.commit.slice(0,8)}</a></div>
           </div>
           <div style="text-align:right">
             <div class="delta ${a.delta < 0 ? 'neg' : 'pos'}">${a.delta > 0 ? '+' : ''}${(a.delta*100).toFixed(1)}%</div>
