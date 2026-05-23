@@ -1,1 +1,67 @@
-{"host": "arm", "runner": {"state": "pending"}, "timestamp": "2026-05-23T21:10:58Z", "queue": {"depth": 0, "tasks": []}, "recent_results": [], "eta_minutes": 0}
+{
+  "timestamp": "2026-05-23T21:14:58.415271Z",
+  "host": "arm",
+  "runner": {
+    "pid": null,
+    "state": "stopped",
+    "uptime_hours": null
+  },
+  "current_task": null,
+  "queue": {
+    "depth": 0,
+    "tasks": []
+  },
+  "recent_results": [
+    {
+      "task_id": "2026.05.23_06.00.16.995122",
+      "method": "perf-get",
+      "score": 2360174.5080991737,
+      "commit": "0321a69e",
+      "source": "valkey-rainfall",
+      "specifier": "0321a69e62f5148096d03358e26a1b884af3b969",
+      "note": "canary-exp2-day20260523",
+      "completed": "2026.05.23_06.03.59.461031"
+    },
+    {
+      "task_id": "2026.05.22_18.29.45.455397",
+      "method": "perf-zscore",
+      "score": 1439623.9310943026,
+      "commit": "707e6dc7",
+      "source": "rainsupreme",
+      "specifier": "oi/pr4-fbtree",
+      "note": "skiplist io-threads=9",
+      "completed": "2026.05.23_00.09.27.057719"
+    },
+    {
+      "task_id": "2026.05.22_18.29.45.455219",
+      "method": "perf-zscore",
+      "score": 918030.1395119216,
+      "commit": "707e6dc7",
+      "source": "rainsupreme",
+      "specifier": "oi/pr4-fbtree",
+      "note": "skiplist io-threads=9",
+      "completed": "2026.05.22_23.41.08.500824"
+    },
+    {
+      "task_id": "2026.05.22_18.29.45.454957",
+      "method": "perf-zrank",
+      "score": 701732.4797065569,
+      "commit": "707e6dc7",
+      "source": "rainsupreme",
+      "specifier": "oi/pr4-fbtree",
+      "note": "skiplist io-threads=9",
+      "completed": "2026.05.22_23.12.49.535689"
+    },
+    {
+      "task_id": "2026.05.22_18.29.45.454787",
+      "method": "perf-zrank",
+      "score": 585448.3477731444,
+      "commit": "707e6dc7",
+      "source": "rainsupreme",
+      "specifier": "oi/pr4-fbtree",
+      "note": "skiplist io-threads=9",
+      "completed": "2026.05.22_22.44.30.748920"
+    }
+  ],
+  "eta_minutes": 0.0
+}
