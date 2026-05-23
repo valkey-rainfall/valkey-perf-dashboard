@@ -139,22 +139,25 @@
       // Landmark annotations for chart
       const chartAnnotations = {};
       data.landmarks.forEach((lm, i) => {
-          chartAnnotations[`lm${i}`] = {
-            type: 'line', xMin: lm.date, xMax: lm.date,
-            borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
-            label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
-          };
+          const idx = points.findIndex(p => p.commit === lm.commit);
+          if (idx >= 0) {
+            chartAnnotations[`lm${i}`] = {
+              type: 'line', xMin: idx, xMax: idx,
+              borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
+              label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
+            };
+          }
         });
 
       // Build datasets: main line + CV band
-      const chartData = points.map(p => ({ x: p.date, y: p.results[workload].rps }));
-      const cvUpper = points.map(p => {
+      const chartData = points.map((p, i) => ({ x: i, y: p.results[workload].rps }));
+      const cvUpper = points.map((p, i) => {
         const r = p.results[workload];
-        return { x: p.date, y: r.rps * (1 + (r.cv || 0) / 100) };
+        return { x: i, y: r.rps * (1 + (r.cv || 0) / 100) };
       });
-      const cvLower = points.map(p => {
+      const cvLower = points.map((p, i) => {
         const r = p.results[workload];
-        return { x: p.date, y: r.rps * (1 - (r.cv || 0) / 100) };
+        return { x: i, y: r.rps * (1 - (r.cv || 0) / 100) };
       });
 
       // Chart
@@ -251,9 +254,15 @@
               grid: { color: '#2d3148' }
             },
             x: {
-              type: 'time',
-              time: { unit: 'month', displayFormats: { month: 'MMM yyyy' } },
-              ticks: { color: '#64748b', maxRotation: 0 },
+              type: 'linear',
+              ticks: {
+                color: '#64748b',
+                maxRotation: 0,
+                callback: function(value) {
+                  const p = points[value];
+                  return p ? p.date.slice(0, 7) : '';
+                }
+              },
               grid: { color: '#2d3148' }
             }
           }
@@ -265,12 +274,13 @@
         const landmarks = data.landmarks || [];
         const lastLandmark = landmarks[landmarks.length - 1];
         if (lastLandmark) {
-          chart.zoomScale('x', { min: lastLandmark.date, max: points[points.length-1].date });
+          const idx = points.findIndex(p => p.commit === lastLandmark.commit);
+          if (idx >= 0) chart.zoomScale('x', { min: idx, max: points.length - 1 });
         }
       };
       window.zoomToLastN = (n) => {
         const start = Math.max(0, points.length - n);
-        chart.zoomScale('x', { min: points[start].date, max: points[points.length-1].date });
+        chart.zoomScale('x', { min: start, max: points.length - 1 });
       };
 
       // Annotations list
