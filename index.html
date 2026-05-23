@@ -256,13 +256,11 @@
             },
             x: {
               type: 'linear',
+              min: 0,
+              max: data.meta.total_commits || points[points.length-1].commit_index,
               ticks: {
                 color: '#64748b',
                 maxRotation: 0,
-                callback: function(value) {
-                  const p = points.find(p => p.commit_index <= value && points[points.indexOf(p)+1]?.commit_index > value) || points[points.length-1];
-                  return p ? p.date.slice(0, 7) : '';
-                },
                 maxTicksLimit: 8,
               },
               grid: { color: '#2d3148' }
