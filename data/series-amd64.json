@@ -4,7 +4,7 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "GET_16B_t1_p1",
-    "generated": "2026-05-23T05:02:33.895021+00:00",
+    "generated": "2026-05-23T06:39:01.528622+00:00",
     "total_commits": 1974
   },
   "workloads": [
@@ -24,6 +24,116 @@
       },
       "pr": 12924,
       "pr_title": "Fix possible corruption in sdsResize (CVE-2023-41056)"
+    },
+    {
+      "commit": "75929f46c5ffccd72b3e6eb90cbee74f9968d726",
+      "date": "2024-03-21",
+      "commit_index": 284,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1254368.4172222228,
+          "cv": 0.3383155581323035,
+          "reps": 3
+        }
+      },
+      "pr_title": "Update README.md"
+    },
+    {
+      "commit": "af205e7d86156b07b71aafb71e32e526882805cc",
+      "date": "2024-03-21",
+      "commit_index": 285,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 758203.0505555555,
+          "cv": 0.08866180811518497,
+          "reps": 3
+        }
+      },
+      "pr_title": "Update README.md"
+    },
+    {
+      "commit": "dc3e76b3fb75a55dd4addbb055db0a9730ad0f7f",
+      "date": "2024-03-21",
+      "commit_index": 286,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 756440.7388888889,
+          "cv": 0.13434139456463037,
+          "reps": 3
+        }
+      },
+      "pr": 6,
+      "pr_title": "Merge pull request #6 from madolson/fix_daily_yml"
+    },
+    {
+      "commit": "1ea46d3ddb7026b175da5c1a30730f9af0c8d458",
+      "date": "2024-03-22",
+      "commit_index": 288,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 755121.2291666667,
+          "cv": 0.4818942591168021,
+          "reps": 3
+        }
+      },
+      "pr": 7,
+      "pr_title": "Merge pull request #7 from hpatro/patch-1"
+    },
+    {
+      "commit": "340ab6d62d7f3fa34e9901acccad576367bf2077",
+      "date": "2024-03-25",
+      "commit_index": 292,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 756714.0205555555,
+          "cv": 0.04187562310377231,
+          "reps": 3
+        }
+      },
+      "pr": 14,
+      "pr_title": "Fixes external server tests and change other references"
+    },
+    {
+      "commit": "699f62e8e3f55bfd665ab234e559081d2bd68230",
+      "date": "2024-03-27",
+      "commit_index": 299,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 752861.1535714285,
+          "cv": 0.6984760598145612,
+          "reps": 3
+        }
+      },
+      "pr": 48,
+      "pr_title": "Updated contributing file with DCO"
+    },
+    {
+      "commit": "0ba2f1b14e03172f51c0b6ec2fed6af0d8378191",
+      "date": "2024-04-01",
+      "commit_index": 314,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 756354.5069047619,
+          "cv": 0.8714586972658336,
+          "reps": 3
+        }
+      },
+      "pr": 127,
+      "pr_title": "Update coverity to reflect project name"
+    },
+    {
+      "commit": "598b951fb509a53037b7a43b863c06e53a35909b",
+      "date": "2024-04-04",
+      "commit_index": 344,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 759295.0227777777,
+          "cv": 0.2818955493684342,
+          "reps": 3
+        }
+      },
+      "pr": 183,
+      "pr_title": "rename redisServer to valkeyServer"
     },
     {
       "commit": "1221b3951ae4faf49923dfbb623a7aca6ccf9b26",
@@ -68,6 +178,90 @@
       "pr_title": "Very minor misspelling in some tests"
     },
     {
+      "commit": "3323e422ad0c0dc81859017798cb04a9621d6522",
+      "date": "2024-07-02",
+      "commit_index": 593,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 749430.2969047618,
+          "cv": 0.7662098500484884,
+          "reps": 3
+        }
+      },
+      "pr": 674,
+      "pr_title": "Introduce thread-local storage variable to update thread's own used_memory and sum when reading to reduce atomic contention."
+    },
+    {
+      "commit": "1ea49e5845a11250a13273c725720822c26860f1",
+      "date": "2024-07-02",
+      "commit_index": 595,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 747854.9294444445,
+          "cv": 0.08872422466960403,
+          "reps": 3
+        }
+      },
+      "pr": 731,
+      "pr_title": "Make valkey compatible with redis-sentinel to start sentinel"
+    },
+    {
+      "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
+      "date": "2024-07-02",
+      "commit_index": 596,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 813979.6942857143,
+          "cv": 0.5196515421557973,
+          "reps": 3
+        }
+      },
+      "pr": 541,
+      "pr_title": "Embed key into dict entry"
+    },
+    {
+      "commit": "b298dfd6ef5c8572965c8154526ea76381fa29d2",
+      "date": "2024-07-03",
+      "commit_index": 597,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 804607.7208333336,
+          "cv": 0.48002957928152296,
+          "reps": 3
+        }
+      },
+      "pr": 724,
+      "pr_title": "Use 'primary' instead of 'master' in Sentinel tcl testing."
+    },
+    {
+      "commit": "2d6791bb1157af52e20ffd1fb4ca025c283153d3",
+      "date": "2024-07-04",
+      "commit_index": 598,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 820809.5885714286,
+          "cv": 0.6434235397091277,
+          "reps": 3
+        }
+      },
+      "pr": 735,
+      "pr_title": "Use clusterNodeIsVotingPrimary function to check the right"
+    },
+    {
+      "commit": "6bf1d02edf962674cb32dc2e4f2f13d3d8cece3f",
+      "date": "2024-07-04",
+      "commit_index": 599,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 827883.2955952381,
+          "cv": 0.8272834046640247,
+          "reps": 3
+        }
+      },
+      "pr": 723,
+      "pr_title": "Nested MULTI or WATCH in MULTI now will abort the transaction"
+    },
+    {
       "commit": "16803788451bfe8d5e6b757e5263653650cbd274",
       "date": "2024-07-04",
       "commit_index": 600,
@@ -80,6 +274,34 @@
       },
       "pr": 706,
       "pr_title": "Update redis keyword to valkey in some sentinel functions (Redis Legacy)"
+    },
+    {
+      "commit": "5f0ccf1478452598490683be4f78cf3e69ee259f",
+      "date": "2024-07-07",
+      "commit_index": 602,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 831585.9877380955,
+          "cv": 0.4769452867672008,
+          "reps": 3
+        }
+      },
+      "pr": 755,
+      "pr_title": "Remove duplicate definition of UNUSED(V)"
+    },
+    {
+      "commit": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483",
+      "date": "2024-07-09",
+      "commit_index": 603,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1253218.4999999998,
+          "cv": 0.3945553430249217,
+          "reps": 3
+        }
+      },
+      "pr": 758,
+      "pr_title": "Async IO threads"
     },
     {
       "commit": "548b4e0ea943da765a4fec46e73484b0742f58f8",
@@ -122,6 +344,76 @@
       },
       "pr": 477,
       "pr_title": "Introduce Valkey Over RDMA transport (experimental)"
+    },
+    {
+      "commit": "c584371506010686087e64af7edc9706e2c38674",
+      "date": "2024-07-18",
+      "commit_index": 619,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1255702.4183215268,
+          "cv": 0.5662391087697561,
+          "reps": 3
+        }
+      },
+      "pr": 800,
+      "pr_title": "Fix rdb pipe uninitialized false positive warning"
+    },
+    {
+      "commit": "8b480310a629300c7cb28576f04df889bda21198",
+      "date": "2024-07-18",
+      "commit_index": 621,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1258124.450119048,
+          "cv": 0.611465274305622,
+          "reps": 3
+        }
+      },
+      "pr": 803,
+      "pr_title": "Remove read handler upon RDB connection close"
+    },
+    {
+      "commit": "94bc15cb7147773d3b45e5a2f9c7e8d7de6f97c7",
+      "date": "2024-07-19",
+      "commit_index": 622,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1120177.8227777777,
+          "cv": 0.24489689450917052,
+          "reps": 3
+        }
+      },
+      "pr": 763,
+      "pr_title": "Io thread work offload"
+    },
+    {
+      "commit": "35a188833335332980a16239ac2efebf241c8a6a",
+      "date": "2024-07-19",
+      "commit_index": 623,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1096647.0211111112,
+          "cv": 0.4211937149950687,
+          "reps": 3
+        }
+      },
+      "pr": 783,
+      "pr_title": "Fix incorrect usage of process_is_paused in tests"
+    },
+    {
+      "commit": "9a7bf910cbd7795d8a86bee9bec6378c366b9e6b",
+      "date": "2024-07-23",
+      "commit_index": 630,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1124175.2925,
+          "cv": 1.2111927332042283,
+          "reps": 3
+        }
+      },
+      "pr": 810,
+      "pr_title": "Fix extra reply in debug sleep-after-fork-seconds error path"
     },
     {
       "commit": "4b8de6b1be24b2c64f6e3e188b6dd6d9bca575b1",
@@ -343,7 +635,8 @@
           "cv": 0.5737503782618084,
           "reps": 3
         }
-      }
+      },
+      "pr_title": "Hashtable implementation including unit tests"
     },
     {
       "commit": "4efff42f041733d786a73f1cdfa65f6e04c3c4b8",
@@ -369,7 +662,8 @@
           "cv": 0.5318172470250534,
           "reps": 3
         }
-      }
+      },
+      "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
     },
     {
       "commit": "1acf7f71c0324747de6b0ed9118f065dde0a5a92",
@@ -1067,7 +1361,8 @@
           "cv": 0.423858391290095,
           "reps": 3
         }
-      }
+      },
+      "pr_title": "Remove temporary build correction for RDMA and libvalkey 0.1.0"
     },
     {
       "commit": "a68040789e7566ab2aabad28459fa07dad43db60",
@@ -1725,70 +2020,138 @@
   ],
   "annotations": [
     {
+      "commit": "af205e7d86156b07b71aafb71e32e526882805cc",
+      "delta": -0.3955,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression",
+      "pr_title": "Update README.md"
+    },
+    {
+      "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
+      "delta": 0.0884,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement",
+      "pr": 541,
+      "pr_title": "Embed key into dict entry"
+    },
+    {
+      "commit": "2d6791bb1157af52e20ffd1fb4ca025c283153d3",
+      "delta": 0.0201,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement",
+      "pr": 735,
+      "pr_title": "Use clusterNodeIsVotingPrimary function to check the right"
+    },
+    {
+      "commit": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483",
+      "delta": 0.507,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement",
+      "pr": 758,
+      "pr_title": "Async IO threads"
+    },
+    {
+      "commit": "94bc15cb7147773d3b45e5a2f9c7e8d7de6f97c7",
+      "delta": -0.1096,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression",
+      "pr": 763,
+      "pr_title": "Io thread work offload"
+    },
+    {
+      "commit": "35a188833335332980a16239ac2efebf241c8a6a",
+      "delta": -0.021,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression",
+      "pr": 783,
+      "pr_title": "Fix incorrect usage of process_is_paused in tests"
+    },
+    {
       "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
       "delta": 0.1104,
       "workload": "GET_16B_t1_p1",
-      "type": "improvement"
+      "type": "improvement",
+      "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
     },
     {
       "commit": "d7993b78d82d9c9d2f9298159acd8f5a2fc997d4",
       "delta": -0.029,
       "workload": "GET_16B_t1_p1",
-      "type": "regression"
+      "type": "regression",
+      "pr": 1949,
+      "pr_title": "Introduce atomic slot migration"
     },
     {
       "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
       "delta": 0.5438,
       "workload": "GET_16B_t1_p1",
-      "type": "improvement"
+      "type": "improvement",
+      "pr": 2092,
+      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
     },
     {
       "commit": "88cd2086aef25183ae0c5fb8bc154d8206dd07f1",
       "delta": -0.046,
       "workload": "GET_16B_t1_p1",
-      "type": "regression"
+      "type": "regression",
+      "pr": 2494,
+      "pr_title": "Split SLOT_EXPORT_AUTHENTICATING into SEND and READ to avoid synchronous reading of auth response"
     },
     {
       "commit": "4b5a48a36e22a885dad2140cf72fda7b64c5eb03",
       "delta": 0.0271,
       "workload": "GET_16B_t1_p1",
-      "type": "improvement"
+      "type": "improvement",
+      "pr": 3022,
+      "pr_title": "Fix HRANDFIELD to return null response when no field could be found"
     },
     {
       "commit": "231a9e731ede9055a9b57861051a596a0a5f82f7",
       "delta": 0.049,
       "workload": "GET_16B_t1_p1",
-      "type": "improvement"
+      "type": "improvement",
+      "pr": 2742,
+      "pr_title": "Fix XREAD returning error on empty stream with + ID"
     },
     {
       "commit": "928e9126172dfdfdbf4ce6ebdc65aae854c6e79e",
       "delta": 0.0441,
       "workload": "GET_16B_t1_p1",
-      "type": "improvement"
+      "type": "improvement",
+      "pr": 3117,
+      "pr_title": "remove unneeded include of expire.h"
     },
     {
       "commit": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
       "delta": -0.0371,
       "workload": "GET_16B_t1_p1",
-      "type": "regression"
+      "type": "regression",
+      "pr": 2867,
+      "pr_title": "Optimize skiplist query efficiency by embedding the skiplist header"
     },
     {
       "commit": "fd1438063927d0d3d2d8c9018011d8f7bcda47c3",
       "delta": 0.0265,
       "workload": "GET_16B_t1_p1",
-      "type": "improvement"
+      "type": "improvement",
+      "pr": 3001,
+      "pr_title": "HSETEX - Always issue keyspace notifications after validation"
     },
     {
       "commit": "cfbe0937fb3b275e735a061c811f07482cdf7904",
       "delta": 0.0293,
       "workload": "GET_16B_t1_p1",
-      "type": "improvement"
+      "type": "improvement",
+      "pr": 3142,
+      "pr_title": "Extend hashtableGetStatsMsg to always show empty table and rehash index"
     },
     {
       "commit": "8ed270f443701b0a737d37c3ecb026d7559ecaaa",
       "delta": 0.0296,
       "workload": "GET_16B_t1_p1",
-      "type": "improvement"
+      "type": "improvement",
+      "pr": 3144,
+      "pr_title": "Optimize SREM/ZREM/HDEL to pause auto shrink when deleting multiple items"
     }
   ]
 }
