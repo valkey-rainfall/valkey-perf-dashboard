@@ -4,7 +4,7 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "throughput",
-    "generated": "2026-05-23T19:18:34.856424+00:00",
+    "generated": "2026-05-23T19:29:28.044727+00:00",
     "total_commits": 1974
   },
   "workloads": [
@@ -290,20 +290,6 @@
       },
       "pr": 783,
       "pr_title": "Fix incorrect usage of process_is_paused in tests"
-    },
-    {
-      "commit": "816accea762271458e89016e3ed6ea27c9c1daff",
-      "date": "2024-07-19",
-      "commit_index": 624,
-      "results": {
-        "throughput": {
-          "rps": 1124000.3482142857,
-          "cv": 1.672456165524,
-          "reps": 3
-        }
-      },
-      "pr": 790,
-      "pr_title": "Generate correct slot information in cluster shards command on primary failure"
     },
     {
       "commit": "15a82902316b59e2cbf8962ac2665e4b6b038f4c",
@@ -1018,20 +1004,6 @@
       "pr_title": "Skip empty db when doing FLUSHALL to reduce some NOP"
     },
     {
-      "commit": "992c5b98780fb5c74d80856b368d5007df26e61a",
-      "date": "2025-06-03",
-      "commit_index": 1280,
-      "results": {
-        "throughput": {
-          "rps": 1265500.787222222,
-          "cv": 1.5628337208268772,
-          "reps": 3
-        }
-      },
-      "pr": 1384,
-      "pr_title": "Add CLUSTER FLUSHSLOT command"
-    },
-    {
       "commit": "5699c8c05a207dd2590aa37843a60b2131f3a2da",
       "date": "2025-06-03",
       "commit_index": 1282,
@@ -1058,34 +1030,6 @@
       },
       "pr": 2078,
       "pr_title": "Reply Copy Avoidance"
-    },
-    {
-      "commit": "5cc2b2575300f09c004bf73f0a5f69ed1775c00c",
-      "date": "2025-06-10",
-      "commit_index": 1291,
-      "results": {
-        "throughput": {
-          "rps": 1245666.0397222224,
-          "cv": 1.8658690507489695,
-          "reps": 3
-        }
-      },
-      "pr": 2186,
-      "pr_title": "Fix cluster myself CLUSTER SLOTS/NODES wrong port after updating port/tls-port"
-    },
-    {
-      "commit": "ceb09b0a9df8a72e544d4837cf6c27221c6f15c8",
-      "date": "2025-06-18",
-      "commit_index": 1308,
-      "results": {
-        "throughput": {
-          "rps": 1252489.3263888888,
-          "cv": 1.578388716919941,
-          "reps": 3
-        }
-      },
-      "pr": 2226,
-      "pr_title": "Reset failover failed primary rank when doing a manual failover"
     },
     {
       "commit": "61b63ab989973412c9173a42c91651b079a18f72",
@@ -1228,34 +1172,6 @@
       "pr_title": "Redact user data when hide-user-data-from-log enabled"
     },
     {
-      "commit": "725c3608f0676aee50a83e1e33f98ed6538220aa",
-      "date": "2025-08-11",
-      "commit_index": 1421,
-      "results": {
-        "throughput": {
-          "rps": 1261290.4244444445,
-          "cv": 1.5674647878452488,
-          "reps": 3
-        }
-      },
-      "pr": 2469,
-      "pr_title": "Throw a useful error when underlying operations failed with tls"
-    },
-    {
-      "commit": "d7993b78d82d9c9d2f9298159acd8f5a2fc997d4",
-      "date": "2025-08-11",
-      "commit_index": 1422,
-      "results": {
-        "throughput": {
-          "rps": 1224732.5088888889,
-          "cv": 1.8070453212921185,
-          "reps": 3
-        }
-      },
-      "pr": 1949,
-      "pr_title": "Introduce atomic slot migration"
-    },
-    {
       "commit": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
       "date": "2025-08-12",
       "commit_index": 1425,
@@ -1395,62 +1311,6 @@
       "pr_title": "Remove debug logging from cluster-flush-slot.tcl"
     },
     {
-      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
-      "date": "2025-08-22",
-      "commit_index": 1463,
-      "results": {
-        "throughput": {
-          "rps": 1996866.3558333332,
-          "cv": 1.6557203794285786,
-          "reps": 3
-        }
-      },
-      "pr": 2092,
-      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
-    },
-    {
-      "commit": "8c55547999a980680997a2c0c2bd292a7112da9c",
-      "date": "2025-08-23",
-      "commit_index": 1464,
-      "results": {
-        "throughput": {
-          "rps": 1961864.2948809522,
-          "cv": 2.235921413405678,
-          "reps": 3
-        }
-      },
-      "pr": 2497,
-      "pr_title": "Don't allow slot migration to myself node"
-    },
-    {
-      "commit": "9aeab8ccbac0ca4923676c749c98d0de4718c872",
-      "date": "2025-08-24",
-      "commit_index": 1465,
-      "results": {
-        "throughput": {
-          "rps": 1967619.360357143,
-          "cv": 2.4335991551182836,
-          "reps": 3
-        }
-      },
-      "pr": 2538,
-      "pr_title": "Consistently use static_assert across code"
-    },
-    {
-      "commit": "40fe4228992f39e31f1481f052ed6bc5c090353d",
-      "date": "2025-08-26",
-      "commit_index": 1468,
-      "results": {
-        "throughput": {
-          "rps": 1966812.8738095236,
-          "cv": 2.4121824058327532,
-          "reps": 3
-        }
-      },
-      "pr": 2537,
-      "pr_title": "deflake test: relax time requirement in hash ttl test"
-    },
-    {
       "commit": "682fc0b4197311a2bc0ea2512151ee29a2b1d327",
       "date": "2025-08-29",
       "commit_index": 1471,
@@ -1463,20 +1323,6 @@
       },
       "pr": 2560,
       "pr_title": "Remove the trailing chars of the --cluster reshard log message in valkey-cli"
-    },
-    {
-      "commit": "39fade42d11a22d4a13beb98d6e36adaa12ecba3",
-      "date": "2025-08-29",
-      "commit_index": 1472,
-      "results": {
-        "throughput": {
-          "rps": 1953928.2034523808,
-          "cv": 2.067064698112511,
-          "reps": 3
-        }
-      },
-      "pr": 2547,
-      "pr_title": "Do not migrate function in new atomic slot migration"
     },
     {
       "commit": "cf90acbc6137ede7ae17fb1450c8aa19a62d163c",
@@ -1521,48 +1367,6 @@
       "pr_title": "Delete the previous comment explaining why changed latency from 5 to 40"
     },
     {
-      "commit": "e53d7de40e5a2aa8605601707ec992e790c47201",
-      "date": "2025-09-18",
-      "commit_index": 1500,
-      "results": {
-        "throughput": {
-          "rps": 1950195.181309524,
-          "cv": 2.9615610077797596,
-          "reps": 7
-        }
-      },
-      "pr": 2625,
-      "pr_title": "Update automated benchmarking configs"
-    },
-    {
-      "commit": "383ffe4874d5062602a68d40cbe8a08359c1879a",
-      "date": "2025-10-07",
-      "commit_index": 1517,
-      "results": {
-        "throughput": {
-          "rps": 1987182.4816666667,
-          "cv": 2.382840576113342,
-          "reps": 7
-        }
-      },
-      "pr": 2635,
-      "pr_title": "Prevent exposure of importing keys on replicas during atomic slot migration"
-    },
-    {
-      "commit": "861d0794b7bdf2237d98502a5b405faf19db24dc",
-      "date": "2025-10-25",
-      "commit_index": 1552,
-      "results": {
-        "throughput": {
-          "rps": 1966738.0915476186,
-          "cv": 2.1259047636871067,
-          "reps": 7
-        }
-      },
-      "pr": 2763,
-      "pr_title": "Sentinel: Skip IS-PRIMARY-DOWN-BY-ADDR requests when primary not SDOWN"
-    },
-    {
       "commit": "04d0bba398afe056a7a269ae46a81da574020ada",
       "date": "2025-12-05",
       "commit_index": 1621,
@@ -1591,34 +1395,6 @@
       "pr_title": "Add copilot review instructions"
     },
     {
-      "commit": "951d942ab20178b89c07420f8f4c13ae7a764749",
-      "date": "2026-01-20",
-      "commit_index": 1694,
-      "results": {
-        "throughput": {
-          "rps": 1942663.4394444446,
-          "cv": 1.989127176879538,
-          "reps": 3
-        }
-      },
-      "pr": 3082,
-      "pr_title": "Fix weekly workflow to continue after failure in releases branches"
-    },
-    {
-      "commit": "1a2ed04705d589948498ec1ceb9f657f0f9f7033",
-      "date": "2026-01-21",
-      "commit_index": 1697,
-      "results": {
-        "throughput": {
-          "rps": 1964619.4866666663,
-          "cv": 1.5412001661617796,
-          "reps": 3
-        }
-      },
-      "pr": 3092,
-      "pr_title": "Fixes run-extra-tests workflow to run on the PR commit instead of unstable"
-    },
-    {
       "commit": "2e2eb418f97ee8ac0dcccd1d5d790697bd0fa43e",
       "date": "2026-01-22",
       "commit_index": 1698,
@@ -1631,48 +1407,6 @@
       },
       "pr": 3088,
       "pr_title": "Fix the memory leak in the VM_GetCommandKeysWithFlags function"
-    },
-    {
-      "commit": "231a9e731ede9055a9b57861051a596a0a5f82f7",
-      "date": "2026-01-22",
-      "commit_index": 1699,
-      "results": {
-        "throughput": {
-          "rps": 2021556.5066666668,
-          "cv": 1.5247337926752729,
-          "reps": 3
-        }
-      },
-      "pr": 2742,
-      "pr_title": "Fix XREAD returning error on empty stream with + ID"
-    },
-    {
-      "commit": "be561e2b4b824d232a97e3f07290f2333cebb928",
-      "date": "2026-01-23",
-      "commit_index": 1702,
-      "results": {
-        "throughput": {
-          "rps": 1974398.1283333334,
-          "cv": 2.981375666123412,
-          "reps": 3
-        }
-      },
-      "pr": 3097,
-      "pr_title": "CI: Make CMake test also run tls tests"
-    },
-    {
-      "commit": "e7d004be0b8221af1e6b07ef7598b901e2d45382",
-      "date": "2026-01-25",
-      "commit_index": 1705,
-      "results": {
-        "throughput": {
-          "rps": 1953753.1424999998,
-          "cv": 1.8197188834894764,
-          "reps": 3
-        }
-      },
-      "pr": 3107,
-      "pr_title": "Comment cleanup around entry.c file"
     },
     {
       "commit": "985cf836ac13e7366f938aa9a4e7a309d83733da",
@@ -1703,34 +1437,6 @@
       "pr_title": "Instrumenting used active time metrics for I/O threads"
     },
     {
-      "commit": "0422fc66cfcced854f4fe30515467fb258dd9e61",
-      "date": "2026-01-28",
-      "commit_index": 1711,
-      "results": {
-        "throughput": {
-          "rps": 1954487.2570238092,
-          "cv": 2.6852053106286213,
-          "reps": 3
-        }
-      },
-      "pr": 3103,
-      "pr_title": "Enable HW clock by default"
-    },
-    {
-      "commit": "f5d7dc8d057df8431d9d23f80b35c83b424b4d2c",
-      "date": "2026-01-29",
-      "commit_index": 1713,
-      "results": {
-        "throughput": {
-          "rps": 1966358.604285714,
-          "cv": 3.2832267186028656,
-          "reps": 3
-        }
-      },
-      "pr": 2953,
-      "pr_title": "Fix potential memory leaks when a writable replica is promoted to primary after direct writes of keys with expiration"
-    },
-    {
       "commit": "1fd6d7156fbf438f471a680fbc7e5b6b087167be",
       "date": "2026-01-28",
       "commit_index": 1714,
@@ -1745,34 +1451,6 @@
       "pr_title": "decouple lru/lfu from server.h"
     },
     {
-      "commit": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
-      "date": "2026-01-29",
-      "commit_index": 1715,
-      "results": {
-        "throughput": {
-          "rps": 1970804.7597619046,
-          "cv": 2.4841109561039474,
-          "reps": 3
-        }
-      },
-      "pr": 2867,
-      "pr_title": "Optimize skiplist query efficiency by embedding the skiplist header"
-    },
-    {
-      "commit": "8a9c3717d13e7857b19a792058f9075f045868f4",
-      "date": "2026-01-29",
-      "commit_index": 1716,
-      "results": {
-        "throughput": {
-          "rps": 1941073.1474999997,
-          "cv": 2.116765782755784,
-          "reps": 3
-        }
-      },
-      "pr": 3067,
-      "pr_title": "Don't exit the process when locale-collate fails to be set from env during startup"
-    },
-    {
       "commit": "1cc268de9fad8e9ed363e2de9e782393418bf697",
       "date": "2026-01-29",
       "commit_index": 1718,
@@ -1785,20 +1463,6 @@
       },
       "pr": 3126,
       "pr_title": "Fix mixup of reply-larger-than and request-larger-than"
-    },
-    {
-      "commit": "b8650a5a31ad80b65f42fd37652a304c8020caef",
-      "date": "2026-01-29",
-      "commit_index": 1720,
-      "results": {
-        "throughput": {
-          "rps": 1996953.7885714287,
-          "cv": 2.6684767350160166,
-          "reps": 3
-        }
-      },
-      "pr": 3123,
-      "pr_title": "Fix Lua Module Build For MacOS Compatibility"
     },
     {
       "commit": "f5b0360fae0f8a8f135631636b1a569884791a57",
@@ -1843,34 +1507,6 @@
       "pr_title": "Extend hashtableGetStatsMsg to always show empty table and rehash index"
     },
     {
-      "commit": "3ea5cb39898bce6f8073a2dd2efbc4d43c9dbcaf",
-      "date": "2026-02-02",
-      "commit_index": 1727,
-      "results": {
-        "throughput": {
-          "rps": 1986118.392142857,
-          "cv": 1.6827814841874036,
-          "reps": 3
-        }
-      },
-      "pr": 3145,
-      "pr_title": "CI: Stop using symlinks for tests with CMake"
-    },
-    {
-      "commit": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
-      "date": "2026-02-03",
-      "commit_index": 1728,
-      "results": {
-        "throughput": {
-          "rps": 1938203.4502777774,
-          "cv": 1.512305947897106,
-          "reps": 3
-        }
-      },
-      "pr": 3141,
-      "pr_title": "Optimize rehash completion check for empty hash table"
-    },
-    {
       "commit": "d64f2072efd80e760e53351e8fab1e1ce1320975",
       "date": "2026-02-03",
       "commit_index": 1729,
@@ -1897,62 +1533,6 @@
       },
       "pr": 3155,
       "pr_title": "Fix arr bound err in test-sanitizer-undefined (gcc)"
-    },
-    {
-      "commit": "994d87a0f255f5a261b78c3f792eb7ac81a1ecbe",
-      "date": "2026-02-26",
-      "commit_index": 1786,
-      "results": {
-        "throughput": {
-          "rps": 1952000.864047619,
-          "cv": 1.846838934104598,
-          "reps": 7
-        }
-      },
-      "pr": 3260,
-      "pr_title": "Deflake test 'LATENCY GRAPH can output the event graph'"
-    },
-    {
-      "commit": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
-      "date": "2026-03-13",
-      "commit_index": 1837,
-      "results": {
-        "throughput": {
-          "rps": 1986815.5314285713,
-          "cv": 2.0277125561717155,
-          "reps": 7
-        }
-      },
-      "pr": 3340,
-      "pr_title": "Weekly tests branches are not honored on scheduled workflow"
-    },
-    {
-      "commit": "b83209de0ab5807b695c780ec6d44e1f49d9140e",
-      "date": "2026-03-26",
-      "commit_index": 1854,
-      "results": {
-        "throughput": {
-          "rps": 1970834.6850000003,
-          "cv": 1.8059799494754403,
-          "reps": 3
-        }
-      },
-      "pr": 3404,
-      "pr_title": "Fix race condition in diskless swapdb RedisModuleEvent_ReplAsyncLoad tests"
-    },
-    {
-      "commit": "604dcdb00df81dacf2520ac85fe1c53897fe2baf",
-      "date": "2026-05-22",
-      "commit_index": 1973,
-      "results": {
-        "throughput": {
-          "rps": 1989455.5119444446,
-          "cv": 1.5689405147395297,
-          "reps": 3
-        }
-      },
-      "pr": 3796,
-      "pr_title": "hashtable: disallow insert during safe iteration (fixes #2302)"
     }
   ],
   "landmarks": [
@@ -2041,43 +1621,11 @@
       "pr_title": "Fix incorrect usage of process_is_paused in tests"
     },
     {
-      "commit": "816accea762271458e89016e3ed6ea27c9c1daff",
-      "delta": 0.0249,
-      "workload": "throughput",
-      "type": "improvement",
-      "pr": 790,
-      "pr_title": "Generate correct slot information in cluster shards command on primary failure"
-    },
-    {
       "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
       "delta": 0.1104,
       "workload": "throughput",
       "type": "improvement",
       "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
-    },
-    {
-      "commit": "d7993b78d82d9c9d2f9298159acd8f5a2fc997d4",
-      "delta": -0.029,
-      "workload": "throughput",
-      "type": "regression",
-      "pr": 1949,
-      "pr_title": "Introduce atomic slot migration"
-    },
-    {
-      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
-      "delta": 0.5911,
-      "workload": "throughput",
-      "type": "improvement",
-      "pr": 2092,
-      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
-    },
-    {
-      "commit": "cf90acbc6137ede7ae17fb1450c8aa19a62d163c",
-      "delta": 0.0331,
-      "workload": "throughput",
-      "type": "improvement",
-      "pr": 2554,
-      "pr_title": "Correct path to gen-test-certs.sh in README.md"
     },
     {
       "commit": "88cd2086aef25183ae0c5fb8bc154d8206dd07f1",
@@ -2088,44 +1636,12 @@
       "pr_title": "Split SLOT_EXPORT_AUTHENTICATING into SEND and READ to avoid synchronous reading of auth response"
     },
     {
-      "commit": "231a9e731ede9055a9b57861051a596a0a5f82f7",
-      "delta": 0.049,
-      "workload": "throughput",
-      "type": "improvement",
-      "pr": 2742,
-      "pr_title": "Fix XREAD returning error on empty stream with + ID"
-    },
-    {
-      "commit": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
-      "delta": -0.0257,
-      "workload": "throughput",
-      "type": "regression",
-      "pr": 2867,
-      "pr_title": "Optimize skiplist query efficiency by embedding the skiplist header"
-    },
-    {
       "commit": "cfbe0937fb3b275e735a061c811f07482cdf7904",
       "delta": 0.0293,
       "workload": "throughput",
       "type": "improvement",
       "pr": 3142,
       "pr_title": "Extend hashtableGetStatsMsg to always show empty table and rehash index"
-    },
-    {
-      "commit": "3ea5cb39898bce6f8073a2dd2efbc4d43c9dbcaf",
-      "delta": -0.0244,
-      "workload": "throughput",
-      "type": "regression",
-      "pr": 3145,
-      "pr_title": "CI: Stop using symlinks for tests with CMake"
-    },
-    {
-      "commit": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
-      "delta": -0.0241,
-      "workload": "throughput",
-      "type": "regression",
-      "pr": 3141,
-      "pr_title": "Optimize rehash completion check for empty hash table"
     }
   ]
 }
