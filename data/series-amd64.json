@@ -4,7 +4,7 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "GET_16B_t1_p1",
-    "generated": "2026-05-23T03:38:06.424673+00:00"
+    "generated": "2026-05-23T04:02:29.312303+00:00"
   },
   "workloads": [
     "GET_16B_t1_p1"
@@ -180,6 +180,19 @@
       "pr_title": "Fix Module Update Args test when other modules are loaded"
     },
     {
+      "commit": "924729eb1695a8a5913fe32531a8d520560fe70b",
+      "date": "2024-12-09",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1192554.1655555556,
+          "cv": 0.17636015399729024,
+          "reps": 3
+        }
+      },
+      "pr": 1339,
+      "pr_title": "Fix the election was reset wrongly before failover epoch was obtained"
+    },
+    {
       "commit": "9cfe1b3d81466ed324c28e55ba60be66dea0b7c9",
       "date": "2024-12-10",
       "results": {
@@ -228,6 +241,19 @@
       }
     },
     {
+      "commit": "1acf7f71c0324747de6b0ed9118f065dde0a5a92",
+      "date": "2024-12-11",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1360035.7008333332,
+          "cv": 0.46817380377316914,
+          "reps": 3
+        }
+      },
+      "pr": 1421,
+      "pr_title": "Fix memory leak in the new hashtable unittest"
+    },
+    {
       "commit": "0c8ad5cd34129bacf5a3dda30b37b156e7cdfb98",
       "date": "2024-12-11",
       "results": {
@@ -254,6 +280,58 @@
       "pr_title": "Discover and fix new typos"
     },
     {
+      "commit": "bb325bde355040a91b6d1237fe6965dd4650b2ec",
+      "date": "2024-12-25",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1330540.388333333,
+          "cv": 0.11134100892223155,
+          "reps": 3
+        }
+      },
+      "pr": 1486,
+      "pr_title": "Fix restore replica output bytes stat update"
+    },
+    {
+      "commit": "0f273bb648bf06557f8d06ee8cb346668b741ba0",
+      "date": "2025-01-01",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1326859.3461111109,
+          "cv": 0.7162499373056128,
+          "reps": 3
+        }
+      },
+      "pr": 577,
+      "pr_title": "Align rejected unblocked commands to update the correct error statistic"
+    },
+    {
+      "commit": "ae70c5459b13d426e8e48d85e7f48120d69eeebb",
+      "date": "2025-01-02",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1344602.5336111109,
+          "cv": 0.7514855833643108,
+          "reps": 3
+        }
+      },
+      "pr": 1422,
+      "pr_title": "replication: fix io-threads possible race by moving waitForClientIO"
+    },
+    {
+      "commit": "ede4adde7ac10d6a02bdf73c33ff762d59b7aca7",
+      "date": "2025-01-02",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1360064.7050000003,
+          "cv": 0.8662226878012543,
+          "reps": 3
+        }
+      },
+      "pr": 1496,
+      "pr_title": "Remove releasetools folder"
+    },
+    {
       "commit": "7977c55ac9bea7d1443c32ef5ec020767c086d3a",
       "date": "2025-01-06",
       "results": {
@@ -278,6 +356,19 @@
       },
       "pr": 1561,
       "pr_title": "Update comments and log message in cluster_legacy.c"
+    },
+    {
+      "commit": "dd92d079dcb15a984493def7f53746669e7cd693",
+      "date": "2025-01-20",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1347796.3624999998,
+          "cv": 1.464356615541418,
+          "reps": 3
+        }
+      },
+      "pr": 1590,
+      "pr_title": "Fix Protocol desync regression test"
     },
     {
       "commit": "99ed308817286fd980a987f877ffa4df197f03a4",
@@ -343,6 +434,19 @@
       },
       "pr": 1815,
       "pr_title": "Fix timing issue in the module propagate test"
+    },
+    {
+      "commit": "f1934cba4110818692e692dd9606a68ae94dc248",
+      "date": "2025-03-27",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1284691.7363888887,
+          "cv": 1.0060597684152641,
+          "reps": 3
+        }
+      },
+      "pr": 1885,
+      "pr_title": "Fix crash in VM_GetCurrentUserName when no valid user"
     },
     {
       "commit": "5f5ad43ebbc1075a51143de2429a562f6b82b94a",
@@ -1289,6 +1393,12 @@
     {
       "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
       "delta": 0.1104,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "1acf7f71c0324747de6b0ed9118f065dde0a5a92",
+      "delta": 0.0197,
       "workload": "GET_16B_t1_p1",
       "type": "improvement"
     },
