@@ -1,1 +1,16 @@
-{"host": "intel", "runner": {"state": "unreachable"}, "timestamp": "2026-05-23T21:25:17Z"}
+{
+  "timestamp": "2026-05-23T21:26:13.552657Z",
+  "host": "ip-172-31-75-87",
+  "runner": {
+    "pid": null,
+    "state": "stopped",
+    "uptime_hours": null
+  },
+  "current_task": null,
+  "queue": {
+    "depth": 0,
+    "tasks": []
+  },
+  "recent_results": [],
+  "eta_minutes": 0.0
+}
