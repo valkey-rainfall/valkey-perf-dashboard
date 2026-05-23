@@ -4,15 +4,45 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "GET_16B_t1_p1",
-    "generated": "2026-05-23T04:04:30.656525+00:00"
+    "generated": "2026-05-23T04:38:04.805387+00:00",
+    "total_commits": 1974
   },
   "workloads": [
     "GET_16B_t1_p1"
   ],
   "points": [
     {
+      "commit": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
+      "date": "2024-01-09",
+      "commit_index": 163,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1277411.1322619047,
+          "cv": 0.8092017678808098,
+          "reps": 3
+        }
+      },
+      "pr": 12924,
+      "pr_title": "Fix possible corruption in sdsResize (CVE-2023-41056)"
+    },
+    {
+      "commit": "1221b3951ae4faf49923dfbb623a7aca6ccf9b26",
+      "date": "2024-04-15",
+      "commit_index": 404,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 744061.7388888889,
+          "cv": 0.24885521907251276,
+          "reps": 3
+        }
+      },
+      "pr": 318,
+      "pr_title": "Fix typo in comment"
+    },
+    {
       "commit": "4b8de6b1be24b2c64f6e3e188b6dd6d9bca575b1",
       "date": "2024-07-31",
+      "commit_index": 645,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1117817.1366666665,
@@ -26,6 +56,7 @@
     {
       "commit": "5d458c62925f4c5d6eba1788447a1bf6d9d6380f",
       "date": "2024-08-31",
+      "commit_index": 715,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1125225.8419444442,
@@ -39,6 +70,7 @@
     {
       "commit": "f504cf233bd08d56b1aa4af6c1ef3a2b4aa0ac60",
       "date": "2024-09-10",
+      "commit_index": 733,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1138848.2266666668,
@@ -52,6 +84,7 @@
     {
       "commit": "fa348e2e59700244e60df2edeb1219f2989e0284",
       "date": "2024-09-11",
+      "commit_index": 742,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1145435.193888889,
@@ -65,6 +98,7 @@
     {
       "commit": "dcc7678fc4d4b7b26e79b76489d37a93064420c3",
       "date": "2024-09-14",
+      "commit_index": 750,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1156170.0894444447,
@@ -78,6 +112,7 @@
     {
       "commit": "150c197bdd5f5474671cc7705b62be799c6f6e4c",
       "date": "2024-10-02",
+      "commit_index": 785,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1156316.250277778,
@@ -91,6 +126,7 @@
     {
       "commit": "1c18c8084451153c468e3224f31da43ff6fbd615",
       "date": "2024-11-07",
+      "commit_index": 855,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1167847.2358333333,
@@ -104,6 +140,7 @@
     {
       "commit": "43b50261620fe813015a8f88717b46876c7e3f83",
       "date": "2024-11-22",
+      "commit_index": 890,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1170072.0466666666,
@@ -117,6 +154,7 @@
     {
       "commit": "377ed22c971878b29b6d2c2c582198f2629f82ed",
       "date": "2024-11-21",
+      "commit_index": 893,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1176633.7730555553,
@@ -130,6 +168,7 @@
     {
       "commit": "b9d224097a46dbe62ec0857cb91e7c67505a200e",
       "date": "2024-11-23",
+      "commit_index": 895,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1189187.076944444,
@@ -143,6 +182,7 @@
     {
       "commit": "c4920bca4a6681b2ba652e4dc52b72fe47db516a",
       "date": "2024-11-25",
+      "commit_index": 899,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1193490.8783333336,
@@ -156,6 +196,7 @@
     {
       "commit": "a939cb88ee0c0512c003106be483b7c6968b3e7f",
       "date": "2024-11-28",
+      "commit_index": 907,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1192567.1630555554,
@@ -169,6 +210,7 @@
     {
       "commit": "a2fe6af457e353425d39c858b8cf68f1b4d6a9b7",
       "date": "2024-12-07",
+      "commit_index": 924,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1198211.4700000002,
@@ -182,6 +224,7 @@
     {
       "commit": "924729eb1695a8a5913fe32531a8d520560fe70b",
       "date": "2024-12-09",
+      "commit_index": 929,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1192554.1655555556,
@@ -195,6 +238,7 @@
     {
       "commit": "9cfe1b3d81466ed324c28e55ba60be66dea0b7c9",
       "date": "2024-12-10",
+      "commit_index": 933,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1181828.570277778,
@@ -208,6 +252,7 @@
     {
       "commit": "c8ee5c2c46c52bcb2b48e190a8f5131fdbcf355e",
       "date": "2024-11-18",
+      "commit_index": 938,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1195603.4597222225,
@@ -219,6 +264,7 @@
     {
       "commit": "4efff42f041733d786a73f1cdfa65f6e04c3c4b8",
       "date": "2024-11-18",
+      "commit_index": 939,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1201151.7650000001,
@@ -232,6 +278,7 @@
     {
       "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
       "date": "2024-09-11",
+      "commit_index": 940,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1333729.9833333334,
@@ -243,6 +290,7 @@
     {
       "commit": "1acf7f71c0324747de6b0ed9118f065dde0a5a92",
       "date": "2024-12-11",
+      "commit_index": 941,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1360035.7008333332,
@@ -256,6 +304,7 @@
     {
       "commit": "0c8ad5cd34129bacf5a3dda30b37b156e7cdfb98",
       "date": "2024-12-11",
+      "commit_index": 942,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1351938.0319444442,
@@ -267,8 +316,23 @@
       "pr_title": "defrag: allow defrag to start during AOF loading"
     },
     {
+      "commit": "3cd176dc3908e89b3178d9d031f58339c242325e",
+      "date": "2024-12-14",
+      "commit_index": 951,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1341455.700833333,
+          "cv": 0.36637559811861603,
+          "reps": 3
+        }
+      },
+      "pr": 1442,
+      "pr_title": "Avoid importing memory aligned malloc"
+    },
+    {
       "commit": "b66698b8870771eadc46fae8d9ef7027aec50dfb",
       "date": "2024-12-18",
+      "commit_index": 959,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1334875.6919444443,
@@ -282,6 +346,7 @@
     {
       "commit": "bb325bde355040a91b6d1237fe6965dd4650b2ec",
       "date": "2024-12-25",
+      "commit_index": 977,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1330540.388333333,
@@ -295,6 +360,7 @@
     {
       "commit": "0f273bb648bf06557f8d06ee8cb346668b741ba0",
       "date": "2025-01-01",
+      "commit_index": 982,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1326859.3461111109,
@@ -306,8 +372,23 @@
       "pr_title": "Align rejected unblocked commands to update the correct error statistic"
     },
     {
+      "commit": "8aff2357212e2bec0d729f835bd278890aff0e4b",
+      "date": "2025-01-02",
+      "commit_index": 983,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1333791.8880555555,
+          "cv": 0.8783020048714155,
+          "reps": 3
+        }
+      },
+      "pr": 1500,
+      "pr_title": "Fix unreliable dual channel Valgrind tests"
+    },
+    {
       "commit": "ae70c5459b13d426e8e48d85e7f48120d69eeebb",
       "date": "2025-01-02",
+      "commit_index": 984,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1344602.5336111109,
@@ -319,8 +400,23 @@
       "pr_title": "replication: fix io-threads possible race by moving waitForClientIO"
     },
     {
+      "commit": "35abb68b798b25333e94186583996efed9667958",
+      "date": "2025-01-02",
+      "commit_index": 985,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1350141.0302777777,
+          "cv": 1.0139393294419725,
+          "reps": 3
+        }
+      },
+      "pr": 1449,
+      "pr_title": "Offload reading the replication stream to IO threads"
+    },
+    {
       "commit": "ede4adde7ac10d6a02bdf73c33ff762d59b7aca7",
       "date": "2025-01-02",
+      "commit_index": 986,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1360064.7050000003,
@@ -334,6 +430,7 @@
     {
       "commit": "7977c55ac9bea7d1443c32ef5ec020767c086d3a",
       "date": "2025-01-06",
+      "commit_index": 994,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1352856.6341666668,
@@ -347,6 +444,7 @@
     {
       "commit": "2d0b8e360847146fa43a8463773dde8125187fa7",
       "date": "2025-01-16",
+      "commit_index": 1029,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1363508.4330555554,
@@ -360,6 +458,7 @@
     {
       "commit": "dd92d079dcb15a984493def7f53746669e7cd693",
       "date": "2025-01-20",
+      "commit_index": 1032,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1347796.3624999998,
@@ -373,6 +472,7 @@
     {
       "commit": "99ed308817286fd980a987f877ffa4df197f03a4",
       "date": "2025-01-23",
+      "commit_index": 1034,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1344910.147839761,
@@ -384,8 +484,37 @@
       "pr_title": "Add cross-version test framework (and a simple test)"
     },
     {
+      "commit": "f2510783f9ed70172bd1a2ab9faa40afc99d54d5",
+      "date": "2025-01-23",
+      "commit_index": 1035,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1349738.8783333332,
+          "cv": 0.62088811413614,
+          "reps": 3
+        }
+      },
+      "pr": 1568,
+      "pr_title": "Accelerate hash table iterator with value prefetching"
+    },
+    {
+      "commit": "3f21705a6c51d7f412f80dd7aabd83dac45b2493",
+      "date": "2025-01-24",
+      "commit_index": 1036,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1326414.5930555554,
+          "cv": 1.0046904203753597,
+          "reps": 3
+        }
+      },
+      "pr": 1294,
+      "pr_title": "Feature COMMANDLOG to record slow execution and large request/reply"
+    },
+    {
       "commit": "66577573f207313b8998f4e0e81e32740adf5d6b",
       "date": "2025-01-27",
+      "commit_index": 1038,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1328289.270833333,
@@ -399,6 +528,7 @@
     {
       "commit": "4b8f3ed9acf3103349b6368407fc48bef55b3327",
       "date": "2025-01-30",
+      "commit_index": 1047,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1313262.980110193,
@@ -412,6 +542,7 @@
     {
       "commit": "da3f1c6144cf3e748545adc13fe607bcdf96609f",
       "date": "2025-02-06",
+      "commit_index": 1064,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1316048.406111111,
@@ -423,8 +554,23 @@
       "pr_title": "Add paused_reason to INFO CLIENTS"
     },
     {
+      "commit": "f85c93301ca63f070164b307c6a7371a9ab5ac7b",
+      "date": "2025-02-17",
+      "commit_index": 1099,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1302096.9205555553,
+          "cv": 0.7269179651674216,
+          "reps": 3
+        }
+      },
+      "pr": 1745,
+      "pr_title": "Comment out assert in kvstore for overhead lut"
+    },
+    {
       "commit": "3efe8419ec98aeb41abf5897501e5fb24100e126",
       "date": "2025-03-05",
+      "commit_index": 1134,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1299547.8161111113,
@@ -438,6 +584,7 @@
     {
       "commit": "f1934cba4110818692e692dd9606a68ae94dc248",
       "date": "2025-03-27",
+      "commit_index": 1152,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1284691.7363888887,
@@ -451,6 +598,7 @@
     {
       "commit": "5f5ad43ebbc1075a51143de2429a562f6b82b94a",
       "date": "2025-04-08",
+      "commit_index": 1169,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1278796.0052777776,
@@ -464,6 +612,7 @@
     {
       "commit": "25ef0b3aff50864eba89f4ca6d8b56f8ff07690c",
       "date": "2025-04-29",
+      "commit_index": 1203,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1280687.6183333334,
@@ -477,6 +626,7 @@
     {
       "commit": "4aaaf88337e14365ff56dcc75131af20d150ae93",
       "date": "2025-05-28",
+      "commit_index": 1273,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1281717.6338888889,
@@ -488,8 +638,37 @@
       "pr_title": "Allow dynamic modification of io-threads num"
     },
     {
+      "commit": "831220a30b5973fcd4b999e3f541ba53e057850e",
+      "date": "2025-05-31",
+      "commit_index": 1278,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1284004.5402777777,
+          "cv": 1.2581821429051927,
+          "reps": 3
+        }
+      },
+      "pr": 2151,
+      "pr_title": "Skip empty db when doing FLUSHALL to reduce some NOP"
+    },
+    {
+      "commit": "992c5b98780fb5c74d80856b368d5007df26e61a",
+      "date": "2025-06-03",
+      "commit_index": 1280,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1265500.787222222,
+          "cv": 1.5628337208268772,
+          "reps": 3
+        }
+      },
+      "pr": 1384,
+      "pr_title": "Add CLUSTER FLUSHSLOT command"
+    },
+    {
       "commit": "5699c8c05a207dd2590aa37843a60b2131f3a2da",
       "date": "2025-06-03",
+      "commit_index": 1282,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1267062.5694444445,
@@ -503,6 +682,7 @@
     {
       "commit": "838ba44cd65b15822f4136a4aed33cc13caa4cae",
       "date": "2025-06-08",
+      "commit_index": 1287,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1258153.2258333333,
@@ -516,6 +696,7 @@
     {
       "commit": "5cc2b2575300f09c004bf73f0a5f69ed1775c00c",
       "date": "2025-06-10",
+      "commit_index": 1291,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1245666.0397222224,
@@ -529,6 +710,7 @@
     {
       "commit": "ceb09b0a9df8a72e544d4837cf6c27221c6f15c8",
       "date": "2025-06-18",
+      "commit_index": 1308,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1252489.3263888888,
@@ -542,6 +724,7 @@
     {
       "commit": "61b63ab989973412c9173a42c91651b079a18f72",
       "date": "2025-07-03",
+      "commit_index": 1343,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1252042.9583333333,
@@ -555,6 +738,7 @@
     {
       "commit": "8df8c84ffe45194d1763d0262d565c3113c8e40c",
       "date": "2025-07-30",
+      "commit_index": 1378,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1246502.028888889,
@@ -568,6 +752,7 @@
     {
       "commit": "b7fe0b6435efbe584dd5d3063aca47554edd6e4b",
       "date": "2025-08-05",
+      "commit_index": 1396,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1245210.6936111113,
@@ -581,6 +766,7 @@
     {
       "commit": "33a43f2a8a66d751b88bce83f5f6bc9921b9dcb7",
       "date": "2025-08-05",
+      "commit_index": 1401,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1254896.03,
@@ -594,6 +780,7 @@
     {
       "commit": "ba7334c7c61abd854109f1d19f807098e5f22cb1",
       "date": "2025-08-06",
+      "commit_index": 1403,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1242314.3761111111,
@@ -607,6 +794,7 @@
     {
       "commit": "fd8270a0aab6c15058997a0e8436c9682dac2036",
       "date": "2025-08-06",
+      "commit_index": 1404,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1258824.8291666666,
@@ -620,6 +808,7 @@
     {
       "commit": "094c80b9cedac7a63cb10ed7ec0ebdf439132b8c",
       "date": "2025-08-07",
+      "commit_index": 1405,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1281739.7086111112,
@@ -633,6 +822,7 @@
     {
       "commit": "de7bb614f1843cebd8fdaf49fdaa29de895519e7",
       "date": "2025-08-08",
+      "commit_index": 1413,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1272182.393611111,
@@ -646,6 +836,7 @@
     {
       "commit": "ecca21331117d38c9eadbbccf5c80c34cb11ec53",
       "date": "2025-08-11",
+      "commit_index": 1418,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1265824.3208333338,
@@ -659,6 +850,7 @@
     {
       "commit": "a89e529932b8106010b1b8faedc974ff3fbc89ad",
       "date": "2025-08-11",
+      "commit_index": 1420,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1267032.7330555555,
@@ -672,6 +864,7 @@
     {
       "commit": "725c3608f0676aee50a83e1e33f98ed6538220aa",
       "date": "2025-08-11",
+      "commit_index": 1421,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1261290.4244444445,
@@ -685,6 +878,7 @@
     {
       "commit": "d7993b78d82d9c9d2f9298159acd8f5a2fc997d4",
       "date": "2025-08-11",
+      "commit_index": 1422,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1224732.5088888889,
@@ -698,6 +892,7 @@
     {
       "commit": "c93b2971e6780a8f4c427752b9be1443a0f52d6a",
       "date": "2025-08-13",
+      "commit_index": 1427,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1216703.6369444446,
@@ -711,6 +906,7 @@
     {
       "commit": "287fbcce335274a1a1f3d1908cbbe8e8200ba47e",
       "date": "2025-08-14",
+      "commit_index": 1431,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1206853.098888889,
@@ -724,6 +920,7 @@
     {
       "commit": "aefed3d363d1c7d7cb391d3f605484c78c9a88f2",
       "date": "2025-08-15",
+      "commit_index": 1434,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1219742.2783333336,
@@ -737,6 +934,7 @@
     {
       "commit": "e7bb2354da5c7c0b4f2135173ec00097178eec93",
       "date": "2025-08-16",
+      "commit_index": 1436,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1225821.715277778,
@@ -750,6 +948,7 @@
     {
       "commit": "4a120217075c5ca4bacbeb13db6fdfe9df9e321e",
       "date": "2025-08-18",
+      "commit_index": 1440,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1234272.745833333,
@@ -763,6 +962,7 @@
     {
       "commit": "c8548f65d23725bcd70b92f4e06844274a940f40",
       "date": "2025-08-19",
+      "commit_index": 1448,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1240462.3058333334,
@@ -776,6 +976,7 @@
     {
       "commit": "2db4eeb1fcd8316a792476c3023e705be24fdd70",
       "date": "2025-08-21",
+      "commit_index": 1457,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1244287.4263888886,
@@ -787,6 +988,7 @@
     {
       "commit": "a68040789e7566ab2aabad28459fa07dad43db60",
       "date": "2025-08-21",
+      "commit_index": 1461,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1236607.9605555555,
@@ -800,6 +1002,7 @@
     {
       "commit": "ac515159a1e79ada6e43ed49c9ed9cb11178c50d",
       "date": "2025-08-22",
+      "commit_index": 1462,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1255056.9544444445,
@@ -813,6 +1016,7 @@
     {
       "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
       "date": "2025-08-22",
+      "commit_index": 1463,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1937529.5450000002,
@@ -826,6 +1030,7 @@
     {
       "commit": "9aeab8ccbac0ca4923676c749c98d0de4718c872",
       "date": "2025-08-24",
+      "commit_index": 1465,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1954594.8272222222,
@@ -839,6 +1044,7 @@
     {
       "commit": "06cefc181abbe458d59a0c4865670810a9cb65d3",
       "date": "2025-08-27",
+      "commit_index": 1470,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1976059.2094444446,
@@ -852,6 +1058,7 @@
     {
       "commit": "39fade42d11a22d4a13beb98d6e36adaa12ecba3",
       "date": "2025-08-29",
+      "commit_index": 1472,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1979243.174166667,
@@ -865,6 +1072,7 @@
     {
       "commit": "cf90acbc6137ede7ae17fb1450c8aa19a62d163c",
       "date": "2025-08-29",
+      "commit_index": 1473,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 2018549.6224999998,
@@ -878,6 +1086,7 @@
     {
       "commit": "88cd2086aef25183ae0c5fb8bc154d8206dd07f1",
       "date": "2025-08-29",
+      "commit_index": 1474,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1925632.6466666667,
@@ -891,6 +1100,7 @@
     {
       "commit": "5ccedafe3ff3895f73ef69084e9cdf042750d0f8",
       "date": "2025-09-02",
+      "commit_index": 1482,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1924049.370555556,
@@ -904,6 +1114,7 @@
     {
       "commit": "04d0bba398afe056a7a269ae46a81da574020ada",
       "date": "2025-12-05",
+      "commit_index": 1621,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1941033.7941666672,
@@ -917,6 +1128,7 @@
     {
       "commit": "62c303fd549cf914f738998ef874132c7c7247ab",
       "date": "2026-01-20",
+      "commit_index": 1691,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1922659.688888889,
@@ -930,6 +1142,7 @@
     {
       "commit": "951d942ab20178b89c07420f8f4c13ae7a764749",
       "date": "2026-01-20",
+      "commit_index": 1694,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1942663.4394444446,
@@ -943,6 +1156,7 @@
     {
       "commit": "4b5a48a36e22a885dad2140cf72fda7b64c5eb03",
       "date": "2026-01-21",
+      "commit_index": 1695,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1995238.2786111112,
@@ -956,6 +1170,7 @@
     {
       "commit": "c1b4129eabca5f991ae227dd78241570c87dd245",
       "date": "2026-01-21",
+      "commit_index": 1696,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 2008284.0494444442,
@@ -969,6 +1184,7 @@
     {
       "commit": "1a2ed04705d589948498ec1ceb9f657f0f9f7033",
       "date": "2026-01-21",
+      "commit_index": 1697,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1964619.4866666663,
@@ -982,6 +1198,7 @@
     {
       "commit": "2e2eb418f97ee8ac0dcccd1d5d790697bd0fa43e",
       "date": "2026-01-22",
+      "commit_index": 1698,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1927190.481111111,
@@ -995,6 +1212,7 @@
     {
       "commit": "231a9e731ede9055a9b57861051a596a0a5f82f7",
       "date": "2026-01-22",
+      "commit_index": 1699,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 2021556.5066666668,
@@ -1008,6 +1226,7 @@
     {
       "commit": "be0a572c8b949538a1947925edf3074b53fbe7c1",
       "date": "2026-01-23",
+      "commit_index": 1700,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1973624.245277778,
@@ -1021,6 +1240,7 @@
     {
       "commit": "e7d004be0b8221af1e6b07ef7598b901e2d45382",
       "date": "2026-01-25",
+      "commit_index": 1705,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1953753.1424999998,
@@ -1034,6 +1254,7 @@
     {
       "commit": "985cf836ac13e7366f938aa9a4e7a309d83733da",
       "date": "2026-01-26",
+      "commit_index": 1707,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1931002.4077777779,
@@ -1047,6 +1268,7 @@
     {
       "commit": "4ad7628d05c87ae69996939fb5cbfa2fd899c478",
       "date": "2026-01-26",
+      "commit_index": 1708,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1919418.0597222222,
@@ -1060,6 +1282,7 @@
     {
       "commit": "928e9126172dfdfdbf4ce6ebdc65aae854c6e79e",
       "date": "2026-01-27",
+      "commit_index": 1709,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 2004018.0166666666,
@@ -1073,6 +1296,7 @@
     {
       "commit": "1fd6d7156fbf438f471a680fbc7e5b6b087167be",
       "date": "2026-01-28",
+      "commit_index": 1714,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 2022738.1236111112,
@@ -1086,6 +1310,7 @@
     {
       "commit": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
       "date": "2026-01-29",
+      "commit_index": 1715,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1947753.160555555,
@@ -1099,6 +1324,7 @@
     {
       "commit": "8a9c3717d13e7857b19a792058f9075f045868f4",
       "date": "2026-01-29",
+      "commit_index": 1716,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1962298.607222222,
@@ -1112,6 +1338,7 @@
     {
       "commit": "1cc268de9fad8e9ed363e2de9e782393418bf697",
       "date": "2026-01-29",
+      "commit_index": 1718,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1949977.0108333332,
@@ -1125,6 +1352,7 @@
     {
       "commit": "fd1438063927d0d3d2d8c9018011d8f7bcda47c3",
       "date": "2026-01-29",
+      "commit_index": 1719,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 2001690.545277778,
@@ -1138,6 +1366,7 @@
     {
       "commit": "b8650a5a31ad80b65f42fd37652a304c8020caef",
       "date": "2026-01-29",
+      "commit_index": 1720,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1979786.3122222223,
@@ -1151,6 +1380,7 @@
     {
       "commit": "f5b0360fae0f8a8f135631636b1a569884791a57",
       "date": "2026-01-30",
+      "commit_index": 1722,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 2000061.1883333332,
@@ -1164,6 +1394,7 @@
     {
       "commit": "9e0303bc53c61b9d9e48fe5f14a640287888fe54",
       "date": "2026-01-30",
+      "commit_index": 1724,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 2003831.6727777778,
@@ -1177,6 +1408,7 @@
     {
       "commit": "eabfe235d2b522f0aded9a6139f16c4f5deeed93",
       "date": "2026-02-01",
+      "commit_index": 1725,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1977903.5775000006,
@@ -1190,6 +1422,7 @@
     {
       "commit": "cfbe0937fb3b275e735a061c811f07482cdf7904",
       "date": "2026-02-02",
+      "commit_index": 1726,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 2035806.1205555557,
@@ -1203,6 +1436,7 @@
     {
       "commit": "3ea5cb39898bce6f8073a2dd2efbc4d43c9dbcaf",
       "date": "2026-02-02",
+      "commit_index": 1727,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1967083.0194444444,
@@ -1216,6 +1450,7 @@
     {
       "commit": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
       "date": "2026-02-03",
+      "commit_index": 1728,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1938203.4502777774,
@@ -1229,6 +1464,7 @@
     {
       "commit": "d64f2072efd80e760e53351e8fab1e1ce1320975",
       "date": "2026-02-03",
+      "commit_index": 1729,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1932865.924722222,
@@ -1242,6 +1478,7 @@
     {
       "commit": "8ed270f443701b0a737d37c3ecb026d7559ecaaa",
       "date": "2026-02-04",
+      "commit_index": 1730,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1990084.2375,
@@ -1255,6 +1492,7 @@
     {
       "commit": "e4804d50ff266f832949e6ab5b118c5a1a96368e",
       "date": "2026-02-03",
+      "commit_index": 1731,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1983146.6041666665,
@@ -1268,6 +1506,7 @@
     {
       "commit": "5d7d542499ca481f3b9691334e123b36feff397c",
       "date": "2026-02-04",
+      "commit_index": 1732,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1951622.3874999995,
@@ -1281,6 +1520,7 @@
     {
       "commit": "9f374e15848d7b070cdd58a071a741c0a59a6c75",
       "date": "2026-02-04",
+      "commit_index": 1733,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1942621.5238888888,
@@ -1294,6 +1534,7 @@
     {
       "commit": "666472c7628158050810a85fec1da7bcf45c8ae0",
       "date": "2026-02-05",
+      "commit_index": 1735,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1938141.9261111112,
@@ -1307,6 +1548,7 @@
     {
       "commit": "dbdc3d9c6bce50a4d50396fd672bf43160762db5",
       "date": "2026-02-08",
+      "commit_index": 1739,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1963835.5616666665,
@@ -1320,6 +1562,7 @@
     {
       "commit": "cb3195e0b8b78afdc8e7e7abd338bf9f1ade1405",
       "date": "2026-02-09",
+      "commit_index": 1743,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1989959.2574999998,
@@ -1333,6 +1576,7 @@
     {
       "commit": "fde31b08f7b00ed0bc1bb153e7a315ff435270f2",
       "date": "2026-02-15",
+      "commit_index": 1760,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1978712.3166666667,
@@ -1346,6 +1590,7 @@
     {
       "commit": "604dcdb00df81dacf2520ac85fe1c53897fe2baf",
       "date": "2026-05-22",
+      "commit_index": 1973,
       "results": {
         "GET_16B_t1_p1": {
           "rps": 1989455.5119444446,
@@ -1397,34 +1642,10 @@
       "type": "improvement"
     },
     {
-      "commit": "1acf7f71c0324747de6b0ed9118f065dde0a5a92",
-      "delta": 0.0197,
-      "workload": "GET_16B_t1_p1",
-      "type": "improvement"
-    },
-    {
-      "commit": "fd8270a0aab6c15058997a0e8436c9682dac2036",
-      "delta": 0.0133,
-      "workload": "GET_16B_t1_p1",
-      "type": "improvement"
-    },
-    {
-      "commit": "094c80b9cedac7a63cb10ed7ec0ebdf439132b8c",
-      "delta": 0.0182,
-      "workload": "GET_16B_t1_p1",
-      "type": "improvement"
-    },
-    {
       "commit": "d7993b78d82d9c9d2f9298159acd8f5a2fc997d4",
       "delta": -0.029,
       "workload": "GET_16B_t1_p1",
       "type": "regression"
-    },
-    {
-      "commit": "ac515159a1e79ada6e43ed49c9ed9cb11178c50d",
-      "delta": 0.0149,
-      "workload": "GET_16B_t1_p1",
-      "type": "improvement"
     },
     {
       "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
@@ -1443,12 +1664,6 @@
       "delta": 0.0271,
       "workload": "GET_16B_t1_p1",
       "type": "improvement"
-    },
-    {
-      "commit": "2e2eb418f97ee8ac0dcccd1d5d790697bd0fa43e",
-      "delta": -0.0191,
-      "workload": "GET_16B_t1_p1",
-      "type": "regression"
     },
     {
       "commit": "231a9e731ede9055a9b57861051a596a0a5f82f7",
