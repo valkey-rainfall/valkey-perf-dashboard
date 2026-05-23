@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conductress — Host Status</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; padding: 2rem; }
+        h1 { color: #58a6ff; margin-bottom: 1.5rem; font-size: 1.5rem; }
+        .hosts { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; }
+        .host-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.25rem; }
+        .host-card h2 { font-size: 1.1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .status-dot.running { background: #3fb950; }
+        .status-dot.stopped { background: #f85149; }
+        .status-dot.unreachable { background: #6e7681; }
+        .meta { color: #8b949e; font-size: 0.8rem; margin-bottom: 1rem; }
+        .section { margin-bottom: 1rem; }
+        .section-title { font-size: 0.75rem; text-transform: uppercase; color: #8b949e; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+        .current-task { background: #1c2128; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; }
+        .progress-bar { height: 4px; background: #30363d; border-radius: 2px; margin-top: 0.5rem; overflow: hidden; }
+        .progress-fill { height: 100%; background: #58a6ff; border-radius: 2px; transition: width 0.3s; }
+        .queue-list { list-style: none; font-size: 0.8rem; }
+        .queue-list li { padding: 0.25rem 0; border-bottom: 1px solid #21262d; color: #8b949e; }
+        .results-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; }
+        .results-table td { padding: 0.2rem 0.4rem; border-bottom: 1px solid #21262d; }
+        .results-table .score { color: #3fb950; font-weight: 600; text-align: right; }
+        .eta { color: #58a6ff; font-weight: 600; font-size: 0.9rem; }
+        .stale-warning { color: #d29922; font-size: 0.75rem; }
+        a { color: #58a6ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .nav { margin-bottom: 1.5rem; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="nav"><a href="index.html">← Performance Dashboard</a></div>
+    <h1>🎵 Conductress — Host Status</h1>
+    <div class="hosts" id="hosts"></div>
+    <script>
+const HOSTS = ['arm', 'x86', 'intel'];
+const STATUS_BASE = 'data/status';
+
+function formatScore(score) {
+    if (!score) return '—';
+    if (score > 1e6) return (score / 1e6).toFixed(2) + 'M';
+    if (score > 1e3) return (score / 1e3).toFixed(1) + 'K';
+    return score.toFixed(1);
+}
+
+function timeAgo(isoStr) {
+    if (!isoStr) return '';
+    const diff = (Date.now() - new Date(isoStr).getTime()) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+}
+
+function renderHost(data) {
+    const state = data.runner?.state || 'unreachable';
+    const stale = data.timestamp && (Date.now() - new Date(data.timestamp).getTime()) > 300000;
+
+    let taskHtml = '<div class="current-task">Idle</div>';
+    if (data.current_task) {
+        const t = data.current_task;
+        taskHtml = `<div class="current-task">
+            <strong>${t.type}</strong> — ${t.state} (${t.steps})<br>
+            <span style="color:#8b949e">${t.elapsed_sec}s elapsed</span>
+            <div class="progress-bar"><div class="progress-fill" style="width:${t.progress_pct}%"></div></div>
+        </div>`;
+    }
+
+    let queueHtml = '<span style="color:#8b949e">Empty</span>';
+    if (data.queue?.depth > 0) {
+        const items = data.queue.tasks.slice(0, 5).map(t =>
+            `<li>${t.type} — ${t.note || t.specifier}</li>`
+        ).join('');
+        queueHtml = `<ul class="queue-list">${items}</ul>`;
+        if (data.queue.depth > 5) queueHtml += `<span style="color:#8b949e;font-size:0.75rem">+${data.queue.depth - 5} more</span>`;
+    }
+
+    let resultsHtml = '';
+    if (data.recent_results?.length) {
+        const rows = data.recent_results.slice(0, 5).map(r =>
+            `<tr><td>${r.commit || '—'}</td><td>${r.method || ''}</td><td class="score">${formatScore(r.score)}</td></tr>`
+        ).join('');
+        resultsHtml = `<table class="results-table">${rows}</table>`;
+    }
+
+    return `<div class="host-card">
+        <h2><span class="status-dot ${state}"></span>${data.host || 'unknown'}</h2>
+        <div class="meta">
+            Updated ${timeAgo(data.timestamp)}
+            ${stale ? '<span class="stale-warning">⚠ stale</span>' : ''}
+            ${data.eta_minutes > 0 ? `· <span class="eta">ETA ${data.eta_minutes}m</span>` : ''}
+        </div>
+        <div class="section"><div class="section-title">Current Task</div>${taskHtml}</div>
+        <div class="section"><div class="section-title">Queue (${data.queue?.depth || 0})</div>${queueHtml}</div>
+        ${resultsHtml ? `<div class="section"><div class="section-title">Recent Results</div>${resultsHtml}</div>` : ''}
+    </div>`;
+}
+
+async function loadStatus() {
+    const container = document.getElementById('hosts');
+    const cards = [];
+    for (const host of HOSTS) {
+        try {
+            const resp = await fetch(`${STATUS_BASE}/${host}.json?t=${Date.now()}`);
+            if (resp.ok) {
+                cards.push(renderHost(await resp.json()));
+            } else {
+                cards.push(renderHost({host, runner: {state: 'unreachable'}, timestamp: new Date().toISOString()}));
+            }
+        } catch {
+            cards.push(renderHost({host, runner: {state: 'unreachable'}, timestamp: new Date().toISOString()}));
+        }
+    }
+    container.innerHTML = cards.join('');
+}
+
+loadStatus();
+setInterval(loadStatus, 60000);
+    </script>
+</body>
+</html>
