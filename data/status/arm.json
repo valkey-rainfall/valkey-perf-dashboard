@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-05-23T21:21:13.427802Z",
+  "timestamp": "2026-05-23T21:22:18.386326Z",
   "host": "arm",
   "runner": {
-    "pid": null,
-    "state": "stopped",
-    "uptime_hours": null
+    "pid": 703167,
+    "state": "running",
+    "uptime_hours": 494228.8
   },
   "current_task": null,
   "queue": {
