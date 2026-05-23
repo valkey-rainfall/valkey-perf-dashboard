@@ -274,9 +274,8 @@
       window.zoomToLastRelease = () => {
         const landmarks = data.landmarks || [];
         const lastLandmark = landmarks[landmarks.length - 1];
-        if (lastLandmark) {
-          const p = points.find(p => p.commit === lastLandmark.commit);
-          if (p) chart.zoomScale('x', { min: p.commit_index, max: data.metadata.total_commits });
+        if (lastLandmark && lastLandmark.commit_index) {
+          chart.zoomScale('x', { min: lastLandmark.commit_index, max: data.metadata.total_commits });
         }
       };
       window.zoomToLastN = (n) => {
