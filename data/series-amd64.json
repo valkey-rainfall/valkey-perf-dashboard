@@ -4,7 +4,7 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "GET_16B_t1_p1",
-    "generated": "2026-05-23T04:02:29.312303+00:00"
+    "generated": "2026-05-23T04:04:30.656525+00:00"
   },
   "workloads": [
     "GET_16B_t1_p1"
@@ -1433,12 +1433,6 @@
       "type": "improvement"
     },
     {
-      "commit": "cf90acbc6137ede7ae17fb1450c8aa19a62d163c",
-      "delta": 0.0199,
-      "workload": "GET_16B_t1_p1",
-      "type": "improvement"
-    },
-    {
       "commit": "88cd2086aef25183ae0c5fb8bc154d8206dd07f1",
       "delta": -0.046,
       "workload": "GET_16B_t1_p1",
@@ -1451,12 +1445,6 @@
       "type": "improvement"
     },
     {
-      "commit": "1a2ed04705d589948498ec1ceb9f657f0f9f7033",
-      "delta": -0.0217,
-      "workload": "GET_16B_t1_p1",
-      "type": "regression"
-    },
-    {
       "commit": "2e2eb418f97ee8ac0dcccd1d5d790697bd0fa43e",
       "delta": -0.0191,
       "workload": "GET_16B_t1_p1",
@@ -1467,12 +1455,6 @@
       "delta": 0.049,
       "workload": "GET_16B_t1_p1",
       "type": "improvement"
-    },
-    {
-      "commit": "be0a572c8b949538a1947925edf3074b53fbe7c1",
-      "delta": -0.0237,
-      "workload": "GET_16B_t1_p1",
-      "type": "regression"
     },
     {
       "commit": "928e9126172dfdfdbf4ce6ebdc65aae854c6e79e",
@@ -1493,46 +1475,16 @@
       "type": "improvement"
     },
     {
-      "commit": "b8650a5a31ad80b65f42fd37652a304c8020caef",
-      "delta": -0.0109,
-      "workload": "GET_16B_t1_p1",
-      "type": "regression"
-    },
-    {
-      "commit": "eabfe235d2b522f0aded9a6139f16c4f5deeed93",
-      "delta": -0.0129,
-      "workload": "GET_16B_t1_p1",
-      "type": "regression"
-    },
-    {
       "commit": "cfbe0937fb3b275e735a061c811f07482cdf7904",
       "delta": 0.0293,
       "workload": "GET_16B_t1_p1",
       "type": "improvement"
     },
     {
-      "commit": "3ea5cb39898bce6f8073a2dd2efbc4d43c9dbcaf",
-      "delta": -0.0338,
-      "workload": "GET_16B_t1_p1",
-      "type": "regression"
-    },
-    {
-      "commit": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
-      "delta": -0.0147,
-      "workload": "GET_16B_t1_p1",
-      "type": "regression"
-    },
-    {
       "commit": "8ed270f443701b0a737d37c3ecb026d7559ecaaa",
       "delta": 0.0296,
       "workload": "GET_16B_t1_p1",
       "type": "improvement"
-    },
-    {
-      "commit": "5d7d542499ca481f3b9691334e123b36feff397c",
-      "delta": -0.0159,
-      "workload": "GET_16B_t1_p1",
-      "type": "regression"
     }
   ]
 }
