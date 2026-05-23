@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-23T23:04:30.326619Z",
+  "timestamp": "2026-05-23T23:06:38.882094Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 2523523,
@@ -7,33 +7,43 @@
     "uptime_hours": 494218.7
   },
   "current_task": {
-    "id": "2026.05.23_22.59.43.942924",
+    "id": "2026.05.23_23.06.23.465209",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 83.7,
-    "elapsed_sec": 286,
-    "steps": "205/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 15,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.23_22.59.43.942924",
+        "id": "2026.05.23_23.06.23.465209",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 43.9% regression between e64d91c3 and 57789d4d",
+        "note": "[sweep] Bisecting 43.8% regression between e64d91c3 and 0aaae734",
         "source": "valkey",
-        "specifier": "0aaae734f46101e621f9d56d76c42d04029d3c99"
+        "specifier": "38632278fd06fe186f7707e4fa099f666d805547"
       },
       {
-        "id": "2026.05.23_22.59.43.955994",
+        "id": "2026.05.23_23.06.23.478513",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "1c48d3dab29ae0ef9f3c1df4c69b59cfd1a90e09"
+        "specifier": "15a048d4f0465dc58be21d7e46d527ccfcc34a64"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.23_22.59.43.942924",
+      "method": "perf-get",
+      "score": 754798.1514285714,
+      "commit": "0aaae734",
+      "source": "valkey",
+      "specifier": "0aaae734f46101e621f9d56d76c42d04029d3c99",
+      "note": "[sweep] Bisecting 43.9% regression between e64d91c3 and 57789d4d",
+      "completed": "2026.05.23_23.05.12.285126"
+    },
     {
       "task_id": "2026.05.23_22.07.01.962960",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "98a6e55d4e7eed5bb68480672a3358ee21b9dce8",
       "note": "[memory-sweep] Backfill: 210 commits in gap",
       "completed": "2026.05.23_21.48.02.986731"
-    },
-    {
-      "task_id": "2026.05.23_21.41.31.755923",
-      "method": "perf-get",
-      "score": 1961402.8634523812,
-      "commit": "8c555479",
-      "source": "valkey",
-      "specifier": "8c55547999a980680997a2c0c2bd292a7112da9c",
-      "note": "[sweep] Bisecting 55.2% improvement between ac515159 and 9aeab8cc",
-      "completed": "2026.05.23_21.47.19.521972"
     }
   ],
-  "eta_minutes": 5.9
+  "eta_minutes": 7.5
 }
