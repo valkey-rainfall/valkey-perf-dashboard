@@ -139,9 +139,8 @@
       // Landmark annotations for chart
       const chartAnnotations = {};
       data.landmarks.forEach((lm, i) => {
-          const p = points.find(p => p.commit === lm.commit);
-          const xVal = p ? p.commit_index : null;
-          if (xVal !== null) {
+          const xVal = lm.commit_index;
+          if (xVal != null) {
             chartAnnotations[`lm${i}`] = {
               type: 'line', xMin: xVal, xMax: xVal,
               borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
@@ -175,7 +174,8 @@
               backgroundColor: 'rgba(99,102,241,0.18)',
               fill: '+1',
               pointRadius: 0,
-              tension: 0.2,
+              tension: 0,
+              spanGaps: true,
             },
             {
               label: 'CV lower',
@@ -184,7 +184,8 @@
               backgroundColor: 'rgba(99,102,241,0.08)',
               fill: false,
               pointRadius: 0,
-              tension: 0.2,
+              tension: 0,
+              spanGaps: true,
             },
             {
               label: 'ops/sec',
@@ -195,7 +196,7 @@
               pointBackgroundColor: pointColors,
               pointRadius: pointRadii,
               pointHoverRadius: 8,
-              tension: 0.2,
+              tension: 0,
             }
           ]
         },
