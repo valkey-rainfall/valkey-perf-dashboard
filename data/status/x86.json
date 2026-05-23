@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-23T23:33:29.922642Z",
+  "timestamp": "2026-05-23T23:35:39.740033Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 2523523,
@@ -7,23 +7,16 @@
     "uptime_hours": 494218.7
   },
   "current_task": {
-    "id": "2026.05.23_23.29.38.258567",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 59.2,
-    "elapsed_sec": 232,
-    "steps": "145/245"
+    "id": "2026.05.23_23.29.38.271982",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 14,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.23_23.29.38.258567",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 3.6% regression between 1fd6d715 and 1cc268de",
-        "source": "valkey",
-        "specifier": "8a9c3717d13e7857b19a792058f9075f045868f4"
-      },
       {
         "id": "2026.05.23_23.29.38.271982",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.23_23.29.38.258567",
+      "method": "perf-get",
+      "score": 1947222.680595238,
+      "commit": "8a9c3717",
+      "source": "valkey",
+      "specifier": "8a9c3717d13e7857b19a792058f9075f045868f4",
+      "note": "[sweep] Bisecting 3.6% regression between 1fd6d715 and 1cc268de",
+      "completed": "2026.05.23_23.35.25.707126"
+    },
     {
       "task_id": "2026.05.23_23.22.38.517343",
       "method": "perf-get",
@@ -73,17 +76,7 @@
       "specifier": "0aaae734f46101e621f9d56d76c42d04029d3c99",
       "note": "[sweep] Bisecting 43.9% regression between e64d91c3 and 57789d4d",
       "completed": "2026.05.23_23.05.12.285126"
-    },
-    {
-      "task_id": "2026.05.23_22.07.01.962960",
-      "method": "perf-get",
-      "score": 752656.3980952381,
-      "commit": "57789d4d",
-      "source": "valkey",
-      "specifier": "57789d4d08fbe794c178a7d6a7c267f15a32b7b4",
-      "note": "[sweep] Bisecting 43.8% regression between e64d91c3 and c0a83c00",
-      "completed": "2026.05.23_22.12.56.383434"
     }
   ],
-  "eta_minutes": 7.7
+  "eta_minutes": 5.0
 }
