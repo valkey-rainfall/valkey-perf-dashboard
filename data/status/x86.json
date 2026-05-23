@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-23T23:53:44.968736Z",
+  "timestamp": "2026-05-23T23:56:53.734199Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 2523523,
@@ -7,23 +7,16 @@
     "uptime_hours": 494218.7
   },
   "current_task": {
-    "id": "2026.05.23_23.50.41.283401",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 44.9,
-    "elapsed_sec": 184,
-    "steps": "110/245"
+    "id": "2026.05.23_23.50.41.297963",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 24,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.23_23.50.41.283401",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 2.6% improvement between 1cc268de and f5b0360f",
-        "source": "valkey",
-        "specifier": "b8650a5a31ad80b65f42fd37652a304c8020caef"
-      },
       {
         "id": "2026.05.23_23.50.41.297963",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.23_23.50.41.283401",
+      "method": "perf-get",
+      "score": 1911213.4977380955,
+      "commit": "b8650a5a",
+      "source": "valkey",
+      "specifier": "b8650a5a31ad80b65f42fd37652a304c8020caef",
+      "note": "[sweep] Bisecting 2.6% improvement between 1cc268de and f5b0360f",
+      "completed": "2026.05.23_23.56.29.755619"
+    },
     {
       "task_id": "2026.05.23_23.43.41.975444",
       "method": "perf-get",
@@ -73,17 +76,7 @@
       "specifier": "39fade42d11a22d4a13beb98d6e36adaa12ecba3",
       "note": "[sweep] Bisecting 5.0% improvement between 682fc0b4 and cf90acbc",
       "completed": "2026.05.23_23.28.26.656972"
-    },
-    {
-      "task_id": "2026.05.23_23.15.38.782394",
-      "method": "perf-get",
-      "score": 1919611.3889285713,
-      "commit": "79c8948e",
-      "source": "valkey",
-      "specifier": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
-      "note": "[sweep] Bisecting 5.1% regression between cfbe0937 and d64f2072",
-      "completed": "2026.05.23_23.21.26.888587"
     }
   ],
-  "eta_minutes": 8.8
+  "eta_minutes": 5.0
 }
