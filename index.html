@@ -29,6 +29,8 @@
     .controls select, .controls button { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; cursor: pointer; }
     .controls button.active { background: var(--accent); border-color: var(--accent); }
     .chart-container { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+    .zoom-btn { font-size:0.8rem;padding:3px 10px;cursor:pointer;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:4px; }
+    .zoom-btn:hover { background:var(--border); }
     .annotations { display: grid; gap: 0.5rem; }
     .annotation { background: var(--card); border-radius: 6px; padding: 0.7rem 1rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
     .annotation.regression { border-left: 3px solid var(--danger); }
@@ -56,7 +58,11 @@
   <div class="stats" id="stats"></div>
 
   <div class="chart-container">
-    <div style="text-align:right;margin-bottom:0.5rem"><button onclick="chart.resetZoom()" style="font-size:0.8rem;padding:2px 8px;cursor:pointer;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:4px">Reset Zoom</button></div>
+    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap">
+      <button onclick="zoomToLastRelease()" class="zoom-btn">Since Last Release</button>
+      <button onclick="zoomToLastN(100)" class="zoom-btn">Last 100 Commits</button>
+      <button onclick="chart.resetZoom()" class="zoom-btn">Reset Zoom</button>
+    </div>
     <canvas id="chart"></canvas>
   </div>
 
@@ -206,7 +212,6 @@
           plugins: {
             zoom: {
               zoom: {
-                wheel: { enabled: true },
                 drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' },
                 mode: 'x',
               },
@@ -254,6 +259,19 @@
           }
         }
       });
+
+      // Zoom presets
+      window.zoomToLastRelease = () => {
+        const landmarks = data.landmarks || [];
+        const lastLandmark = landmarks[landmarks.length - 1];
+        if (lastLandmark) {
+          chart.zoomScale('x', { min: lastLandmark.date, max: points[points.length-1].date });
+        }
+      };
+      window.zoomToLastN = (n) => {
+        const start = Math.max(0, points.length - n);
+        chart.zoomScale('x', { min: points[start].date, max: points[points.length-1].date });
+      };
 
       // Annotations list
       const annEl = document.getElementById('annotations');
