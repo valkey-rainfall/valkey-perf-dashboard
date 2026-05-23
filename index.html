@@ -299,6 +299,28 @@
           if (memPoints.length > 0) {
             const memCtx = document.getElementById('memoryChart').getContext('2d');
             if (window.memoryChart instanceof Chart) window.memoryChart.destroy();
+
+            // Annotation map for coloring
+            const memAnnMap = {};
+            (memData.annotations || []).forEach(a => { memAnnMap[a.commit] = a; });
+            const memColors = memPoints.map(p => {
+              const a = memAnnMap[p.commit];
+              if (a) return a.type === 'regression' ? '#ef4444' : '#22c55e';
+              return '#10b981';
+            });
+
+            // Landmark lines
+            const memLandmarks = {};
+            (memData.landmarks || []).forEach((lm, i) => {
+              if (lm.commit_index != null) {
+                memLandmarks[`lm${i}`] = {
+                  type: 'line', xMin: lm.commit_index, xMax: lm.commit_index,
+                  borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
+                  label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
+                };
+              }
+            });
+
             window.memoryChart = new Chart(memCtx, {
               type: 'line',
               data: {
@@ -307,15 +329,36 @@
                   data: memPoints.map(p => ({ x: p.commit_index, y: p.results[memWorkload].rps })),
                   borderColor: '#10b981',
                   backgroundColor: 'transparent',
-                  pointRadius: 3,
-                  pointBackgroundColor: '#10b981',
+                  pointRadius: memPoints.map(p => memAnnMap[p.commit] ? 6 : 3),
+                  pointBackgroundColor: memColors,
                   tension: 0,
                 }]
               },
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false }, zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x' } } },
+                plugins: {
+                  legend: { display: false },
+                  annotation: { annotations: memLandmarks },
+                  zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x' } },
+                  tooltip: {
+                    callbacks: {
+                      title: (items) => {
+                        const p = memPoints[items[0].dataIndex];
+                        let t = `${p.date} — ${p.commit.slice(0,8)}`;
+                        if (p.pr) t += ` (PR #${p.pr})`;
+                        return t;
+                      },
+                      label: (item) => `${item.raw.y.toFixed(1)} bytes/item`,
+                      afterLabel: (item) => {
+                        const p = memPoints[item.dataIndex];
+                        const a = memAnnMap[p.commit];
+                        if (a) return `${a.type}: ${(a.delta*100).toFixed(1)}%${a.pr_title ? ' — ' + a.pr_title : ''}`;
+                        return p.pr_title || '';
+                      }
+                    }
+                  }
+                },
                 scales: {
                   y: { title: { display: true, text: 'bytes/item', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: '#2d3148' } },
                   x: { type: 'linear', min: 0, max: memData.metadata.total_commits || memPoints[memPoints.length-1].commit_index, ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: '#2d3148' } }
