@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-23T21:17:44.725114Z",
+  "timestamp": "2026-05-23T21:19:52.707166Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": null,
@@ -11,7 +11,7 @@
     "type": "perf-get",
     "state": "running",
     "progress_pct": 87.8,
-    "elapsed_sec": 10957,
+    "elapsed_sec": 11085,
     "steps": "215/245"
   },
   "queue": {
@@ -85,5 +85,5 @@
       "completed": "2026.05.23_17.29.05.978014"
     }
   ],
-  "eta_minutes": 30.4
+  "eta_minutes": 30.7
 }
