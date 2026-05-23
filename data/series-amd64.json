@@ -3,12 +3,12 @@
     "repo": "valkey-io/valkey",
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
-    "workload": "GET_16B_t1_p1",
-    "generated": "2026-05-23T06:56:56.617952+00:00",
+    "workload": "GET_16B_t7_p10",
+    "generated": "2026-05-23T08:06:34.676442+00:00",
     "total_commits": 1974
   },
   "workloads": [
-    "GET_16B_t1_p1"
+    "GET_16B_t7_p10"
   ],
   "points": [
     {
@@ -16,7 +16,7 @@
       "date": "2024-01-09",
       "commit_index": 163,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1277411.1322619047,
           "cv": 0.8092017678808098,
           "reps": 3
@@ -30,7 +30,7 @@
       "date": "2024-03-21",
       "commit_index": 284,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1254368.4172222228,
           "cv": 0.3383155581323035,
           "reps": 3
@@ -43,7 +43,7 @@
       "date": "2024-03-21",
       "commit_index": 285,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 758203.0505555555,
           "cv": 0.08866180811518497,
           "reps": 3
@@ -56,7 +56,7 @@
       "date": "2024-03-21",
       "commit_index": 286,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 756440.7388888889,
           "cv": 0.13434139456463037,
           "reps": 3
@@ -70,7 +70,7 @@
       "date": "2024-03-22",
       "commit_index": 288,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 755121.2291666667,
           "cv": 0.4818942591168021,
           "reps": 3
@@ -84,7 +84,7 @@
       "date": "2024-03-25",
       "commit_index": 292,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 756714.0205555555,
           "cv": 0.04187562310377231,
           "reps": 3
@@ -98,7 +98,7 @@
       "date": "2024-03-27",
       "commit_index": 299,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 752861.1535714285,
           "cv": 0.6984760598145612,
           "reps": 3
@@ -112,7 +112,7 @@
       "date": "2024-04-01",
       "commit_index": 314,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 756354.5069047619,
           "cv": 0.8714586972658336,
           "reps": 3
@@ -126,7 +126,7 @@
       "date": "2024-04-04",
       "commit_index": 344,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 759295.0227777777,
           "cv": 0.2818955493684342,
           "reps": 3
@@ -136,11 +136,25 @@
       "pr_title": "rename redisServer to valkeyServer"
     },
     {
+      "commit": "ebfb44062982d29fc031e20c916be68c127f5ddc",
+      "date": "2024-04-08",
+      "commit_index": 374,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 755706.3505555554,
+          "cv": 0.3390761671488644,
+          "reps": 3
+        }
+      },
+      "pr": 52,
+      "pr_title": "Pass extensions to node if extension processing is handled by it"
+    },
+    {
       "commit": "1221b3951ae4faf49923dfbb623a7aca6ccf9b26",
       "date": "2024-04-15",
       "commit_index": 404,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 744061.7388888889,
           "cv": 0.24885521907251276,
           "reps": 3
@@ -154,7 +168,7 @@
       "date": "2024-06-02",
       "commit_index": 525,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 747269.0258333333,
           "cv": 0.13638931493377265,
           "reps": 3
@@ -168,7 +182,7 @@
       "date": "2024-06-28",
       "commit_index": 585,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 756493.7680555553,
           "cv": 0.03087601088719996,
           "reps": 3
@@ -182,7 +196,7 @@
       "date": "2024-07-02",
       "commit_index": 593,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 749430.2969047618,
           "cv": 0.7662098500484884,
           "reps": 3
@@ -196,7 +210,7 @@
       "date": "2024-07-02",
       "commit_index": 595,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 747854.9294444445,
           "cv": 0.08872422466960403,
           "reps": 3
@@ -210,7 +224,7 @@
       "date": "2024-07-02",
       "commit_index": 596,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 813979.6942857143,
           "cv": 0.5196515421557973,
           "reps": 3
@@ -224,7 +238,7 @@
       "date": "2024-07-03",
       "commit_index": 597,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 804607.7208333336,
           "cv": 0.48002957928152296,
           "reps": 3
@@ -238,7 +252,7 @@
       "date": "2024-07-04",
       "commit_index": 598,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 820809.5885714286,
           "cv": 0.6434235397091277,
           "reps": 3
@@ -252,7 +266,7 @@
       "date": "2024-07-04",
       "commit_index": 599,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 827883.2955952381,
           "cv": 0.8272834046640247,
           "reps": 3
@@ -266,7 +280,7 @@
       "date": "2024-07-04",
       "commit_index": 600,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 829949.6158333331,
           "cv": 0.19364918965667222,
           "reps": 3
@@ -280,7 +294,7 @@
       "date": "2024-07-07",
       "commit_index": 602,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 831585.9877380955,
           "cv": 0.4769452867672008,
           "reps": 3
@@ -294,7 +308,7 @@
       "date": "2024-07-09",
       "commit_index": 603,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1253218.4999999998,
           "cv": 0.3945553430249217,
           "reps": 3
@@ -308,7 +322,7 @@
       "date": "2024-07-09",
       "commit_index": 604,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1249868.8014561196,
           "cv": 0.8884910656190108,
           "reps": 3
@@ -322,7 +336,7 @@
       "date": "2024-07-11",
       "commit_index": 608,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1258589.4310153483,
           "cv": 0.5356183112350581,
           "reps": 3
@@ -336,7 +350,7 @@
       "date": "2024-07-15",
       "commit_index": 615,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1265832.2888095237,
           "cv": 0.5871395076261037,
           "reps": 3
@@ -350,7 +364,7 @@
       "date": "2024-07-18",
       "commit_index": 619,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1255702.4183215268,
           "cv": 0.5662391087697561,
           "reps": 3
@@ -364,7 +378,7 @@
       "date": "2024-07-18",
       "commit_index": 621,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1258124.450119048,
           "cv": 0.611465274305622,
           "reps": 3
@@ -378,7 +392,7 @@
       "date": "2024-07-19",
       "commit_index": 622,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1120177.8227777777,
           "cv": 0.24489689450917052,
           "reps": 3
@@ -392,7 +406,7 @@
       "date": "2024-07-19",
       "commit_index": 623,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1096647.0211111112,
           "cv": 0.4211937149950687,
           "reps": 3
@@ -406,7 +420,7 @@
       "date": "2024-07-20",
       "commit_index": 625,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1120514.3282142857,
           "cv": 1.0925698906459516,
           "reps": 3
@@ -420,7 +434,7 @@
       "date": "2024-07-22",
       "commit_index": 627,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1127633.0575,
           "cv": 1.424727019119034,
           "reps": 3
@@ -434,7 +448,7 @@
       "date": "2024-07-23",
       "commit_index": 630,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1124175.2925,
           "cv": 1.2111927332042283,
           "reps": 3
@@ -448,7 +462,7 @@
       "date": "2024-07-31",
       "commit_index": 645,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1117817.1366666665,
           "cv": 0.7945460004220393,
           "reps": 3
@@ -462,7 +476,7 @@
       "date": "2024-08-31",
       "commit_index": 715,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1125225.8419444442,
           "cv": 0.246975752859127,
           "reps": 3
@@ -476,7 +490,7 @@
       "date": "2024-09-10",
       "commit_index": 733,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1138848.2266666668,
           "cv": 1.309408128406392,
           "reps": 3
@@ -490,7 +504,7 @@
       "date": "2024-09-11",
       "commit_index": 742,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1145435.193888889,
           "cv": 0.7053947798410083,
           "reps": 3
@@ -504,7 +518,7 @@
       "date": "2024-09-14",
       "commit_index": 750,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1156170.0894444447,
           "cv": 0.5529029032210867,
           "reps": 3
@@ -518,7 +532,7 @@
       "date": "2024-10-02",
       "commit_index": 785,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1156316.250277778,
           "cv": 0.6322022531112663,
           "reps": 3
@@ -532,7 +546,7 @@
       "date": "2024-11-07",
       "commit_index": 855,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1167847.2358333333,
           "cv": 0.7177605959923404,
           "reps": 3
@@ -546,7 +560,7 @@
       "date": "2024-11-22",
       "commit_index": 890,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1170072.0466666666,
           "cv": 0.8791662739826256,
           "reps": 3
@@ -560,7 +574,7 @@
       "date": "2024-11-21",
       "commit_index": 893,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1176633.7730555553,
           "cv": 1.2681678711871551,
           "reps": 3
@@ -574,7 +588,7 @@
       "date": "2024-11-23",
       "commit_index": 895,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1189187.076944444,
           "cv": 0.546157192348654,
           "reps": 3
@@ -588,7 +602,7 @@
       "date": "2024-11-25",
       "commit_index": 899,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1193490.8783333336,
           "cv": 0.537243228788834,
           "reps": 3
@@ -602,7 +616,7 @@
       "date": "2024-11-28",
       "commit_index": 907,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1192567.1630555554,
           "cv": 1.0187264062879942,
           "reps": 3
@@ -616,7 +630,7 @@
       "date": "2024-12-07",
       "commit_index": 924,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1198211.4700000002,
           "cv": 0.8727219114991059,
           "reps": 3
@@ -630,7 +644,7 @@
       "date": "2024-12-09",
       "commit_index": 929,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1192554.1655555556,
           "cv": 0.17636015399729024,
           "reps": 3
@@ -644,7 +658,7 @@
       "date": "2024-12-10",
       "commit_index": 933,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1181828.570277778,
           "cv": 1.4245644119239522,
           "reps": 3
@@ -658,7 +672,7 @@
       "date": "2024-11-18",
       "commit_index": 938,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1195603.4597222225,
           "cv": 0.5737503782618084,
           "reps": 3
@@ -671,7 +685,7 @@
       "date": "2024-11-18",
       "commit_index": 939,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1201151.7650000001,
           "cv": 0.4990823285119982,
           "reps": 3
@@ -685,7 +699,7 @@
       "date": "2024-09-11",
       "commit_index": 940,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1333729.9833333334,
           "cv": 0.5318172470250534,
           "reps": 3
@@ -698,7 +712,7 @@
       "date": "2024-12-11",
       "commit_index": 941,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1360035.7008333332,
           "cv": 0.46817380377316914,
           "reps": 3
@@ -712,7 +726,7 @@
       "date": "2024-12-11",
       "commit_index": 942,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1351938.0319444442,
           "cv": 0.38920830892736774,
           "reps": 3
@@ -726,7 +740,7 @@
       "date": "2024-12-14",
       "commit_index": 951,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1341455.700833333,
           "cv": 0.36637559811861603,
           "reps": 3
@@ -740,7 +754,7 @@
       "date": "2024-12-18",
       "commit_index": 959,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1334875.6919444443,
           "cv": 1.0663142725343266,
           "reps": 3
@@ -754,7 +768,7 @@
       "date": "2024-12-25",
       "commit_index": 977,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1330540.388333333,
           "cv": 0.11134100892223155,
           "reps": 3
@@ -768,7 +782,7 @@
       "date": "2025-01-01",
       "commit_index": 982,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1326859.3461111109,
           "cv": 0.7162499373056128,
           "reps": 3
@@ -782,7 +796,7 @@
       "date": "2025-01-02",
       "commit_index": 983,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1333791.8880555555,
           "cv": 0.8783020048714155,
           "reps": 3
@@ -796,7 +810,7 @@
       "date": "2025-01-02",
       "commit_index": 984,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1344602.5336111109,
           "cv": 0.7514855833643108,
           "reps": 3
@@ -810,7 +824,7 @@
       "date": "2025-01-02",
       "commit_index": 985,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1350141.0302777777,
           "cv": 1.0139393294419725,
           "reps": 3
@@ -824,7 +838,7 @@
       "date": "2025-01-02",
       "commit_index": 986,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1360064.7050000003,
           "cv": 0.8662226878012543,
           "reps": 3
@@ -838,7 +852,7 @@
       "date": "2025-01-06",
       "commit_index": 994,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1352856.6341666668,
           "cv": 0.6848943417511993,
           "reps": 3
@@ -852,7 +866,7 @@
       "date": "2025-01-16",
       "commit_index": 1029,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1363508.4330555554,
           "cv": 0.19469384597756892,
           "reps": 3
@@ -866,7 +880,7 @@
       "date": "2025-01-20",
       "commit_index": 1032,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1347796.3624999998,
           "cv": 1.464356615541418,
           "reps": 3
@@ -880,7 +894,7 @@
       "date": "2025-01-23",
       "commit_index": 1034,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1344910.147839761,
           "cv": 0.21431251462613898,
           "reps": 3
@@ -894,7 +908,7 @@
       "date": "2025-01-23",
       "commit_index": 1035,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1349738.8783333332,
           "cv": 0.62088811413614,
           "reps": 3
@@ -908,7 +922,7 @@
       "date": "2025-01-24",
       "commit_index": 1036,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1326414.5930555554,
           "cv": 1.0046904203753597,
           "reps": 3
@@ -922,7 +936,7 @@
       "date": "2025-01-27",
       "commit_index": 1038,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1328289.270833333,
           "cv": 0.6115522502509243,
           "reps": 3
@@ -936,7 +950,7 @@
       "date": "2025-01-30",
       "commit_index": 1047,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1313262.980110193,
           "cv": 0.11451258185147412,
           "reps": 3
@@ -950,7 +964,7 @@
       "date": "2025-02-06",
       "commit_index": 1064,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1316048.406111111,
           "cv": 0.7830762657056592,
           "reps": 3
@@ -964,7 +978,7 @@
       "date": "2025-02-17",
       "commit_index": 1099,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1302096.9205555553,
           "cv": 0.7269179651674216,
           "reps": 3
@@ -978,7 +992,7 @@
       "date": "2025-03-05",
       "commit_index": 1134,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1299547.8161111113,
           "cv": 0.5203160148360696,
           "reps": 3
@@ -992,7 +1006,7 @@
       "date": "2025-03-27",
       "commit_index": 1152,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1284691.7363888887,
           "cv": 1.0060597684152641,
           "reps": 3
@@ -1006,7 +1020,7 @@
       "date": "2025-04-08",
       "commit_index": 1169,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1278796.0052777776,
           "cv": 0.5932546662041355,
           "reps": 3
@@ -1020,7 +1034,7 @@
       "date": "2025-04-29",
       "commit_index": 1203,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1280687.6183333334,
           "cv": 0.10124268066123489,
           "reps": 3
@@ -1034,7 +1048,7 @@
       "date": "2025-05-28",
       "commit_index": 1273,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1281717.6338888889,
           "cv": 0.839720032982278,
           "reps": 3
@@ -1048,7 +1062,7 @@
       "date": "2025-05-31",
       "commit_index": 1278,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1284004.5402777777,
           "cv": 1.2581821429051927,
           "reps": 3
@@ -1062,7 +1076,7 @@
       "date": "2025-06-03",
       "commit_index": 1280,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1265500.787222222,
           "cv": 1.5628337208268772,
           "reps": 3
@@ -1076,7 +1090,7 @@
       "date": "2025-06-03",
       "commit_index": 1282,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1267062.5694444445,
           "cv": 1.003228997377331,
           "reps": 3
@@ -1090,7 +1104,7 @@
       "date": "2025-06-08",
       "commit_index": 1287,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1258153.2258333333,
           "cv": 0.7855329514068288,
           "reps": 3
@@ -1104,7 +1118,7 @@
       "date": "2025-06-10",
       "commit_index": 1291,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1245666.0397222224,
           "cv": 1.8658690507489695,
           "reps": 3
@@ -1118,7 +1132,7 @@
       "date": "2025-06-18",
       "commit_index": 1308,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1252489.3263888888,
           "cv": 1.578388716919941,
           "reps": 3
@@ -1132,7 +1146,7 @@
       "date": "2025-07-03",
       "commit_index": 1343,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1252042.9583333333,
           "cv": 0.780852656228677,
           "reps": 3
@@ -1146,7 +1160,7 @@
       "date": "2025-07-30",
       "commit_index": 1378,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1246502.028888889,
           "cv": 0.9370836100222056,
           "reps": 3
@@ -1160,7 +1174,7 @@
       "date": "2025-08-05",
       "commit_index": 1396,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1245210.6936111113,
           "cv": 0.3864118150272995,
           "reps": 3
@@ -1174,7 +1188,7 @@
       "date": "2025-08-05",
       "commit_index": 1401,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1254896.03,
           "cv": 0.6428063681372268,
           "reps": 3
@@ -1188,7 +1202,7 @@
       "date": "2025-08-06",
       "commit_index": 1403,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1242314.3761111111,
           "cv": 0.05478762975424801,
           "reps": 3
@@ -1202,7 +1216,7 @@
       "date": "2025-08-06",
       "commit_index": 1404,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1258824.8291666666,
           "cv": 0.7734550001893188,
           "reps": 3
@@ -1216,7 +1230,7 @@
       "date": "2025-08-07",
       "commit_index": 1405,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1281739.7086111112,
           "cv": 1.1245106549193364,
           "reps": 3
@@ -1230,7 +1244,7 @@
       "date": "2025-08-08",
       "commit_index": 1413,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1272182.393611111,
           "cv": 0.41909803426526904,
           "reps": 3
@@ -1244,7 +1258,7 @@
       "date": "2025-08-11",
       "commit_index": 1418,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1265824.3208333338,
           "cv": 1.4806136370642016,
           "reps": 3
@@ -1258,7 +1272,7 @@
       "date": "2025-08-11",
       "commit_index": 1420,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1267032.7330555555,
           "cv": 1.2424066309068196,
           "reps": 3
@@ -1272,7 +1286,7 @@
       "date": "2025-08-11",
       "commit_index": 1421,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1261290.4244444445,
           "cv": 1.5674647878452488,
           "reps": 3
@@ -1286,7 +1300,7 @@
       "date": "2025-08-11",
       "commit_index": 1422,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1224732.5088888889,
           "cv": 1.8070453212921185,
           "reps": 3
@@ -1300,7 +1314,7 @@
       "date": "2025-08-13",
       "commit_index": 1427,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1216703.6369444446,
           "cv": 1.166320375968085,
           "reps": 3
@@ -1314,7 +1328,7 @@
       "date": "2025-08-14",
       "commit_index": 1431,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1206853.098888889,
           "cv": 1.359469430371862,
           "reps": 3
@@ -1328,7 +1342,7 @@
       "date": "2025-08-15",
       "commit_index": 1434,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1219742.2783333336,
           "cv": 0.5186428272675876,
           "reps": 3
@@ -1342,7 +1356,7 @@
       "date": "2025-08-16",
       "commit_index": 1436,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1225821.715277778,
           "cv": 0.8057877859860958,
           "reps": 3
@@ -1356,7 +1370,7 @@
       "date": "2025-08-18",
       "commit_index": 1440,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1234272.745833333,
           "cv": 0.41452778698064824,
           "reps": 3
@@ -1370,7 +1384,7 @@
       "date": "2025-08-19",
       "commit_index": 1448,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1240462.3058333334,
           "cv": 0.7921427019074543,
           "reps": 3
@@ -1384,7 +1398,7 @@
       "date": "2025-08-21",
       "commit_index": 1457,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1244287.4263888886,
           "cv": 0.423858391290095,
           "reps": 3
@@ -1397,7 +1411,7 @@
       "date": "2025-08-21",
       "commit_index": 1461,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1236607.9605555555,
           "cv": 0.09674914704625025,
           "reps": 3
@@ -1411,7 +1425,7 @@
       "date": "2025-08-22",
       "commit_index": 1462,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1255056.9544444445,
           "cv": 1.4904686712298922,
           "reps": 3
@@ -1421,11 +1435,67 @@
       "pr_title": "Remove debug logging from cluster-flush-slot.tcl"
     },
     {
+      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
+      "date": "2025-08-22",
+      "commit_index": 1463,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1996866.3558333332,
+          "cv": 1.6557203794285786,
+          "reps": 3
+        }
+      },
+      "pr": 2092,
+      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
+    },
+    {
+      "commit": "8c55547999a980680997a2c0c2bd292a7112da9c",
+      "date": "2025-08-23",
+      "commit_index": 1464,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1961864.2948809522,
+          "cv": 2.235921413405678,
+          "reps": 3
+        }
+      },
+      "pr": 2497,
+      "pr_title": "Don't allow slot migration to myself node"
+    },
+    {
+      "commit": "9aeab8ccbac0ca4923676c749c98d0de4718c872",
+      "date": "2025-08-24",
+      "commit_index": 1465,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1967619.360357143,
+          "cv": 2.4335991551182836,
+          "reps": 3
+        }
+      },
+      "pr": 2538,
+      "pr_title": "Consistently use static_assert across code"
+    },
+    {
+      "commit": "40fe4228992f39e31f1481f052ed6bc5c090353d",
+      "date": "2025-08-26",
+      "commit_index": 1468,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1966812.8738095236,
+          "cv": 2.4121824058327532,
+          "reps": 3
+        }
+      },
+      "pr": 2537,
+      "pr_title": "deflake test: relax time requirement in hash ttl test"
+    },
+    {
       "commit": "cf90acbc6137ede7ae17fb1450c8aa19a62d163c",
       "date": "2025-08-29",
       "commit_index": 1473,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 2018549.6224999998,
           "cv": 0.34982301588795917,
           "reps": 3
@@ -1439,7 +1509,7 @@
       "date": "2025-08-29",
       "commit_index": 1474,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1925632.6466666667,
           "cv": 0.3243266193512805,
           "reps": 3
@@ -1453,7 +1523,7 @@
       "date": "2025-09-02",
       "commit_index": 1482,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1924049.370555556,
           "cv": 0.3237419553916192,
           "reps": 3
@@ -1467,7 +1537,7 @@
       "date": "2025-12-05",
       "commit_index": 1621,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1941033.7941666672,
           "cv": 0.32450428815220267,
           "reps": 3
@@ -1481,7 +1551,7 @@
       "date": "2026-01-20",
       "commit_index": 1691,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1922659.688888889,
           "cv": 0.7535244767576612,
           "reps": 3
@@ -1495,7 +1565,7 @@
       "date": "2026-01-20",
       "commit_index": 1694,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1942663.4394444446,
           "cv": 1.989127176879538,
           "reps": 3
@@ -1509,7 +1579,7 @@
       "date": "2026-01-21",
       "commit_index": 1697,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1964619.4866666663,
           "cv": 1.5412001661617796,
           "reps": 3
@@ -1523,7 +1593,7 @@
       "date": "2026-01-22",
       "commit_index": 1698,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1927190.481111111,
           "cv": 0.6792503146335929,
           "reps": 3
@@ -1537,7 +1607,7 @@
       "date": "2026-01-22",
       "commit_index": 1699,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 2021556.5066666668,
           "cv": 1.5247337926752729,
           "reps": 3
@@ -1547,11 +1617,25 @@
       "pr_title": "Fix XREAD returning error on empty stream with + ID"
     },
     {
+      "commit": "be561e2b4b824d232a97e3f07290f2333cebb928",
+      "date": "2026-01-23",
+      "commit_index": 1702,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1974398.1283333334,
+          "cv": 2.981375666123412,
+          "reps": 3
+        }
+      },
+      "pr": 3097,
+      "pr_title": "CI: Make CMake test also run tls tests"
+    },
+    {
       "commit": "e7d004be0b8221af1e6b07ef7598b901e2d45382",
       "date": "2026-01-25",
       "commit_index": 1705,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1953753.1424999998,
           "cv": 1.8197188834894764,
           "reps": 3
@@ -1565,7 +1649,7 @@
       "date": "2026-01-26",
       "commit_index": 1707,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1931002.4077777779,
           "cv": 1.0524122977096775,
           "reps": 3
@@ -1579,7 +1663,7 @@
       "date": "2026-01-26",
       "commit_index": 1708,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1919418.0597222222,
           "cv": 0.4825229015035669,
           "reps": 3
@@ -1589,11 +1673,39 @@
       "pr_title": "Instrumenting used active time metrics for I/O threads"
     },
     {
+      "commit": "0422fc66cfcced854f4fe30515467fb258dd9e61",
+      "date": "2026-01-28",
+      "commit_index": 1711,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1954487.2570238092,
+          "cv": 2.6852053106286213,
+          "reps": 3
+        }
+      },
+      "pr": 3103,
+      "pr_title": "Enable HW clock by default"
+    },
+    {
+      "commit": "f5d7dc8d057df8431d9d23f80b35c83b424b4d2c",
+      "date": "2026-01-29",
+      "commit_index": 1713,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1966358.604285714,
+          "cv": 3.2832267186028656,
+          "reps": 3
+        }
+      },
+      "pr": 2953,
+      "pr_title": "Fix potential memory leaks when a writable replica is promoted to primary after direct writes of keys with expiration"
+    },
+    {
       "commit": "1fd6d7156fbf438f471a680fbc7e5b6b087167be",
       "date": "2026-01-28",
       "commit_index": 1714,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 2022738.1236111112,
           "cv": 0.6079507226206162,
           "reps": 3
@@ -1603,11 +1715,39 @@
       "pr_title": "decouple lru/lfu from server.h"
     },
     {
+      "commit": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
+      "date": "2026-01-29",
+      "commit_index": 1715,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1970804.7597619046,
+          "cv": 2.4841109561039474,
+          "reps": 3
+        }
+      },
+      "pr": 2867,
+      "pr_title": "Optimize skiplist query efficiency by embedding the skiplist header"
+    },
+    {
+      "commit": "8a9c3717d13e7857b19a792058f9075f045868f4",
+      "date": "2026-01-29",
+      "commit_index": 1716,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1941073.1474999997,
+          "cv": 2.116765782755784,
+          "reps": 3
+        }
+      },
+      "pr": 3067,
+      "pr_title": "Don't exit the process when locale-collate fails to be set from env during startup"
+    },
+    {
       "commit": "1cc268de9fad8e9ed363e2de9e782393418bf697",
       "date": "2026-01-29",
       "commit_index": 1718,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1949977.0108333332,
           "cv": 0.9532683517001083,
           "reps": 3
@@ -1621,7 +1761,7 @@
       "date": "2026-01-30",
       "commit_index": 1722,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 2000061.1883333332,
           "cv": 1.2793394565160425,
           "reps": 3
@@ -1635,7 +1775,7 @@
       "date": "2026-02-01",
       "commit_index": 1725,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1977903.5775000006,
           "cv": 1.2871943242280544,
           "reps": 3
@@ -1649,7 +1789,7 @@
       "date": "2026-02-02",
       "commit_index": 1726,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 2035806.1205555557,
           "cv": 0.29034525192789584,
           "reps": 3
@@ -1659,11 +1799,25 @@
       "pr_title": "Extend hashtableGetStatsMsg to always show empty table and rehash index"
     },
     {
+      "commit": "3ea5cb39898bce6f8073a2dd2efbc4d43c9dbcaf",
+      "date": "2026-02-02",
+      "commit_index": 1727,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1986118.392142857,
+          "cv": 1.6827814841874036,
+          "reps": 3
+        }
+      },
+      "pr": 3145,
+      "pr_title": "CI: Stop using symlinks for tests with CMake"
+    },
+    {
       "commit": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
       "date": "2026-02-03",
       "commit_index": 1728,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1938203.4502777774,
           "cv": 1.512305947897106,
           "reps": 3
@@ -1677,7 +1831,7 @@
       "date": "2026-02-03",
       "commit_index": 1729,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1932865.924722222,
           "cv": 1.358953167611548,
           "reps": 3
@@ -1691,7 +1845,7 @@
       "date": "2026-02-05",
       "commit_index": 1735,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1938141.9261111112,
           "cv": 0.8309682898309703,
           "reps": 3
@@ -1701,11 +1855,25 @@
       "pr_title": "Fix arr bound err in test-sanitizer-undefined (gcc)"
     },
     {
+      "commit": "b83209de0ab5807b695c780ec6d44e1f49d9140e",
+      "date": "2026-03-26",
+      "commit_index": 1854,
+      "results": {
+        "GET_16B_t7_p10": {
+          "rps": 1970834.6850000003,
+          "cv": 1.8059799494754403,
+          "reps": 3
+        }
+      },
+      "pr": 3404,
+      "pr_title": "Fix race condition in diskless swapdb RedisModuleEvent_ReplAsyncLoad tests"
+    },
+    {
       "commit": "604dcdb00df81dacf2520ac85fe1c53897fe2baf",
       "date": "2026-05-22",
       "commit_index": 1973,
       "results": {
-        "GET_16B_t1_p1": {
+        "GET_16B_t7_p10": {
           "rps": 1989455.5119444446,
           "cv": 1.5689405147395297,
           "reps": 3
@@ -1716,6 +1884,13 @@
     }
   ],
   "landmarks": [
+    {
+      "commit": "2b8cde71bb553713cf93794a0fb30a1618c0c955",
+      "date": "2023-08-16",
+      "label": "Valkey created",
+      "type": "release",
+      "commit_index": 0
+    },
     {
       "commit": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
       "date": "2024-01-09",
@@ -1756,14 +1931,14 @@
     {
       "commit": "af205e7d86156b07b71aafb71e32e526882805cc",
       "delta": -0.3955,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "regression",
       "pr_title": "Update README.md"
     },
     {
       "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
       "delta": 0.0884,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "improvement",
       "pr": 541,
       "pr_title": "Embed key into dict entry"
@@ -1771,7 +1946,7 @@
     {
       "commit": "2d6791bb1157af52e20ffd1fb4ca025c283153d3",
       "delta": 0.0201,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "improvement",
       "pr": 735,
       "pr_title": "Use clusterNodeIsVotingPrimary function to check the right"
@@ -1779,7 +1954,7 @@
     {
       "commit": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483",
       "delta": 0.507,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "improvement",
       "pr": 758,
       "pr_title": "Async IO threads"
@@ -1787,7 +1962,7 @@
     {
       "commit": "94bc15cb7147773d3b45e5a2f9c7e8d7de6f97c7",
       "delta": -0.1096,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "regression",
       "pr": 763,
       "pr_title": "Io thread work offload"
@@ -1795,7 +1970,7 @@
     {
       "commit": "35a188833335332980a16239ac2efebf241c8a6a",
       "delta": -0.021,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "regression",
       "pr": 783,
       "pr_title": "Fix incorrect usage of process_is_paused in tests"
@@ -1803,22 +1978,30 @@
     {
       "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
       "delta": 0.1104,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "improvement",
       "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
     },
     {
       "commit": "d7993b78d82d9c9d2f9298159acd8f5a2fc997d4",
       "delta": -0.029,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "regression",
       "pr": 1949,
       "pr_title": "Introduce atomic slot migration"
     },
     {
+      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
+      "delta": 0.5911,
+      "workload": "GET_16B_t7_p10",
+      "type": "improvement",
+      "pr": 2092,
+      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
+    },
+    {
       "commit": "88cd2086aef25183ae0c5fb8bc154d8206dd07f1",
       "delta": -0.046,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "regression",
       "pr": 2494,
       "pr_title": "Split SLOT_EXPORT_AUTHENTICATING into SEND and READ to avoid synchronous reading of auth response"
@@ -1826,18 +2009,42 @@
     {
       "commit": "231a9e731ede9055a9b57861051a596a0a5f82f7",
       "delta": 0.049,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "improvement",
       "pr": 2742,
       "pr_title": "Fix XREAD returning error on empty stream with + ID"
     },
     {
+      "commit": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
+      "delta": -0.0257,
+      "workload": "GET_16B_t7_p10",
+      "type": "regression",
+      "pr": 2867,
+      "pr_title": "Optimize skiplist query efficiency by embedding the skiplist header"
+    },
+    {
       "commit": "cfbe0937fb3b275e735a061c811f07482cdf7904",
       "delta": 0.0293,
-      "workload": "GET_16B_t1_p1",
+      "workload": "GET_16B_t7_p10",
       "type": "improvement",
       "pr": 3142,
       "pr_title": "Extend hashtableGetStatsMsg to always show empty table and rehash index"
+    },
+    {
+      "commit": "3ea5cb39898bce6f8073a2dd2efbc4d43c9dbcaf",
+      "delta": -0.0244,
+      "workload": "GET_16B_t7_p10",
+      "type": "regression",
+      "pr": 3145,
+      "pr_title": "CI: Stop using symlinks for tests with CMake"
+    },
+    {
+      "commit": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
+      "delta": -0.0241,
+      "workload": "GET_16B_t7_p10",
+      "type": "regression",
+      "pr": 3141,
+      "pr_title": "Optimize rehash completion check for empty hash table"
     }
   ]
 }
