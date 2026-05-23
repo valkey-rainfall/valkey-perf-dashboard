@@ -4,7 +4,7 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "GET_16B_t1_p1",
-    "generated": "2026-05-23T06:39:01.528622+00:00",
+    "generated": "2026-05-23T06:56:56.617952+00:00",
     "total_commits": 1974
   },
   "workloads": [
@@ -400,6 +400,34 @@
       },
       "pr": 783,
       "pr_title": "Fix incorrect usage of process_is_paused in tests"
+    },
+    {
+      "commit": "15a82902316b59e2cbf8962ac2665e4b6b038f4c",
+      "date": "2024-07-20",
+      "commit_index": 625,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1120514.3282142857,
+          "cv": 1.0925698906459516,
+          "reps": 3
+        }
+      },
+      "pr": 782,
+      "pr_title": "Optimize failover time when the new primary node is down again"
+    },
+    {
+      "commit": "14e09e981e0039edbf8c41a208a258c18624cbb7",
+      "date": "2024-07-22",
+      "commit_index": 627,
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1127633.0575,
+          "cv": 1.424727019119034,
+          "reps": 3
+        }
+      },
+      "pr": 776,
+      "pr_title": "Fix the wrong woff when execute WAIT / WAITAOF in script"
     },
     {
       "commit": "9a7bf910cbd7795d8a86bee9bec6378c366b9e6b",
@@ -1393,62 +1421,6 @@
       "pr_title": "Remove debug logging from cluster-flush-slot.tcl"
     },
     {
-      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
-      "date": "2025-08-22",
-      "commit_index": 1463,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1937529.5450000002,
-          "cv": 2.4598139746259284,
-          "reps": 3
-        }
-      },
-      "pr": 2092,
-      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
-    },
-    {
-      "commit": "9aeab8ccbac0ca4923676c749c98d0de4718c872",
-      "date": "2025-08-24",
-      "commit_index": 1465,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1954594.8272222222,
-          "cv": 2.8276143016961806,
-          "reps": 3
-        }
-      },
-      "pr": 2538,
-      "pr_title": "Consistently use static_assert across code"
-    },
-    {
-      "commit": "06cefc181abbe458d59a0c4865670810a9cb65d3",
-      "date": "2025-08-27",
-      "commit_index": 1470,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1976059.2094444446,
-          "cv": 2.199254985377806,
-          "reps": 3
-        }
-      },
-      "pr": 2548,
-      "pr_title": "Attempt to fix sub-replica getting out of sync"
-    },
-    {
-      "commit": "39fade42d11a22d4a13beb98d6e36adaa12ecba3",
-      "date": "2025-08-29",
-      "commit_index": 1472,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1979243.174166667,
-          "cv": 2.594533204437587,
-          "reps": 3
-        }
-      },
-      "pr": 2547,
-      "pr_title": "Do not migrate function in new atomic slot migration"
-    },
-    {
       "commit": "cf90acbc6137ede7ae17fb1450c8aa19a62d163c",
       "date": "2025-08-29",
       "commit_index": 1473,
@@ -1533,34 +1505,6 @@
       "pr_title": "Fix weekly workflow to continue after failure in releases branches"
     },
     {
-      "commit": "4b5a48a36e22a885dad2140cf72fda7b64c5eb03",
-      "date": "2026-01-21",
-      "commit_index": 1695,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1995238.2786111112,
-          "cv": 2.0616368425614673,
-          "reps": 3
-        }
-      },
-      "pr": 3022,
-      "pr_title": "Fix HRANDFIELD to return null response when no field could be found"
-    },
-    {
-      "commit": "c1b4129eabca5f991ae227dd78241570c87dd245",
-      "date": "2026-01-21",
-      "commit_index": 1696,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 2008284.0494444442,
-          "cv": 3.117235033593174,
-          "reps": 3
-        }
-      },
-      "pr": 3089,
-      "pr_title": "Skip MPTCP test on platforms without MPTCP"
-    },
-    {
       "commit": "1a2ed04705d589948498ec1ceb9f657f0f9f7033",
       "date": "2026-01-21",
       "commit_index": 1697,
@@ -1601,20 +1545,6 @@
       },
       "pr": 2742,
       "pr_title": "Fix XREAD returning error on empty stream with + ID"
-    },
-    {
-      "commit": "be0a572c8b949538a1947925edf3074b53fbe7c1",
-      "date": "2026-01-23",
-      "commit_index": 1700,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1973624.245277778,
-          "cv": 4.125999406586126,
-          "reps": 3
-        }
-      },
-      "pr": 3098,
-      "pr_title": "Fix minor inconsistency in connFormatAddr size argument"
     },
     {
       "commit": "e7d004be0b8221af1e6b07ef7598b901e2d45382",
@@ -1659,20 +1589,6 @@
       "pr_title": "Instrumenting used active time metrics for I/O threads"
     },
     {
-      "commit": "928e9126172dfdfdbf4ce6ebdc65aae854c6e79e",
-      "date": "2026-01-27",
-      "commit_index": 1709,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 2004018.0166666666,
-          "cv": 3.1166808040991945,
-          "reps": 3
-        }
-      },
-      "pr": 3117,
-      "pr_title": "remove unneeded include of expire.h"
-    },
-    {
       "commit": "1fd6d7156fbf438f471a680fbc7e5b6b087167be",
       "date": "2026-01-28",
       "commit_index": 1714,
@@ -1685,34 +1601,6 @@
       },
       "pr": 2928,
       "pr_title": "decouple lru/lfu from server.h"
-    },
-    {
-      "commit": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
-      "date": "2026-01-29",
-      "commit_index": 1715,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1947753.160555555,
-          "cv": 2.7314870578210257,
-          "reps": 3
-        }
-      },
-      "pr": 2867,
-      "pr_title": "Optimize skiplist query efficiency by embedding the skiplist header"
-    },
-    {
-      "commit": "8a9c3717d13e7857b19a792058f9075f045868f4",
-      "date": "2026-01-29",
-      "commit_index": 1716,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1962298.607222222,
-          "cv": 3.020510663035986,
-          "reps": 3
-        }
-      },
-      "pr": 3067,
-      "pr_title": "Don't exit the process when locale-collate fails to be set from env during startup"
     },
     {
       "commit": "1cc268de9fad8e9ed363e2de9e782393418bf697",
@@ -1729,34 +1617,6 @@
       "pr_title": "Fix mixup of reply-larger-than and request-larger-than"
     },
     {
-      "commit": "fd1438063927d0d3d2d8c9018011d8f7bcda47c3",
-      "date": "2026-01-29",
-      "commit_index": 1719,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 2001690.545277778,
-          "cv": 2.399416530725466,
-          "reps": 3
-        }
-      },
-      "pr": 3001,
-      "pr_title": "HSETEX - Always issue keyspace notifications after validation"
-    },
-    {
-      "commit": "b8650a5a31ad80b65f42fd37652a304c8020caef",
-      "date": "2026-01-29",
-      "commit_index": 1720,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1979786.3122222223,
-          "cv": 3.0747057790948817,
-          "reps": 3
-        }
-      },
-      "pr": 3123,
-      "pr_title": "Fix Lua Module Build For MacOS Compatibility"
-    },
-    {
       "commit": "f5b0360fae0f8a8f135631636b1a569884791a57",
       "date": "2026-01-30",
       "commit_index": 1722,
@@ -1769,20 +1629,6 @@
       },
       "pr": 3134,
       "pr_title": "Add waits in test-ubuntu-reclaim-cache"
-    },
-    {
-      "commit": "9e0303bc53c61b9d9e48fe5f14a640287888fe54",
-      "date": "2026-01-30",
-      "commit_index": 1724,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 2003831.6727777778,
-          "cv": 2.915960758317625,
-          "reps": 3
-        }
-      },
-      "pr": 3137,
-      "pr_title": "Revert #3088"
     },
     {
       "commit": "eabfe235d2b522f0aded9a6139f16c4f5deeed93",
@@ -1813,20 +1659,6 @@
       "pr_title": "Extend hashtableGetStatsMsg to always show empty table and rehash index"
     },
     {
-      "commit": "3ea5cb39898bce6f8073a2dd2efbc4d43c9dbcaf",
-      "date": "2026-02-02",
-      "commit_index": 1727,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1967083.0194444444,
-          "cv": 3.969045155444484,
-          "reps": 3
-        }
-      },
-      "pr": 3145,
-      "pr_title": "CI: Stop using symlinks for tests with CMake"
-    },
-    {
       "commit": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
       "date": "2026-02-03",
       "commit_index": 1728,
@@ -1855,62 +1687,6 @@
       "pr_title": "Skip flaky test cases in client-eviction.tcl when in TLS mode"
     },
     {
-      "commit": "8ed270f443701b0a737d37c3ecb026d7559ecaaa",
-      "date": "2026-02-04",
-      "commit_index": 1730,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1990084.2375,
-          "cv": 2.9061197509671644,
-          "reps": 3
-        }
-      },
-      "pr": 3144,
-      "pr_title": "Optimize SREM/ZREM/HDEL to pause auto shrink when deleting multiple items"
-    },
-    {
-      "commit": "e4804d50ff266f832949e6ab5b118c5a1a96368e",
-      "date": "2026-02-03",
-      "commit_index": 1731,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1983146.6041666665,
-          "cv": 2.2587266081090287,
-          "reps": 3
-        }
-      },
-      "pr": 2913,
-      "pr_title": "Add server side TLS certificate expiry tracking and INFO telemetry"
-    },
-    {
-      "commit": "5d7d542499ca481f3b9691334e123b36feff397c",
-      "date": "2026-02-04",
-      "commit_index": 1732,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1951622.3874999995,
-          "cv": 3.030500561022566,
-          "reps": 3
-        }
-      },
-      "pr": 2839,
-      "pr_title": "Add cache for COMMAND"
-    },
-    {
-      "commit": "9f374e15848d7b070cdd58a071a741c0a59a6c75",
-      "date": "2026-02-04",
-      "commit_index": 1733,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1942621.5238888888,
-          "cv": 2.0955356248284427,
-          "reps": 3
-        }
-      },
-      "pr": 3154,
-      "pr_title": "Skips the internal clients from logresreq checks"
-    },
-    {
       "commit": "666472c7628158050810a85fec1da7bcf45c8ae0",
       "date": "2026-02-05",
       "commit_index": 1735,
@@ -1923,48 +1699,6 @@
       },
       "pr": 3155,
       "pr_title": "Fix arr bound err in test-sanitizer-undefined (gcc)"
-    },
-    {
-      "commit": "dbdc3d9c6bce50a4d50396fd672bf43160762db5",
-      "date": "2026-02-08",
-      "commit_index": 1739,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1963835.5616666665,
-          "cv": 2.6324234872873853,
-          "reps": 3
-        }
-      },
-      "pr": 3069,
-      "pr_title": "Extend test helper wait_for_cluster_propagation to support ignoring certain node"
-    },
-    {
-      "commit": "cb3195e0b8b78afdc8e7e7abd338bf9f1ade1405",
-      "date": "2026-02-09",
-      "commit_index": 1743,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1989959.2574999998,
-          "cv": 2.5355652242448654,
-          "reps": 3
-        }
-      },
-      "pr": 3138,
-      "pr_title": "test: add valgrind:skip tag to automatically skip tests under valgrind"
-    },
-    {
-      "commit": "fde31b08f7b00ed0bc1bb153e7a315ff435270f2",
-      "date": "2026-02-15",
-      "commit_index": 1760,
-      "results": {
-        "GET_16B_t1_p1": {
-          "rps": 1978712.3166666667,
-          "cv": 2.3804572935925905,
-          "reps": 3
-        }
-      },
-      "pr": 3201,
-      "pr_title": "Optimize endian conversion functions"
     },
     {
       "commit": "604dcdb00df81dacf2520ac85fe1c53897fe2baf",
@@ -2082,28 +1816,12 @@
       "pr_title": "Introduce atomic slot migration"
     },
     {
-      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
-      "delta": 0.5438,
-      "workload": "GET_16B_t1_p1",
-      "type": "improvement",
-      "pr": 2092,
-      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
-    },
-    {
       "commit": "88cd2086aef25183ae0c5fb8bc154d8206dd07f1",
       "delta": -0.046,
       "workload": "GET_16B_t1_p1",
       "type": "regression",
       "pr": 2494,
       "pr_title": "Split SLOT_EXPORT_AUTHENTICATING into SEND and READ to avoid synchronous reading of auth response"
-    },
-    {
-      "commit": "4b5a48a36e22a885dad2140cf72fda7b64c5eb03",
-      "delta": 0.0271,
-      "workload": "GET_16B_t1_p1",
-      "type": "improvement",
-      "pr": 3022,
-      "pr_title": "Fix HRANDFIELD to return null response when no field could be found"
     },
     {
       "commit": "231a9e731ede9055a9b57861051a596a0a5f82f7",
@@ -2114,44 +1832,12 @@
       "pr_title": "Fix XREAD returning error on empty stream with + ID"
     },
     {
-      "commit": "928e9126172dfdfdbf4ce6ebdc65aae854c6e79e",
-      "delta": 0.0441,
-      "workload": "GET_16B_t1_p1",
-      "type": "improvement",
-      "pr": 3117,
-      "pr_title": "remove unneeded include of expire.h"
-    },
-    {
-      "commit": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
-      "delta": -0.0371,
-      "workload": "GET_16B_t1_p1",
-      "type": "regression",
-      "pr": 2867,
-      "pr_title": "Optimize skiplist query efficiency by embedding the skiplist header"
-    },
-    {
-      "commit": "fd1438063927d0d3d2d8c9018011d8f7bcda47c3",
-      "delta": 0.0265,
-      "workload": "GET_16B_t1_p1",
-      "type": "improvement",
-      "pr": 3001,
-      "pr_title": "HSETEX - Always issue keyspace notifications after validation"
-    },
-    {
       "commit": "cfbe0937fb3b275e735a061c811f07482cdf7904",
       "delta": 0.0293,
       "workload": "GET_16B_t1_p1",
       "type": "improvement",
       "pr": 3142,
       "pr_title": "Extend hashtableGetStatsMsg to always show empty table and rehash index"
-    },
-    {
-      "commit": "8ed270f443701b0a737d37c3ecb026d7559ecaaa",
-      "delta": 0.0296,
-      "workload": "GET_16B_t1_p1",
-      "type": "improvement",
-      "pr": 3144,
-      "pr_title": "Optimize SREM/ZREM/HDEL to pause auto shrink when deleting multiple items"
     }
   ]
 }
