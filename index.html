@@ -81,7 +81,7 @@
 
     async function loadPlatform(platform) {
       try {
-        const resp = await fetch(`data/series-${platform}.json`);
+        const resp = await fetch(`data/series-${platform}-throughput.json`);
         if (!resp.ok) return null;
         return await resp.json();
       } catch { return null; }
