@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-23T21:31:34.936501Z",
+  "timestamp": "2026-05-23T21:34:43.782520Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 2523523,
@@ -7,33 +7,43 @@
     "uptime_hours": 494218.7
   },
   "current_task": {
-    "id": "2026.05.23_21.27.26.534084",
+    "id": "2026.05.23_21.34.23.023066",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 67.3,
-    "elapsed_sec": 248,
-    "steps": "165/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 21,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.23_21.27.26.534084",
+        "id": "2026.05.23_21.34.23.023066",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 53.2% improvement between ac515159 and 682fc0b4",
+        "note": "[sweep] Bisecting 57.6% improvement between ac515159 and 3086e61d",
         "source": "valkey",
-        "specifier": "3086e61d4b06a81602fc74163eb7d4eb6b6bfe41"
+        "specifier": "9aeab8ccbac0ca4923676c749c98d0de4718c872"
       },
       {
-        "id": "2026.05.23_21.27.26.544507",
+        "id": "2026.05.23_21.34.23.033674",
         "type": "MemTaskData",
-        "note": "[memory-sweep] Release Valkey created",
+        "note": "[memory-sweep] Release 7.2.4",
         "source": "valkey",
-        "specifier": "2b8cde71bb553713cf93794a0fb30a1618c0c955"
+        "specifier": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.23_21.27.26.534084",
+      "method": "perf-get",
+      "score": 1978426.1182142857,
+      "commit": "3086e61d",
+      "source": "valkey",
+      "specifier": "3086e61d4b06a81602fc74163eb7d4eb6b6bfe41",
+      "note": "[sweep] Bisecting 53.2% improvement between ac515159 and 682fc0b4",
+      "completed": "2026.05.23_21.33.12.495656"
+    },
     {
       "task_id": "2026.05.23_17.57.43.281867",
       "method": "mem-set",
@@ -73,17 +83,7 @@
       "specifier": "38632278fd06fe186f7707e4fa099f666d805547",
       "note": "[sweep] Bisecting 3.2% regression between bad33f87 and ee107481",
       "completed": "2026.05.23_17.39.13.015739"
-    },
-    {
-      "task_id": "2026.05.23_17.29.06.559753",
-      "method": "mem-set",
-      "score": 84.1474896,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "efa8ba519b2d54f68fe05d03cac5b0d5352400ad",
-      "note": "[memory-sweep] Backfill: 59 commits in gap",
-      "completed": "2026.05.23_17.35.46.917210"
     }
   ],
-  "eta_minutes": 7.0
+  "eta_minutes": 7.5
 }
