@@ -4,7 +4,7 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "GET_16B_t1_p1",
-    "generated": "2026-05-23T00:03:16.442925+00:00"
+    "generated": "2026-05-23T03:38:06.424673+00:00"
   },
   "workloads": [
     "GET_16B_t1_p1"
@@ -24,6 +24,58 @@
       "pr_title": "Update replica version comparison to handle version 8 RC candidates"
     },
     {
+      "commit": "5d458c62925f4c5d6eba1788447a1bf6d9d6380f",
+      "date": "2024-08-31",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1125225.8419444442,
+          "cv": 0.246975752859127,
+          "reps": 3
+        }
+      },
+      "pr": 973,
+      "pr_title": "Delete unused parts of zipmap"
+    },
+    {
+      "commit": "f504cf233bd08d56b1aa4af6c1ef3a2b4aa0ac60",
+      "date": "2024-09-10",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1138848.2266666668,
+          "cv": 1.309408128406392,
+          "reps": 3
+        }
+      },
+      "pr": 1004,
+      "pr_title": "add assertion for kvstore's dictType"
+    },
+    {
+      "commit": "fa348e2e59700244e60df2edeb1219f2989e0284",
+      "date": "2024-09-11",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1145435.193888889,
+          "cv": 0.7053947798410083,
+          "reps": 3
+        }
+      },
+      "pr": 995,
+      "pr_title": "Optimize the per slot dictionary by checking for cluster mode earlier"
+    },
+    {
+      "commit": "dcc7678fc4d4b7b26e79b76489d37a93064420c3",
+      "date": "2024-09-14",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1156170.0894444447,
+          "cv": 0.5529029032210867,
+          "reps": 3
+        }
+      },
+      "pr": 981,
+      "pr_title": "Fix replica unable trigger migration when it received CLUSTER SETSLOT in advance"
+    },
+    {
       "commit": "150c197bdd5f5474671cc7705b62be799c6f6e4c",
       "date": "2024-10-02",
       "results": {
@@ -35,6 +87,84 @@
       },
       "pr": 1115,
       "pr_title": "Apply CVE patches for CVE-2024-31449, CVE-2024-31227, CVE-2024-31228"
+    },
+    {
+      "commit": "1c18c8084451153c468e3224f31da43ff6fbd615",
+      "date": "2024-11-07",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1167847.2358333333,
+          "cv": 0.7177605959923404,
+          "reps": 3
+        }
+      },
+      "pr": 1255,
+      "pr_title": "Fix incorrect cache_memory reset in functionsLibCtxClear"
+    },
+    {
+      "commit": "43b50261620fe813015a8f88717b46876c7e3f83",
+      "date": "2024-11-22",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1170072.0466666666,
+          "cv": 0.8791662739826256,
+          "reps": 3
+        }
+      },
+      "pr": 1253,
+      "pr_title": "Fix argument types of formatting functions"
+    },
+    {
+      "commit": "377ed22c971878b29b6d2c2c582198f2629f82ed",
+      "date": "2024-11-21",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1176633.7730555553,
+          "cv": 1.2681678711871551,
+          "reps": 3
+        }
+      },
+      "pr": 971,
+      "pr_title": "[feat] add Ubuntu 24.04 Noble package support"
+    },
+    {
+      "commit": "b9d224097a46dbe62ec0857cb91e7c67505a200e",
+      "date": "2024-11-23",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1189187.076944444,
+          "cv": 0.546157192348654,
+          "reps": 3
+        }
+      },
+      "pr": 1295,
+      "pr_title": "Brocast a PONG to all node in cluster when role changed"
+    },
+    {
+      "commit": "c4920bca4a6681b2ba652e4dc52b72fe47db516a",
+      "date": "2024-11-25",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1193490.8783333336,
+          "cv": 0.537243228788834,
+          "reps": 3
+        }
+      },
+      "pr": 1260,
+      "pr_title": "Integrating fast_float to optionally replace strtod"
+    },
+    {
+      "commit": "a939cb88ee0c0512c003106be483b7c6968b3e7f",
+      "date": "2024-11-28",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1192567.1630555554,
+          "cv": 1.0187264062879942,
+          "reps": 3
+        }
+      },
+      "pr": 1368,
+      "pr_title": "Handle keyIsExpiredWithDictIndex to make it check for import mode"
     },
     {
       "commit": "a2fe6af457e353425d39c858b8cf68f1b4d6a9b7",
@@ -69,6 +199,30 @@
         "GET_16B_t1_p1": {
           "rps": 1195603.4597222225,
           "cv": 0.5737503782618084,
+          "reps": 3
+        }
+      }
+    },
+    {
+      "commit": "4efff42f041733d786a73f1cdfa65f6e04c3c4b8",
+      "date": "2024-11-18",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1201151.7650000001,
+          "cv": 0.4990823285119982,
+          "reps": 3
+        }
+      },
+      "pr": 1065,
+      "pr_title": "Replace dict with hashtable in command tables"
+    },
+    {
+      "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
+      "date": "2024-09-11",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1333729.9833333334,
+          "cv": 0.5318172470250534,
           "reps": 3
         }
       }
@@ -113,6 +267,58 @@
       "pr_title": "Fix Read/Write key pattern selector (CVE-2024-51741)"
     },
     {
+      "commit": "2d0b8e360847146fa43a8463773dde8125187fa7",
+      "date": "2025-01-16",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1363508.4330555554,
+          "cv": 0.19469384597756892,
+          "reps": 3
+        }
+      },
+      "pr": 1561,
+      "pr_title": "Update comments and log message in cluster_legacy.c"
+    },
+    {
+      "commit": "99ed308817286fd980a987f877ffa4df197f03a4",
+      "date": "2025-01-23",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1344910.147839761,
+          "cv": 0.21431251462613898,
+          "reps": 3
+        }
+      },
+      "pr": 1371,
+      "pr_title": "Add cross-version test framework (and a simple test)"
+    },
+    {
+      "commit": "66577573f207313b8998f4e0e81e32740adf5d6b",
+      "date": "2025-01-27",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1328289.270833333,
+          "cv": 0.6115522502509243,
+          "reps": 3
+        }
+      },
+      "pr": 1617,
+      "pr_title": "Test coverage for COMMANDLOG HELP"
+    },
+    {
+      "commit": "4b8f3ed9acf3103349b6368407fc48bef55b3327",
+      "date": "2025-01-30",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1313262.980110193,
+          "cv": 0.11451258185147412,
+          "reps": 3
+        }
+      },
+      "pr": 1614,
+      "pr_title": "Do command existence and arity checks when loading AOF to avoid crash"
+    },
+    {
       "commit": "da3f1c6144cf3e748545adc13fe607bcdf96609f",
       "date": "2025-02-06",
       "results": {
@@ -124,6 +330,32 @@
       },
       "pr": 1564,
       "pr_title": "Add paused_reason to INFO CLIENTS"
+    },
+    {
+      "commit": "3efe8419ec98aeb41abf5897501e5fb24100e126",
+      "date": "2025-03-05",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1299547.8161111113,
+          "cv": 0.5203160148360696,
+          "reps": 3
+        }
+      },
+      "pr": 1815,
+      "pr_title": "Fix timing issue in the module propagate test"
+    },
+    {
+      "commit": "5f5ad43ebbc1075a51143de2429a562f6b82b94a",
+      "date": "2025-04-08",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1278796.0052777776,
+          "cv": 0.5932546662041355,
+          "reps": 3
+        }
+      },
+      "pr": 1932,
+      "pr_title": "Fix random-key CI failure: key may expire before CLIENT PAUSE"
     },
     {
       "commit": "25ef0b3aff50864eba89f4ca6d8b56f8ff07690c",
@@ -139,6 +371,71 @@
       "pr_title": "CI build-macos version from macOS 14 to macOS 15"
     },
     {
+      "commit": "4aaaf88337e14365ff56dcc75131af20d150ae93",
+      "date": "2025-05-28",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1281717.6338888889,
+          "cv": 0.839720032982278,
+          "reps": 3
+        }
+      },
+      "pr": 2033,
+      "pr_title": "Allow dynamic modification of io-threads num"
+    },
+    {
+      "commit": "5699c8c05a207dd2590aa37843a60b2131f3a2da",
+      "date": "2025-06-03",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1267062.5694444445,
+          "cv": 1.003228997377331,
+          "reps": 3
+        }
+      },
+      "pr": 2129,
+      "pr_title": "Combine range element ranks calculation with range elements search to improve zcount performance"
+    },
+    {
+      "commit": "838ba44cd65b15822f4136a4aed33cc13caa4cae",
+      "date": "2025-06-08",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1258153.2258333333,
+          "cv": 0.7855329514068288,
+          "reps": 3
+        }
+      },
+      "pr": 2078,
+      "pr_title": "Reply Copy Avoidance"
+    },
+    {
+      "commit": "5cc2b2575300f09c004bf73f0a5f69ed1775c00c",
+      "date": "2025-06-10",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1245666.0397222224,
+          "cv": 1.8658690507489695,
+          "reps": 3
+        }
+      },
+      "pr": 2186,
+      "pr_title": "Fix cluster myself CLUSTER SLOTS/NODES wrong port after updating port/tls-port"
+    },
+    {
+      "commit": "ceb09b0a9df8a72e544d4837cf6c27221c6f15c8",
+      "date": "2025-06-18",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1252489.3263888888,
+          "cv": 1.578388716919941,
+          "reps": 3
+        }
+      },
+      "pr": 2226,
+      "pr_title": "Reset failover failed primary rank when doing a manual failover"
+    },
+    {
       "commit": "61b63ab989973412c9173a42c91651b079a18f72",
       "date": "2025-07-03",
       "results": {
@@ -152,6 +449,84 @@
       "pr_title": "[valkey-benchmark] Allow multiple random (or sequential) placeholders and fix zadd --sequential to create expected data"
     },
     {
+      "commit": "8df8c84ffe45194d1763d0262d565c3113c8e40c",
+      "date": "2025-07-30",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1246502.028888889,
+          "cv": 0.9370836100222056,
+          "reps": 3
+        }
+      },
+      "pr": 2397,
+      "pr_title": "Same number of hyphens for summary output"
+    },
+    {
+      "commit": "b7fe0b6435efbe584dd5d3063aca47554edd6e4b",
+      "date": "2025-08-05",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1245210.6936111113,
+          "cv": 0.3864118150272995,
+          "reps": 3
+        }
+      },
+      "pr": 2418,
+      "pr_title": "Strengthen undefined behavior prevention in checkSignedBitfieldOverflow"
+    },
+    {
+      "commit": "33a43f2a8a66d751b88bce83f5f6bc9921b9dcb7",
+      "date": "2025-08-05",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1254896.03,
+          "cv": 0.6428063681372268,
+          "reps": 3
+        }
+      },
+      "pr": 2422,
+      "pr_title": "bump the RDB version for Valkey 9.0"
+    },
+    {
+      "commit": "ba7334c7c61abd854109f1d19f807098e5f22cb1",
+      "date": "2025-08-06",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1242314.3761111111,
+          "cv": 0.05478762975424801,
+          "reps": 3
+        }
+      },
+      "pr": 2436,
+      "pr_title": "Fix hfe no malloc size unit"
+    },
+    {
+      "commit": "fd8270a0aab6c15058997a0e8436c9682dac2036",
+      "date": "2025-08-06",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1258824.8291666666,
+          "cv": 0.7734550001893188,
+          "reps": 3
+        }
+      },
+      "pr": 2347,
+      "pr_title": "[CRASH] Fix missing check for executing client"
+    },
+    {
+      "commit": "094c80b9cedac7a63cb10ed7ec0ebdf439132b8c",
+      "date": "2025-08-07",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1281739.7086111112,
+          "cv": 1.1245106549193364,
+          "reps": 3
+        }
+      },
+      "pr": 2437,
+      "pr_title": "Print error context when test fails"
+    },
+    {
       "commit": "de7bb614f1843cebd8fdaf49fdaa29de895519e7",
       "date": "2025-08-08",
       "results": {
@@ -163,6 +538,123 @@
       },
       "pr": 2453,
       "pr_title": "Fix expectations for manual failover tests"
+    },
+    {
+      "commit": "ecca21331117d38c9eadbbccf5c80c34cb11ec53",
+      "date": "2025-08-11",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1265824.3208333338,
+          "cv": 1.4806136370642016,
+          "reps": 3
+        }
+      },
+      "pr": 2464,
+      "pr_title": "Fix out-of-bound memory access when num-fields is not provided"
+    },
+    {
+      "commit": "a89e529932b8106010b1b8faedc974ff3fbc89ad",
+      "date": "2025-08-11",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1267032.7330555555,
+          "cv": 1.2424066309068196,
+          "reps": 3
+        }
+      },
+      "pr": 2274,
+      "pr_title": "Redact user data when hide-user-data-from-log enabled"
+    },
+    {
+      "commit": "725c3608f0676aee50a83e1e33f98ed6538220aa",
+      "date": "2025-08-11",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1261290.4244444445,
+          "cv": 1.5674647878452488,
+          "reps": 3
+        }
+      },
+      "pr": 2469,
+      "pr_title": "Throw a useful error when underlying operations failed with tls"
+    },
+    {
+      "commit": "d7993b78d82d9c9d2f9298159acd8f5a2fc997d4",
+      "date": "2025-08-11",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1224732.5088888889,
+          "cv": 1.8070453212921185,
+          "reps": 3
+        }
+      },
+      "pr": 1949,
+      "pr_title": "Introduce atomic slot migration"
+    },
+    {
+      "commit": "c93b2971e6780a8f4c427752b9be1443a0f52d6a",
+      "date": "2025-08-13",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1216703.6369444446,
+          "cv": 1.166320375968085,
+          "reps": 3
+        }
+      },
+      "pr": 2474,
+      "pr_title": "Increment expired_fields stat when assigned TTL is in the past"
+    },
+    {
+      "commit": "287fbcce335274a1a1f3d1908cbbe8e8200ba47e",
+      "date": "2025-08-14",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1206853.098888889,
+          "cv": 1.359469430371862,
+          "reps": 3
+        }
+      },
+      "pr": 2485,
+      "pr_title": "Fixing Slot Migration Test Failure"
+    },
+    {
+      "commit": "aefed3d363d1c7d7cb391d3f605484c78c9a88f2",
+      "date": "2025-08-15",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1219742.2783333336,
+          "cv": 0.5186428272675876,
+          "reps": 3
+        }
+      },
+      "pr": 2465,
+      "pr_title": "Don't allow resize hashtable if rehashing is ongoing"
+    },
+    {
+      "commit": "e7bb2354da5c7c0b4f2135173ec00097178eec93",
+      "date": "2025-08-16",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1225821.715277778,
+          "cv": 0.8057877859860958,
+          "reps": 3
+        }
+      },
+      "pr": 2490,
+      "pr_title": "Don't call SSL_write() with num=0"
+    },
+    {
+      "commit": "4a120217075c5ca4bacbeb13db6fdfe9df9e321e",
+      "date": "2025-08-18",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1234272.745833333,
+          "cv": 0.41452778698064824,
+          "reps": 3
+        }
+      },
+      "pr": 2502,
+      "pr_title": "Fix memory leak in rdbLoadObject when loading a wrong HFE"
     },
     {
       "commit": "c8548f65d23725bcd70b92f4e06844274a940f40",
@@ -241,6 +733,58 @@
       "pr_title": "Consistently use static_assert across code"
     },
     {
+      "commit": "06cefc181abbe458d59a0c4865670810a9cb65d3",
+      "date": "2025-08-27",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1976059.2094444446,
+          "cv": 2.199254985377806,
+          "reps": 3
+        }
+      },
+      "pr": 2548,
+      "pr_title": "Attempt to fix sub-replica getting out of sync"
+    },
+    {
+      "commit": "39fade42d11a22d4a13beb98d6e36adaa12ecba3",
+      "date": "2025-08-29",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1979243.174166667,
+          "cv": 2.594533204437587,
+          "reps": 3
+        }
+      },
+      "pr": 2547,
+      "pr_title": "Do not migrate function in new atomic slot migration"
+    },
+    {
+      "commit": "cf90acbc6137ede7ae17fb1450c8aa19a62d163c",
+      "date": "2025-08-29",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 2018549.6224999998,
+          "cv": 0.34982301588795917,
+          "reps": 3
+        }
+      },
+      "pr": 2554,
+      "pr_title": "Correct path to gen-test-certs.sh in README.md"
+    },
+    {
+      "commit": "88cd2086aef25183ae0c5fb8bc154d8206dd07f1",
+      "date": "2025-08-29",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1925632.6466666667,
+          "cv": 0.3243266193512805,
+          "reps": 3
+        }
+      },
+      "pr": 2494,
+      "pr_title": "Split SLOT_EXPORT_AUTHENTICATING into SEND and READ to avoid synchronous reading of auth response"
+    },
+    {
       "commit": "5ccedafe3ff3895f73ef69084e9cdf042750d0f8",
       "date": "2025-09-02",
       "results": {
@@ -252,6 +796,435 @@
       },
       "pr": 2574,
       "pr_title": "Delete the previous comment explaining why changed latency from 5 to 40"
+    },
+    {
+      "commit": "04d0bba398afe056a7a269ae46a81da574020ada",
+      "date": "2025-12-05",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1941033.7941666672,
+          "cv": 0.32450428815220267,
+          "reps": 3
+        }
+      },
+      "pr": 2876,
+      "pr_title": "support whole cluster info for INFO command in cluster section"
+    },
+    {
+      "commit": "62c303fd549cf914f738998ef874132c7c7247ab",
+      "date": "2026-01-20",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1922659.688888889,
+          "cv": 0.7535244767576612,
+          "reps": 3
+        }
+      },
+      "pr": 3076,
+      "pr_title": "Add copilot review instructions"
+    },
+    {
+      "commit": "951d942ab20178b89c07420f8f4c13ae7a764749",
+      "date": "2026-01-20",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1942663.4394444446,
+          "cv": 1.989127176879538,
+          "reps": 3
+        }
+      },
+      "pr": 3082,
+      "pr_title": "Fix weekly workflow to continue after failure in releases branches"
+    },
+    {
+      "commit": "4b5a48a36e22a885dad2140cf72fda7b64c5eb03",
+      "date": "2026-01-21",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1995238.2786111112,
+          "cv": 2.0616368425614673,
+          "reps": 3
+        }
+      },
+      "pr": 3022,
+      "pr_title": "Fix HRANDFIELD to return null response when no field could be found"
+    },
+    {
+      "commit": "c1b4129eabca5f991ae227dd78241570c87dd245",
+      "date": "2026-01-21",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 2008284.0494444442,
+          "cv": 3.117235033593174,
+          "reps": 3
+        }
+      },
+      "pr": 3089,
+      "pr_title": "Skip MPTCP test on platforms without MPTCP"
+    },
+    {
+      "commit": "1a2ed04705d589948498ec1ceb9f657f0f9f7033",
+      "date": "2026-01-21",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1964619.4866666663,
+          "cv": 1.5412001661617796,
+          "reps": 3
+        }
+      },
+      "pr": 3092,
+      "pr_title": "Fixes run-extra-tests workflow to run on the PR commit instead of unstable"
+    },
+    {
+      "commit": "2e2eb418f97ee8ac0dcccd1d5d790697bd0fa43e",
+      "date": "2026-01-22",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1927190.481111111,
+          "cv": 0.6792503146335929,
+          "reps": 3
+        }
+      },
+      "pr": 3088,
+      "pr_title": "Fix the memory leak in the VM_GetCommandKeysWithFlags function"
+    },
+    {
+      "commit": "231a9e731ede9055a9b57861051a596a0a5f82f7",
+      "date": "2026-01-22",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 2021556.5066666668,
+          "cv": 1.5247337926752729,
+          "reps": 3
+        }
+      },
+      "pr": 2742,
+      "pr_title": "Fix XREAD returning error on empty stream with + ID"
+    },
+    {
+      "commit": "be0a572c8b949538a1947925edf3074b53fbe7c1",
+      "date": "2026-01-23",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1973624.245277778,
+          "cv": 4.125999406586126,
+          "reps": 3
+        }
+      },
+      "pr": 3098,
+      "pr_title": "Fix minor inconsistency in connFormatAddr size argument"
+    },
+    {
+      "commit": "e7d004be0b8221af1e6b07ef7598b901e2d45382",
+      "date": "2026-01-25",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1953753.1424999998,
+          "cv": 1.8197188834894764,
+          "reps": 3
+        }
+      },
+      "pr": 3107,
+      "pr_title": "Comment cleanup around entry.c file"
+    },
+    {
+      "commit": "985cf836ac13e7366f938aa9a4e7a309d83733da",
+      "date": "2026-01-26",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1931002.4077777779,
+          "cv": 1.0524122977096775,
+          "reps": 3
+        }
+      },
+      "pr": 3086,
+      "pr_title": "Perf: Track net bytes only if commandlog-request-larger-than != -1"
+    },
+    {
+      "commit": "4ad7628d05c87ae69996939fb5cbfa2fd899c478",
+      "date": "2026-01-26",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1919418.0597222222,
+          "cv": 0.4825229015035669,
+          "reps": 3
+        }
+      },
+      "pr": 2463,
+      "pr_title": "Instrumenting used active time metrics for I/O threads"
+    },
+    {
+      "commit": "928e9126172dfdfdbf4ce6ebdc65aae854c6e79e",
+      "date": "2026-01-27",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 2004018.0166666666,
+          "cv": 3.1166808040991945,
+          "reps": 3
+        }
+      },
+      "pr": 3117,
+      "pr_title": "remove unneeded include of expire.h"
+    },
+    {
+      "commit": "1fd6d7156fbf438f471a680fbc7e5b6b087167be",
+      "date": "2026-01-28",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 2022738.1236111112,
+          "cv": 0.6079507226206162,
+          "reps": 3
+        }
+      },
+      "pr": 2928,
+      "pr_title": "decouple lru/lfu from server.h"
+    },
+    {
+      "commit": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
+      "date": "2026-01-29",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1947753.160555555,
+          "cv": 2.7314870578210257,
+          "reps": 3
+        }
+      },
+      "pr": 2867,
+      "pr_title": "Optimize skiplist query efficiency by embedding the skiplist header"
+    },
+    {
+      "commit": "8a9c3717d13e7857b19a792058f9075f045868f4",
+      "date": "2026-01-29",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1962298.607222222,
+          "cv": 3.020510663035986,
+          "reps": 3
+        }
+      },
+      "pr": 3067,
+      "pr_title": "Don't exit the process when locale-collate fails to be set from env during startup"
+    },
+    {
+      "commit": "1cc268de9fad8e9ed363e2de9e782393418bf697",
+      "date": "2026-01-29",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1949977.0108333332,
+          "cv": 0.9532683517001083,
+          "reps": 3
+        }
+      },
+      "pr": 3126,
+      "pr_title": "Fix mixup of reply-larger-than and request-larger-than"
+    },
+    {
+      "commit": "fd1438063927d0d3d2d8c9018011d8f7bcda47c3",
+      "date": "2026-01-29",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 2001690.545277778,
+          "cv": 2.399416530725466,
+          "reps": 3
+        }
+      },
+      "pr": 3001,
+      "pr_title": "HSETEX - Always issue keyspace notifications after validation"
+    },
+    {
+      "commit": "b8650a5a31ad80b65f42fd37652a304c8020caef",
+      "date": "2026-01-29",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1979786.3122222223,
+          "cv": 3.0747057790948817,
+          "reps": 3
+        }
+      },
+      "pr": 3123,
+      "pr_title": "Fix Lua Module Build For MacOS Compatibility"
+    },
+    {
+      "commit": "f5b0360fae0f8a8f135631636b1a569884791a57",
+      "date": "2026-01-30",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 2000061.1883333332,
+          "cv": 1.2793394565160425,
+          "reps": 3
+        }
+      },
+      "pr": 3134,
+      "pr_title": "Add waits in test-ubuntu-reclaim-cache"
+    },
+    {
+      "commit": "9e0303bc53c61b9d9e48fe5f14a640287888fe54",
+      "date": "2026-01-30",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 2003831.6727777778,
+          "cv": 2.915960758317625,
+          "reps": 3
+        }
+      },
+      "pr": 3137,
+      "pr_title": "Revert #3088"
+    },
+    {
+      "commit": "eabfe235d2b522f0aded9a6139f16c4f5deeed93",
+      "date": "2026-02-01",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1977903.5775000006,
+          "cv": 1.2871943242280544,
+          "reps": 3
+        }
+      },
+      "pr": 3116,
+      "pr_title": "Check expiration time first before lookup the key in GETEX command"
+    },
+    {
+      "commit": "cfbe0937fb3b275e735a061c811f07482cdf7904",
+      "date": "2026-02-02",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 2035806.1205555557,
+          "cv": 0.29034525192789584,
+          "reps": 3
+        }
+      },
+      "pr": 3142,
+      "pr_title": "Extend hashtableGetStatsMsg to always show empty table and rehash index"
+    },
+    {
+      "commit": "3ea5cb39898bce6f8073a2dd2efbc4d43c9dbcaf",
+      "date": "2026-02-02",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1967083.0194444444,
+          "cv": 3.969045155444484,
+          "reps": 3
+        }
+      },
+      "pr": 3145,
+      "pr_title": "CI: Stop using symlinks for tests with CMake"
+    },
+    {
+      "commit": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
+      "date": "2026-02-03",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1938203.4502777774,
+          "cv": 1.512305947897106,
+          "reps": 3
+        }
+      },
+      "pr": 3141,
+      "pr_title": "Optimize rehash completion check for empty hash table"
+    },
+    {
+      "commit": "d64f2072efd80e760e53351e8fab1e1ce1320975",
+      "date": "2026-02-03",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1932865.924722222,
+          "cv": 1.358953167611548,
+          "reps": 3
+        }
+      },
+      "pr": 3151,
+      "pr_title": "Skip flaky test cases in client-eviction.tcl when in TLS mode"
+    },
+    {
+      "commit": "8ed270f443701b0a737d37c3ecb026d7559ecaaa",
+      "date": "2026-02-04",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1990084.2375,
+          "cv": 2.9061197509671644,
+          "reps": 3
+        }
+      },
+      "pr": 3144,
+      "pr_title": "Optimize SREM/ZREM/HDEL to pause auto shrink when deleting multiple items"
+    },
+    {
+      "commit": "e4804d50ff266f832949e6ab5b118c5a1a96368e",
+      "date": "2026-02-03",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1983146.6041666665,
+          "cv": 2.2587266081090287,
+          "reps": 3
+        }
+      },
+      "pr": 2913,
+      "pr_title": "Add server side TLS certificate expiry tracking and INFO telemetry"
+    },
+    {
+      "commit": "5d7d542499ca481f3b9691334e123b36feff397c",
+      "date": "2026-02-04",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1951622.3874999995,
+          "cv": 3.030500561022566,
+          "reps": 3
+        }
+      },
+      "pr": 2839,
+      "pr_title": "Add cache for COMMAND"
+    },
+    {
+      "commit": "9f374e15848d7b070cdd58a071a741c0a59a6c75",
+      "date": "2026-02-04",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1942621.5238888888,
+          "cv": 2.0955356248284427,
+          "reps": 3
+        }
+      },
+      "pr": 3154,
+      "pr_title": "Skips the internal clients from logresreq checks"
+    },
+    {
+      "commit": "666472c7628158050810a85fec1da7bcf45c8ae0",
+      "date": "2026-02-05",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1938141.9261111112,
+          "cv": 0.8309682898309703,
+          "reps": 3
+        }
+      },
+      "pr": 3155,
+      "pr_title": "Fix arr bound err in test-sanitizer-undefined (gcc)"
+    },
+    {
+      "commit": "dbdc3d9c6bce50a4d50396fd672bf43160762db5",
+      "date": "2026-02-08",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1963835.5616666665,
+          "cv": 2.6324234872873853,
+          "reps": 3
+        }
+      },
+      "pr": 3069,
+      "pr_title": "Extend test helper wait_for_cluster_propagation to support ignoring certain node"
+    },
+    {
+      "commit": "cb3195e0b8b78afdc8e7e7abd338bf9f1ade1405",
+      "date": "2026-02-09",
+      "results": {
+        "GET_16B_t1_p1": {
+          "rps": 1989959.2574999998,
+          "cv": 2.5355652242448654,
+          "reps": 3
+        }
+      },
+      "pr": 3138,
+      "pr_title": "test: add valgrind:skip tag to automatically skip tests under valgrind"
     },
     {
       "commit": "fde31b08f7b00ed0bc1bb153e7a315ff435270f2",
@@ -282,6 +1255,12 @@
   ],
   "landmarks": [
     {
+      "commit": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
+      "date": "2024-01-09",
+      "label": "7.2.4",
+      "type": "release"
+    },
+    {
       "commit": "4b8de6b1be24b2c64f6e3e188b6dd6d9bca575b1",
       "date": "2024-07-31",
       "label": "8.0",
@@ -308,6 +1287,30 @@
   ],
   "annotations": [
     {
+      "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
+      "delta": 0.1104,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "fd8270a0aab6c15058997a0e8436c9682dac2036",
+      "delta": 0.0133,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "094c80b9cedac7a63cb10ed7ec0ebdf439132b8c",
+      "delta": 0.0182,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "d7993b78d82d9c9d2f9298159acd8f5a2fc997d4",
+      "delta": -0.029,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    },
+    {
       "commit": "ac515159a1e79ada6e43ed49c9ed9cb11178c50d",
       "delta": 0.0149,
       "workload": "GET_16B_t1_p1",
@@ -318,6 +1321,108 @@
       "delta": 0.5438,
       "workload": "GET_16B_t1_p1",
       "type": "improvement"
+    },
+    {
+      "commit": "cf90acbc6137ede7ae17fb1450c8aa19a62d163c",
+      "delta": 0.0199,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "88cd2086aef25183ae0c5fb8bc154d8206dd07f1",
+      "delta": -0.046,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    },
+    {
+      "commit": "4b5a48a36e22a885dad2140cf72fda7b64c5eb03",
+      "delta": 0.0271,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "1a2ed04705d589948498ec1ceb9f657f0f9f7033",
+      "delta": -0.0217,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    },
+    {
+      "commit": "2e2eb418f97ee8ac0dcccd1d5d790697bd0fa43e",
+      "delta": -0.0191,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    },
+    {
+      "commit": "231a9e731ede9055a9b57861051a596a0a5f82f7",
+      "delta": 0.049,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "be0a572c8b949538a1947925edf3074b53fbe7c1",
+      "delta": -0.0237,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    },
+    {
+      "commit": "928e9126172dfdfdbf4ce6ebdc65aae854c6e79e",
+      "delta": 0.0441,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
+      "delta": -0.0371,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    },
+    {
+      "commit": "fd1438063927d0d3d2d8c9018011d8f7bcda47c3",
+      "delta": 0.0265,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "b8650a5a31ad80b65f42fd37652a304c8020caef",
+      "delta": -0.0109,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    },
+    {
+      "commit": "eabfe235d2b522f0aded9a6139f16c4f5deeed93",
+      "delta": -0.0129,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    },
+    {
+      "commit": "cfbe0937fb3b275e735a061c811f07482cdf7904",
+      "delta": 0.0293,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "3ea5cb39898bce6f8073a2dd2efbc4d43c9dbcaf",
+      "delta": -0.0338,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    },
+    {
+      "commit": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
+      "delta": -0.0147,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
+    },
+    {
+      "commit": "8ed270f443701b0a737d37c3ecb026d7559ecaaa",
+      "delta": 0.0296,
+      "workload": "GET_16B_t1_p1",
+      "type": "improvement"
+    },
+    {
+      "commit": "5d7d542499ca481f3b9691334e123b36feff397c",
+      "delta": -0.0159,
+      "workload": "GET_16B_t1_p1",
+      "type": "regression"
     }
   ]
 }

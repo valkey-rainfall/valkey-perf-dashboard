@@ -7,6 +7,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
   <style>
     :root {
       --bg: #0f1117;
@@ -54,6 +56,7 @@
   <div class="stats" id="stats"></div>
 
   <div class="chart-container">
+    <div style="text-align:right;margin-bottom:0.5rem"><button onclick="chart.resetZoom()" style="font-size:0.8rem;padding:2px 8px;cursor:pointer;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:4px">Reset Zoom</button></div>
     <canvas id="chart"></canvas>
   </div>
 
@@ -201,6 +204,14 @@
             }
           },
           plugins: {
+            zoom: {
+              zoom: {
+                wheel: { enabled: true },
+                drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' },
+                mode: 'x',
+              },
+              pan: { enabled: true, mode: 'x' },
+            },
             legend: { display: false },
             annotation: { annotations: chartAnnotations },
             tooltip: {
