@@ -242,7 +242,7 @@
                 afterLabel: (item) => {
                   const p = points[item.dataIndex];
                   const a = annotationMap[p.commit];
-                  if (a) return `${a.type}: ${(a.delta*100).toFixed(1)}% — ${a.pr_title}`;
+                  if (a) return `${a.type}: ${(a.delta*100).toFixed(1)}%${a.pr_title ? ' — ' + a.pr_title : ''}`;
                   if (p.pr_title) return p.pr_title;
                   return '';
                 }
