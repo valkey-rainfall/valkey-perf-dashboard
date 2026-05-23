@@ -298,7 +298,7 @@
           const memPoints = memData.points.filter(p => p.results[memWorkload]).sort((a, b) => a.commit_index - b.commit_index);
           if (memPoints.length > 0) {
             const memCtx = document.getElementById('memoryChart').getContext('2d');
-            if (window.memoryChart) window.memoryChart.destroy();
+            if (window.memoryChart instanceof Chart) window.memoryChart.destroy();
             window.memoryChart = new Chart(memCtx, {
               type: 'line',
               data: {
