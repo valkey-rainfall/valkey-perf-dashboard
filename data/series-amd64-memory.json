@@ -4,54 +4,13 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "memory",
-    "generated": "2026-05-23T19:14:12.935634+00:00",
+    "generated": "2026-05-23T19:18:34.859012+00:00",
     "total_commits": 1976
   },
   "workloads": [
     "memory"
   ],
   "points": [
-    {
-      "commit": "75929f46c5ffccd72b3e6eb90cbee74f9968d726",
-      "date": "2024-03-21",
-      "commit_index": 284,
-      "results": {
-        "memory": {
-          "rps": 84.1474896,
-          "cv": 0.0,
-          "reps": 1
-        }
-      },
-      "pr_title": "Update README.md"
-    },
-    {
-      "commit": "0ba2f1b14e03172f51c0b6ec2fed6af0d8378191",
-      "date": "2024-04-01",
-      "commit_index": 314,
-      "results": {
-        "memory": {
-          "rps": 84.14748320000001,
-          "cv": 0.0,
-          "reps": 1
-        }
-      },
-      "pr": 127,
-      "pr_title": "Update coverity to reflect project name"
-    },
-    {
-      "commit": "598b951fb509a53037b7a43b863c06e53a35909b",
-      "date": "2024-04-04",
-      "commit_index": 344,
-      "results": {
-        "memory": {
-          "rps": 84.1474896,
-          "cv": 0.0,
-          "reps": 1
-        }
-      },
-      "pr": 183,
-      "pr_title": "rename redisServer to valkeyServer"
-    },
     {
       "commit": "ebfb44062982d29fc031e20c916be68c127f5ddc",
       "date": "2024-04-08",
