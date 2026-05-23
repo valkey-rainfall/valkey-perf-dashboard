@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-23T21:46:29.962310Z",
+  "timestamp": "2026-05-23T21:48:38.677720Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 2523523,
@@ -7,33 +7,53 @@
     "uptime_hours": 494218.7
   },
   "current_task": {
-    "id": "2026.05.23_21.41.31.755923",
+    "id": "2026.05.23_21.48.03.496018",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 83.7,
-    "elapsed_sec": 298,
-    "steps": "205/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 35,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.23_21.41.31.755923",
+        "id": "2026.05.23_21.48.03.496018",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 55.2% improvement between ac515159 and 9aeab8cc",
+        "note": "[sweep] Bisecting 56.3% improvement between ac515159 and 8c555479",
         "source": "valkey",
-        "specifier": "8c55547999a980680997a2c0c2bd292a7112da9c"
+        "specifier": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742"
       },
       {
-        "id": "2026.05.23_21.41.31.767259",
+        "id": "2026.05.23_21.48.03.507384",
         "type": "MemTaskData",
-        "note": "[memory-sweep] Backfill: 210 commits in gap",
+        "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "98a6e55d4e7eed5bb68480672a3358ee21b9dce8"
+        "specifier": "9b6dded421cbd0eed78c4da28196de7ef5adb6e8"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.23_21.41.31.767259",
+      "method": "mem-set",
+      "score": 84.1474896,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "98a6e55d4e7eed5bb68480672a3358ee21b9dce8",
+      "note": "[memory-sweep] Backfill: 210 commits in gap",
+      "completed": "2026.05.23_21.48.02.986731"
+    },
+    {
+      "task_id": "2026.05.23_21.41.31.755923",
+      "method": "perf-get",
+      "score": 1961402.8634523812,
+      "commit": "8c555479",
+      "source": "valkey",
+      "specifier": "8c55547999a980680997a2c0c2bd292a7112da9c",
+      "note": "[sweep] Bisecting 55.2% improvement between ac515159 and 9aeab8cc",
+      "completed": "2026.05.23_21.47.19.521972"
+    },
     {
       "task_id": "2026.05.23_21.34.23.033674",
       "method": "mem-set",
@@ -63,27 +83,7 @@
       "specifier": "3086e61d4b06a81602fc74163eb7d4eb6b6bfe41",
       "note": "[sweep] Bisecting 53.2% improvement between ac515159 and 682fc0b4",
       "completed": "2026.05.23_21.33.12.495656"
-    },
-    {
-      "task_id": "2026.05.23_17.57.43.281867",
-      "method": "mem-set",
-      "score": 54.925590400000004,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "293be3e3250eea8eff73ba85c8dbffc00a6d32ac",
-      "note": "[memory-sweep] Backfill: 57 commits in gap",
-      "completed": "2026.05.23_21.27.26.123552"
-    },
-    {
-      "task_id": "2026.05.23_17.57.43.269312",
-      "method": "perf-get",
-      "score": 1341890.496547619,
-      "commit": "e64d91c3",
-      "source": "valkey",
-      "specifier": "e64d91c37105bc2e23816b6f81b9ffc5e5d99801",
-      "note": "[sweep] Bisecting 33.6% regression between bad33f87 and 38632278",
-      "completed": "2026.05.23_21.26.38.630670"
     }
   ],
-  "eta_minutes": 6.0
+  "eta_minutes": 7.5
 }
