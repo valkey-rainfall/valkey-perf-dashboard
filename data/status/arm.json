@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T12:03:02.303853Z",
+  "timestamp": "2026-05-24T12:06:11.508749Z",
   "host": "arm",
   "runner": {
     "pid": 1259781,
@@ -7,33 +7,43 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_11.59.03.496337",
+    "id": "2026.05.24_12.05.37.294956",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 67.3,
-    "elapsed_sec": 239,
-    "steps": "165/245"
+    "progress_pct": 0.0,
+    "elapsed_sec": 34,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_11.59.03.496337",
+        "id": "2026.05.24_12.05.37.294956",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 6.9% regression between 6fee1aa6 and c9ce3e09",
+        "note": "[sweep] Bisecting 6.0% regression between 8051de74 and c9ce3e09",
         "source": "valkey",
-        "specifier": "8051de740dd38172476b04e892e5517630e3eaed"
+        "specifier": "26522fc527d1f474d39bbd74482541aa54715bfb"
       },
       {
-        "id": "2026.05.24_11.59.03.504416",
+        "id": "2026.05.24_12.05.37.303015",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 226 commits in gap",
         "source": "valkey",
-        "specifier": "ee107481e5621f0de3c2bbb617c72efa7ca7c2ef"
+        "specifier": "0a9cb985c8c37c54c5007bc0af2dcd0b6752a529"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_11.59.03.496337",
+      "method": "perf-get",
+      "score": 2145553.510271547,
+      "commit": "8051de74",
+      "source": "valkey",
+      "specifier": "8051de740dd38172476b04e892e5517630e3eaed",
+      "note": "[sweep] Bisecting 6.9% regression between 6fee1aa6 and c9ce3e09",
+      "completed": "2026.05.24_12.04.38.149448"
+    },
     {
       "task_id": "2026.05.24_11.52.52.239934",
       "method": "mem-set",
@@ -73,17 +83,7 @@
       "specifier": "b58083d9e906f9fdd0d694d77d1ebf9a8a677eda",
       "note": "[sweep] Bisecting 7.9% improvement between c9ce3e09 and 6c329dfe",
       "completed": "2026.05.24_11.52.40.318240"
-    },
-    {
-      "task_id": "2026.05.24_11.43.08.229760",
-      "method": "mem-set",
-      "score": 54.926896,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
-      "note": "[memory-sweep] Release 9.0",
-      "completed": "2026.05.24_11.47.05.773395"
     }
   ],
-  "eta_minutes": 6.9
+  "eta_minutes": 7.5
 }
