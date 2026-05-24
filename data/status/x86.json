@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T01:01:50.065324Z",
+  "timestamp": "2026-05-24T01:03:53.812179Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 2523523,
@@ -7,23 +7,16 @@
     "uptime_hours": 494218.7
   },
   "current_task": {
-    "id": "2026.05.24_00.57.07.975823",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 77.6,
-    "elapsed_sec": 282,
-    "steps": "190/245"
+    "id": "2026.05.24_00.57.07.988736",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 59,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_00.57.07.975823",
-        "type": "PerfTaskData",
-        "note": "[sweep] Release 9.1",
-        "source": "valkey",
-        "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1"
-      },
       {
         "id": "2026.05.24_00.57.07.988736",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_00.57.07.975823",
+      "method": "perf-get",
+      "score": 1945087.3326190475,
+      "commit": "6c329dfe",
+      "source": "valkey",
+      "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
+      "note": "[sweep] Release 9.1",
+      "completed": "2026.05.24_01.02.54.655184"
+    },
     {
       "task_id": "2026.05.24_00.50.01.418797",
       "method": "perf-get",
@@ -73,17 +76,7 @@
       "specifier": "da727ad445a640950baa097124070468a0316cc9",
       "note": "[sweep] Bisecting 79.0% improvement between 763827c9 and e64d91c3",
       "completed": "2026.05.24_00.34.35.735905"
-    },
-    {
-      "task_id": "2026.05.24_00.20.18.508410",
-      "method": "perf-get",
-      "score": 749517.262857143,
-      "commit": "763827c9",
-      "source": "valkey",
-      "specifier": "763827c98144fa83b4fc50eb4cae7ec4d63e7925",
-      "note": "[sweep] Bisecting 76.7% improvement between 1e8dc1da and e64d91c3",
-      "completed": "2026.05.24_00.26.51.254052"
     }
   ],
-  "eta_minutes": 6.4
+  "eta_minutes": 5.0
 }
