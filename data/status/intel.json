@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T11:02:59.580022Z",
+  "timestamp": "2026-05-24T11:05:09.551700Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_10.58.56.770689",
+    "id": "2026.05.24_11.04.39.600535",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 65.3,
-    "elapsed_sec": 243,
-    "steps": "160/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 30,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_10.58.56.770689",
+        "id": "2026.05.24_11.04.39.600535",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 44.6% improvement between c41ffc34 and cce8f49b",
+        "note": "[sweep] Bisecting 43.1% improvement between c41ffc34 and 0a9cb985",
         "source": "valkey",
-        "specifier": "0a9cb985c8c37c54c5007bc0af2dcd0b6752a529"
+        "specifier": "3086e61d4b06a81602fc74163eb7d4eb6b6bfe41"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_10.58.56.770689",
+      "method": "perf-get",
+      "score": 1146710.6425236126,
+      "commit": "0a9cb985",
+      "source": "valkey",
+      "specifier": "0a9cb985c8c37c54c5007bc0af2dcd0b6752a529",
+      "note": "[sweep] Bisecting 44.6% improvement between c41ffc34 and cce8f49b",
+      "completed": "2026.05.24_11.04.39.414505"
+    },
     {
       "task_id": "2026.05.24_10.53.10.740035",
       "method": "perf-get",
@@ -58,5 +68,5 @@
       "completed": "2026.05.24_10.31.08.563557"
     }
   ],
-  "eta_minutes": 4.7
+  "eta_minutes": 5.0
 }
