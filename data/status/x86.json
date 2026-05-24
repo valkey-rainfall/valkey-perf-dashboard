@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T10:55:15.944851Z",
+  "timestamp": "2026-05-24T10:57:24.814120Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,23 +7,16 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_10.51.17.981219",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 61.2,
-    "elapsed_sec": 238,
-    "steps": "150/245"
+    "id": "2026.05.24_10.51.18.086774",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 12,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_10.51.17.981219",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 57.1% improvement between ba19ec86 and 9d682bad",
-        "source": "valkey",
-        "specifier": "e364c57e3dd10c908aa98926c4a58148d1fe5bff"
-      },
       {
         "id": "2026.05.24_10.51.18.086774",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_10.51.17.981219",
+      "method": "perf-get",
+      "score": 1213246.9736717828,
+      "commit": "e364c57e",
+      "source": "valkey",
+      "specifier": "e364c57e3dd10c908aa98926c4a58148d1fe5bff",
+      "note": "[sweep] Bisecting 57.1% improvement between ba19ec86 and 9d682bad",
+      "completed": "2026.05.24_10.57.12.055733"
+    },
     {
       "task_id": "2026.05.24_10.44.14.159474",
       "method": "mem-set",
@@ -73,17 +76,7 @@
       "specifier": "ba19ec861a660059ac9e22652166c562cdd75493",
       "note": "[sweep] Bisecting 58.4% improvement between 1b531e56 and 5bbbc6bd",
       "completed": "2026.05.24_10.43.30.097473"
-    },
-    {
-      "task_id": "2026.05.24_10.30.53.945951",
-      "method": "mem-set",
-      "score": 30.914099199999995,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "034d16ac44e8f722b26d30ea7be9422427092d05",
-      "note": "[memory-sweep] Bisecting 43.7% regression between 3ed6e5f8 and 2585f60e",
-      "completed": "2026.05.24_10.37.35.867898"
     }
   ],
-  "eta_minutes": 7.5
+  "eta_minutes": 5.0
 }
