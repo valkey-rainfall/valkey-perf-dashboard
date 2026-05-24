@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T02:40:08.728820Z",
+  "timestamp": "2026-05-24T02:43:19.010061Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 2523523,
@@ -7,22 +7,22 @@
     "uptime_hours": 494218.7
   },
   "current_task": {
-    "id": "2026.05.24_02.39.29.240591",
-    "type": "mem-set",
+    "id": "2026.05.24_02.43.13.540867",
+    "type": "perf-get",
     "state": "starting",
     "progress_pct": 0.0,
-    "elapsed_sec": 34,
-    "steps": "0/3"
+    "elapsed_sec": 5,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_02.39.29.240591",
-        "type": "MemTaskData",
-        "note": "[memory-sweep] Backfill: 105 commits in gap",
+        "id": "2026.05.24_02.43.13.540867",
+        "type": "PerfTaskData",
+        "note": "[sweep] Backfill: 105 commits in gap",
         "source": "valkey",
-        "specifier": "17904780ae5b4793ad133020d6bfa7f4a266b20c"
+        "specifier": "90e9fc387c81d48d3d82ea7fcd2d3b6d896bf923"
       }
     ]
   },
