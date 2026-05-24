@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T18:34:31.438041Z",
+  "timestamp": "2026-05-24T18:36:41.448341Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,23 +7,16 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_18.30.48.676565",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 69.4,
-    "elapsed_sec": 223,
-    "steps": "170/245"
+    "id": "2026.05.24_18.30.48.684040",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 38,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_18.30.48.676565",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 2.0% improvement between 66d0f7d9 and e8ae5b18",
-        "source": "valkey",
-        "specifier": "ab98f375db51c83f3c56beac9440097f81af2048"
-      },
       {
         "id": "2026.05.24_18.30.48.684040",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_18.30.48.676565",
+      "method": "perf-get",
+      "score": 1263842.8365997637,
+      "commit": "ab98f375",
+      "source": "valkey",
+      "specifier": "ab98f375db51c83f3c56beac9440097f81af2048",
+      "note": "[sweep] Bisecting 2.0% improvement between 66d0f7d9 and e8ae5b18",
+      "completed": "2026.05.24_18.36.03.252271"
+    },
     {
       "task_id": "2026.05.24_18.24.42.662670",
       "method": "mem-set",
@@ -73,17 +76,7 @@
       "specifier": "4cbec4a1d9620bc02c9de526264536f1cc3b611c",
       "note": "[sweep] Bisecting 2.0% regression between 26522fc5 and c9ce3e09",
       "completed": "2026.05.24_18.23.33.000786"
-    },
-    {
-      "task_id": "2026.05.24_18.19.30.724021",
-      "method": "mem-set",
-      "score": 54.920806400000004,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "3c092caa08fd7e202e52791bc7c523d80c8247ea",
-      "note": "[memory-sweep] Backfill: 111 commits in gap",
-      "completed": "2026.05.24_18.20.12.908504"
     }
   ],
-  "eta_minutes": 6.6
+  "eta_minutes": 5.0
 }
