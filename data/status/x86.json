@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T12:51:35.211008Z",
+  "timestamp": "2026-05-24T12:54:49.811480Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,23 +7,16 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_12.48.38.959891",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 40.8,
-    "elapsed_sec": 176,
-    "steps": "100/245"
+    "id": "2026.05.24_12.48.38.972970",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 15,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_12.48.38.959891",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 2.9% improvement between e364c57e and bb81f8d1",
-        "source": "valkey",
-        "specifier": "7a5c0d0ebf72354f122c64cd52788c671ae04064"
-      },
       {
         "id": "2026.05.24_12.48.38.972970",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_12.48.38.959891",
+      "method": "perf-get",
+      "score": 1220258.7513577333,
+      "commit": "7a5c0d0e",
+      "source": "valkey",
+      "specifier": "7a5c0d0ebf72354f122c64cd52788c671ae04064",
+      "note": "[sweep] Bisecting 2.9% improvement between e364c57e and bb81f8d1",
+      "completed": "2026.05.24_12.54.34.049148"
+    },
     {
       "task_id": "2026.05.24_12.45.00.888591",
       "method": "mem-set",
@@ -73,17 +76,7 @@
       "specifier": "8131c2b07bcff0dd62c79f8495e45563eacadec1",
       "note": "[sweep] Bisecting 3.2% regression between 725c3608 and 7a9ef29f",
       "completed": "2026.05.24_12.44.45.587074"
-    },
-    {
-      "task_id": "2026.05.24_12.35.44.165050",
-      "method": "mem-set",
-      "score": 54.922377600000004,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
-      "note": "[memory-sweep] Release 9.0",
-      "completed": "2026.05.24_12.42.27.078092"
     }
   ],
-  "eta_minutes": 9.3
+  "eta_minutes": 5.0
 }
