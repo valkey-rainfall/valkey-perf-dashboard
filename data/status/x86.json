@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T14:35:29.898484Z",
+  "timestamp": "2026-05-24T14:37:30.342928Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,23 +7,16 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_14.31.28.152916",
-    "type": "perf-get",
+    "id": "2026.05.24_14.31.28.167287",
+    "type": "mem-set",
     "state": "running",
-    "progress_pct": 61.2,
-    "elapsed_sec": 242,
-    "steps": "150/245"
+    "progress_pct": 33.3,
+    "elapsed_sec": 5,
+    "steps": "1/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_14.31.28.152916",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 13.3% improvement between c8ceb2ee and 079f4edf",
-        "source": "valkey",
-        "specifier": "b4c2a1804a20211a0cca634393d689e5bc96ddf7"
-      },
       {
         "id": "2026.05.24_14.31.28.167287",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_14.31.28.152916",
+      "method": "perf-get",
+      "score": 1145282.0820543093,
+      "commit": "b4c2a180",
+      "source": "valkey",
+      "specifier": "b4c2a1804a20211a0cca634393d689e5bc96ddf7",
+      "note": "[sweep] Bisecting 13.3% improvement between c8ceb2ee and 079f4edf",
+      "completed": "2026.05.24_14.37.24.799736"
+    },
     {
       "task_id": "2026.05.24_14.25.26.013096",
       "method": "perf-get",
@@ -73,17 +76,7 @@
       "specifier": "94bc15cb7147773d3b45e5a2f9c7e8d7de6f97c7",
       "note": "[sweep] Bisecting 12.1% regression between 36e81d9e and 816accea",
       "completed": "2026.05.24_14.13.23.208779"
-    },
-    {
-      "task_id": "2026.05.24_14.01.34.357477",
-      "method": "perf-get",
-      "score": 1261712.2850059033,
-      "commit": "36e81d9e",
-      "source": "valkey",
-      "specifier": "36e81d9e79ea934b888f133ccee313a5fe0b9297",
-      "note": "[sweep] Bisecting 12.3% regression between 1a8bd045 and 816accea",
-      "completed": "2026.05.24_14.07.24.151461"
     }
   ],
-  "eta_minutes": 7.6
+  "eta_minutes": 2.7
 }
