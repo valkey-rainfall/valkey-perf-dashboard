@@ -1,31 +1,27 @@
 {
-  "timestamp": "2026-05-24T10:31:05.580978Z",
+  "timestamp": "2026-05-24T10:34:14.552676Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 796428,
     "state": "running",
     "uptime_hours": 494230.5
   },
-  "current_task": {
-    "id": "2026.05.24_10.25.59.485933",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 98.0,
-    "elapsed_sec": 306,
-    "steps": "240/245"
-  },
+  "current_task": null,
   "queue": {
-    "depth": 1,
-    "tasks": [
-      {
-        "id": "2026.05.24_10.25.59.485933",
-        "type": "PerfTaskData",
-        "note": "[sweep] New HEAD on unstable",
-        "source": "valkey",
-        "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55"
-      }
-    ]
+    "depth": 0,
+    "tasks": []
   },
-  "recent_results": [],
-  "eta_minutes": 2.6
+  "recent_results": [
+    {
+      "task_id": "2026.05.24_10.25.59.485933",
+      "method": "perf-get",
+      "score": 1159170.7523425817,
+      "commit": "cce8f49b",
+      "source": "valkey",
+      "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55",
+      "note": "[sweep] New HEAD on unstable",
+      "completed": "2026.05.24_10.31.08.563557"
+    }
+  ],
+  "eta_minutes": 0.0
 }
