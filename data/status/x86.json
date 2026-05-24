@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T13:18:19.797588Z",
+  "timestamp": "2026-05-24T13:20:29.968193Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,26 +7,43 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_13.12.13.725748",
-    "type": "mem-set",
-    "state": "starting",
-    "progress_pct": 0.0,
-    "elapsed_sec": 11,
-    "steps": "0/3"
+    "id": "2026.05.24_13.18.56.842523",
+    "type": "perf-get",
+    "state": "running",
+    "progress_pct": 16.3,
+    "elapsed_sec": 93,
+    "steps": "40/245"
   },
   "queue": {
-    "depth": 1,
+    "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_13.12.13.725748",
+        "id": "2026.05.24_13.18.56.842523",
+        "type": "PerfTaskData",
+        "note": "[sweep] Bisecting 2.1% improvement between b298dfd6 and 6bf1d02e",
+        "source": "valkey",
+        "specifier": "2d6791bb1157af52e20ffd1fb4ca025c283153d3"
+      },
+      {
+        "id": "2026.05.24_13.18.56.855394",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 165 commits in gap",
         "source": "valkey",
-        "specifier": "2399f107729171f9e8e35c9997b19d3e8c9c58ef"
+        "specifier": "9c45cf33423e2f7c70ccf6adbdb428a1890cb4a5"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_13.12.13.725748",
+      "method": "mem-set",
+      "score": 54.91654080000001,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "2399f107729171f9e8e35c9997b19d3e8c9c58ef",
+      "note": "[memory-sweep] Backfill: 165 commits in gap",
+      "completed": "2026.05.24_13.18.56.246621"
+    },
     {
       "task_id": "2026.05.24_13.12.13.712116",
       "method": "perf-get",
@@ -66,17 +83,7 @@
       "specifier": "0aaae734f46101e621f9d56d76c42d04029d3c99",
       "note": "[memory-sweep] Backfill: 225 commits in gap",
       "completed": "2026.05.24_13.05.33.156076"
-    },
-    {
-      "task_id": "2026.05.24_13.02.27.770441",
-      "method": "perf-get",
-      "score": 1230789.149862259,
-      "commit": "dcf32220",
-      "source": "valkey",
-      "specifier": "dcf32220c914588123e6d7001a72e7643d428130",
-      "note": "[sweep] Bisecting 2.4% improvement between 1b531e56 and ba19ec86",
-      "completed": "2026.05.24_13.05.17.328424"
     }
   ],
-  "eta_minutes": 5.0
+  "eta_minutes": 13.0
 }
