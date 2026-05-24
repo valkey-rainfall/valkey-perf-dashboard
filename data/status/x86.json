@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T09:29:34.918706Z",
+  "timestamp": "2026-05-24T09:31:42.725964Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 3934281,
@@ -7,33 +7,53 @@
     "uptime_hours": 494218.8
   },
   "current_task": {
-    "id": "2026.05.24_09.22.57.019841",
+    "id": "2026.05.24_09.31.41.089581",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 61.2,
-    "elapsed_sec": 210,
-    "steps": "150/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 2,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_09.22.57.019841",
+        "id": "2026.05.24_09.31.41.089581",
         "type": "PerfTaskData",
-        "note": "[sweep] New HEAD on unstable",
+        "note": "[sweep] Release Valkey created",
         "source": "valkey",
-        "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55"
+        "specifier": "2b8cde71bb553713cf93794a0fb30a1618c0c955"
       },
       {
-        "id": "2026.05.24_09.22.57.029802",
+        "id": "2026.05.24_09.31.41.099750",
         "type": "MemTaskData",
-        "note": "[memory-sweep] New HEAD on unstable",
+        "note": "[memory-sweep] Release Valkey created",
         "source": "valkey",
-        "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55"
+        "specifier": "2b8cde71bb553713cf93794a0fb30a1618c0c955"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_09.22.57.029802",
+      "method": "mem-set",
+      "score": 30.918451200000007,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55",
+      "note": "[memory-sweep] New HEAD on unstable",
+      "completed": "2026.05.24_09.31.40.675343"
+    },
+    {
+      "task_id": "2026.05.24_09.22.57.019841",
+      "method": "perf-get",
+      "score": 1981986.2755952382,
+      "commit": "cce8f49b",
+      "source": "valkey",
+      "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55",
+      "note": "[sweep] New HEAD on unstable",
+      "completed": "2026.05.24_09.31.26.419687"
+    },
     {
       "task_id": "2026.05.24_09.20.02.094513",
       "method": "perf-get",
@@ -63,27 +83,7 @@
       "specifier": "d2db0c268cc73ede427f46ad206cb93685c0b10f",
       "note": "[sweep] Backfill: 136 commits in gap",
       "completed": "2026.05.24_02.21.12.424621"
-    },
-    {
-      "task_id": "2026.05.24_02.08.21.866218",
-      "method": "perf-get",
-      "score": 1956765.2946428573,
-      "commit": "861d0794",
-      "source": "valkey",
-      "specifier": "861d0794b7bdf2237d98502a5b405faf19db24dc",
-      "note": "[sweep] Backfill: 138 commits in gap",
-      "completed": "2026.05.24_02.14.11.100577"
-    },
-    {
-      "task_id": "2026.05.24_02.01.42.530836",
-      "method": "perf-get",
-      "score": 750126.4998809524,
-      "commit": "3431b1f1",
-      "source": "valkey",
-      "specifier": "3431b1f156b05866e4f9a368304216974f047c43",
-      "note": "[sweep] Backfill: 163 commits in gap",
-      "completed": "2026.05.24_02.07.11.209957"
     }
   ],
-  "eta_minutes": 7.2
+  "eta_minutes": 7.5
 }
