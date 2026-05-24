@@ -1,30 +1,15 @@
 {
-  "timestamp": "2026-05-24T17:23:39.891217Z",
+  "timestamp": "2026-05-24T17:26:48.768658Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
     "state": "running",
     "uptime_hours": 494218.9
   },
-  "current_task": {
-    "id": "2026.05.24_17.23.35.410858",
-    "type": "perf-get",
-    "state": "starting",
-    "progress_pct": 0.0,
-    "elapsed_sec": 4,
-    "steps": "0/245"
-  },
+  "current_task": null,
   "queue": {
-    "depth": 1,
-    "tasks": [
-      {
-        "id": "2026.05.24_17.23.35.410858",
-        "type": "PerfTaskData",
-        "note": "[sweep] Backfill: 105 commits in gap",
-        "source": "valkey",
-        "specifier": "b784c5375e2a649b7ffcafcd913937d40006a671"
-      }
-    ]
+    "depth": 0,
+    "tasks": []
   },
   "recent_results": [
     {
@@ -78,5 +63,5 @@
       "completed": "2026.05.24_16.53.32.042738"
     }
   ],
-  "eta_minutes": 5.0
+  "eta_minutes": 0.0
 }
