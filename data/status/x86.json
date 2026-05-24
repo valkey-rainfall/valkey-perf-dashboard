@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:45:59.909817Z",
+  "timestamp": "2026-05-24T15:48:07.888505Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,33 +7,43 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_15.40.25.741218",
+    "id": "2026.05.24_15.46.25.191971",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 91.8,
-    "elapsed_sec": 334,
-    "steps": "225/245"
+    "progress_pct": 18.4,
+    "elapsed_sec": 103,
+    "steps": "45/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_15.40.25.741218",
+        "id": "2026.05.24_15.46.25.191971",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 5.5% improvement between 390a11c8 and c59b2471",
+        "note": "[sweep] Backfill: 226 commits in gap",
         "source": "valkey",
-        "specifier": "82740995e01887f3fc7ff8ea05714a27c28001d7"
+        "specifier": "e9014fd02b6e378ea647013097452558c20f0540"
       },
       {
-        "id": "2026.05.24_15.40.25.756689",
+        "id": "2026.05.24_15.46.25.207116",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "157e5d47b5326b27064955d30a694daf8f3b12cd"
+        "specifier": "28b6155ba5daa252240f334be41774d840bcfbd9"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.40.25.741218",
+      "method": "perf-get",
+      "score": 1965587.0635822508,
+      "commit": "82740995",
+      "source": "valkey",
+      "specifier": "82740995e01887f3fc7ff8ea05714a27c28001d7",
+      "note": "[sweep] Bisecting 5.5% improvement between 390a11c8 and c59b2471",
+      "completed": "2026.05.24_15.46.19.000842"
+    },
     {
       "task_id": "2026.05.24_15.34.28.030502",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
       "note": "[sweep] Release 9.1",
       "completed": "2026.05.24_15.22.56.780001"
-    },
-    {
-      "task_id": "2026.05.24_15.12.06.244183",
-      "method": "perf-get",
-      "score": 1183781.5760330579,
-      "commit": "6c2e4f95",
-      "source": "valkey",
-      "specifier": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
-      "note": "[sweep] Release 9.0",
-      "completed": "2026.05.24_15.17.31.781072"
     }
   ],
-  "eta_minutes": 5.5
+  "eta_minutes": 12.6
 }
