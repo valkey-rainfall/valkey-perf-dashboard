@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T22:40:32.249222Z",
+  "timestamp": "2026-05-24T22:42:37.442977Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,26 +7,36 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_22.34.51.372126",
+    "id": "2026.05.24_22.40.38.742165",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 95.9,
-    "elapsed_sec": 341,
-    "steps": "235/245"
+    "progress_pct": 28.6,
+    "elapsed_sec": 119,
+    "steps": "70/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_22.34.51.372126",
+        "id": "2026.05.24_22.40.38.742165",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 3.9% regression between e9014fd0 and 951d942a",
+        "note": "[sweep] Bisecting 5.0% regression between e9014fd0 and 0ee42345",
         "source": "valkey",
-        "specifier": "0ee4234506ba5b37095160047daf75b857171c12"
+        "specifier": "7cef1e8ee21bf67190a48fccdcbe73ba69b42a19"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_22.34.51.372126",
+      "method": "perf-get",
+      "score": 1962489.7410861866,
+      "commit": "0ee42345",
+      "source": "valkey",
+      "specifier": "0ee4234506ba5b37095160047daf75b857171c12",
+      "note": "[sweep] Bisecting 3.9% regression between e9014fd0 and 951d942a",
+      "completed": "2026.05.24_22.40.38.196295"
+    },
     {
       "task_id": "2026.05.24_22.29.04.277178",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "3431b1f156b05866e4f9a368304216974f047c43",
       "note": "[sweep] Backfill: 163 commits in gap",
       "completed": "2026.05.24_22.21.22.764373"
-    },
-    {
-      "task_id": "2026.05.24_21.51.58.459958",
-      "method": "perf-get",
-      "score": 921157.0154269971,
-      "commit": "e64d91c3",
-      "source": "valkey",
-      "specifier": "e64d91c37105bc2e23816b6f81b9ffc5e5d99801",
-      "note": "[sweep] Backfill: 221 commits in gap",
-      "completed": "2026.05.24_21.54.15.950588"
     }
   ],
-  "eta_minutes": 2.7
+  "eta_minutes": 7.5
 }
