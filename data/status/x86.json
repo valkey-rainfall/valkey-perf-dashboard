@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T13:49:54.841590Z",
+  "timestamp": "2026-05-24T13:51:59.892631Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,33 +7,43 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_13.44.06.381962",
+    "id": "2026.05.24_13.50.04.872185",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 98.0,
-    "elapsed_sec": 348,
-    "steps": "240/245"
+    "progress_pct": 24.5,
+    "elapsed_sec": 115,
+    "steps": "60/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_13.44.06.381962",
+        "id": "2026.05.24_13.50.04.872185",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 18.2% improvement between 4b8de6b1 and de3672a7",
+        "note": "[sweep] Bisecting 13.9% regression between 1a8bd045 and 4b8de6b1",
         "source": "valkey",
-        "specifier": "07b3e7ae7a9e08101fa4dd50aebb8fa5fbdd4f1e"
+        "specifier": "59aa00823c3691c50da452f2df2c4bc24e46696d"
       },
       {
-        "id": "2026.05.24_13.44.06.395722",
+        "id": "2026.05.24_13.50.04.885853",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "eb392c0a6f247d507df07ca39386bf2b5d895424"
+        "specifier": "a9e73c00bc1056eae4db98ca4bd1c126d994889d"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_13.44.06.381962",
+      "method": "perf-get",
+      "score": 1153028.1370720188,
+      "commit": "07b3e7ae",
+      "source": "valkey",
+      "specifier": "07b3e7ae7a9e08101fa4dd50aebb8fa5fbdd4f1e",
+      "note": "[sweep] Bisecting 18.2% improvement between 4b8de6b1 and de3672a7",
+      "completed": "2026.05.24_13.49.58.790136"
+    },
     {
       "task_id": "2026.05.24_13.38.36.404889",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "9c45cf33423e2f7c70ccf6adbdb428a1890cb4a5",
       "note": "[memory-sweep] Backfill: 165 commits in gap",
       "completed": "2026.05.24_13.25.43.619080"
-    },
-    {
-      "task_id": "2026.05.24_13.18.56.842523",
-      "method": "perf-get",
-      "score": 828266.1066115703,
-      "commit": "2d6791bb",
-      "source": "valkey",
-      "specifier": "2d6791bb1157af52e20ffd1fb4ca025c283153d3",
-      "note": "[sweep] Bisecting 2.1% improvement between b298dfd6 and 6bf1d02e",
-      "completed": "2026.05.24_13.24.55.899507"
     }
   ],
-  "eta_minutes": 5.1
+  "eta_minutes": 10.9
 }
