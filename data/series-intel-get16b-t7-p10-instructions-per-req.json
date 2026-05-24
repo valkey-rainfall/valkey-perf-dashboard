@@ -1,0 +1,645 @@
+{
+  "metadata": {
+    "repo": "valkey-io/valkey",
+    "branch": "unstable",
+    "platform": "intel",
+    "workload": "get16b-t7-p10",
+    "metric": "instructions-per-req",
+    "unit": "instructions/request",
+    "generated": "2026-05-24T17:59:11.417729+00:00",
+    "total_commits": 1975
+  },
+  "points": [
+    {
+      "commit": "3431b1f156b05866e4f9a368304216974f047c43",
+      "commit_index": 104,
+      "date": "2023-11-29",
+      "value": 61272.153955,
+      "pr": 7351,
+      "pr_title": "format cpu config as redis style"
+    },
+    {
+      "commit": "38f02349462d5aefa9b25386a130ebd67db1a4de",
+      "commit_index": 153,
+      "date": "2024-01-04",
+      "value": 60941.487859,
+      "pr": 12904,
+      "pr_title": "Bump cross-platform-actions/action from 0.21.1 to 0.22.0"
+    },
+    {
+      "commit": "9103ccc39843e16c456e459f2e64008e1cc33c1f",
+      "commit_index": 230,
+      "date": "2024-02-18",
+      "value": 60662.620307,
+      "pr": 13041,
+      "pr_title": "AOF_FSYNC_EVERYSEC higher resolution, change aof_last_fsync and aof_flush_postponed_start to use mstime"
+    },
+    {
+      "commit": "af1b0de92de2ace4a01e74cf9ed7d7d6f3dedf70",
+      "commit_index": 307,
+      "date": "2024-03-31",
+      "value": 61181.298809,
+      "pr": 84,
+      "pr_title": "Fix typo"
+    },
+    {
+      "commit": "05d16579e612c7670787ce3f2c3f5c91e0914afe",
+      "commit_index": 384,
+      "date": "2024-04-10",
+      "value": 60779.928875,
+      "pr": 222,
+      "pr_title": "Rename redis in valkey-cli file comments and prints"
+    },
+    {
+      "commit": "6e7af9471c0576e9567b62821b23aa13edf4e866",
+      "commit_index": 461,
+      "date": "2024-05-06",
+      "value": 61482.747991,
+      "pr": 445,
+      "pr_title": "Slot migration improvement"
+    },
+    {
+      "commit": "71dd85dc5a89a4e07d837efa14937990b01e317f",
+      "commit_index": 538,
+      "date": "2024-06-09",
+      "value": 61234.125993,
+      "pr": 607,
+      "pr_title": "src/Makefile: Link libatomic on POWER systems"
+    },
+    {
+      "commit": "7719dbb84bbe6861ac60277915ab22d208159680",
+      "commit_index": 577,
+      "date": "2024-06-27",
+      "value": 61575.917962,
+      "pr": 704,
+      "pr_title": "Update readonly and readwrite json"
+    },
+    {
+      "commit": "752b6ee8ff75a72c364feca8b667f9e723df0c4c",
+      "commit_index": 587,
+      "date": "2024-07-01",
+      "value": 62040.519627,
+      "pr": 721,
+      "pr_title": "Avoid compilation error oin valkey-cli"
+    },
+    {
+      "commit": "eff45f546762577bd1877dfeece41c53b39926ad",
+      "commit_index": 592,
+      "date": "2024-07-01",
+      "value": 61506.231766,
+      "pr": 728,
+      "pr_title": "Fix flakiness of cluster-multiple-meets and cluster-reliable-meet"
+    },
+    {
+      "commit": "1ea49e5845a11250a13273c725720822c26860f1",
+      "commit_index": 593,
+      "date": "2024-07-02",
+      "value": 61440.942604,
+      "pr": 731,
+      "pr_title": "Make valkey compatible with redis-sentinel to start sentinel"
+    },
+    {
+      "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
+      "commit_index": 594,
+      "date": "2024-07-02",
+      "value": 57720.894968,
+      "pr": 541,
+      "pr_title": "Embed key into dict entry"
+    },
+    {
+      "commit": "2d6791bb1157af52e20ffd1fb4ca025c283153d3",
+      "commit_index": 596,
+      "date": "2024-07-04",
+      "value": 58042.597267,
+      "pr": 735,
+      "pr_title": "Use clusterNodeIsVotingPrimary function to check the right"
+    },
+    {
+      "commit": "f2bbd1ff0f650182e7df1fda1055551389bb79c2",
+      "commit_index": 599,
+      "date": "2024-07-04",
+      "value": 57684.840983,
+      "pr": 741,
+      "pr_title": "Fix minor memory leak in clusterLoadConfig"
+    },
+    {
+      "commit": "5f0ccf1478452598490683be4f78cf3e69ee259f",
+      "commit_index": 600,
+      "date": "2024-07-07",
+      "value": 57712.207089,
+      "pr": 755,
+      "pr_title": "Remove duplicate definition of UNUSED(V)"
+    },
+    {
+      "commit": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483",
+      "commit_index": 601,
+      "date": "2024-07-09",
+      "value": 57329.907967,
+      "pr": 758,
+      "pr_title": "Async IO threads"
+    },
+    {
+      "commit": "9948f07a01c90174074d4bf1f7db10768307e052",
+      "commit_index": 606,
+      "date": "2024-07-11",
+      "value": 57123.859166,
+      "pr": 773,
+      "pr_title": "Temporary skip blockwait aof test until it's fixed"
+    },
+    {
+      "commit": "66d0f7d9a116ee6c58da4c18532825130dcae773",
+      "commit_index": 615,
+      "date": "2024-07-16",
+      "value": 55997.384224,
+      "pr": 754,
+      "pr_title": "Ensure only primary sender drives slot ownership updates"
+    },
+    {
+      "commit": "36e81d9e79ea934b888f133ccee313a5fe0b9297",
+      "commit_index": 618,
+      "date": "2024-07-18",
+      "value": 55789.441124,
+      "pr": 801,
+      "pr_title": "Fix rdb_child_exit_pipe incorrect close call"
+    },
+    {
+      "commit": "8b480310a629300c7cb28576f04df889bda21198",
+      "commit_index": 619,
+      "date": "2024-07-18",
+      "value": 56792.483131,
+      "pr": 803,
+      "pr_title": "Remove read handler upon RDB connection close"
+    },
+    {
+      "commit": "94bc15cb7147773d3b45e5a2f9c7e8d7de6f97c7",
+      "commit_index": 620,
+      "date": "2024-07-19",
+      "value": 69593.850462,
+      "pr": 763,
+      "pr_title": "Io thread work offload"
+    },
+    {
+      "commit": "35a188833335332980a16239ac2efebf241c8a6a",
+      "commit_index": 621,
+      "date": "2024-07-19",
+      "value": 69674.366265,
+      "pr": 783,
+      "pr_title": "Fix incorrect usage of process_is_paused in tests"
+    },
+    {
+      "commit": "ccafbb750bebad7dddcc4a0266945a6d56281385",
+      "commit_index": 626,
+      "date": "2024-07-22",
+      "value": 70240.000916,
+      "pr": 815,
+      "pr_title": "Added a flag to run additional tests for additional tests"
+    },
+    {
+      "commit": "e32518d6553e4bd9d7742926b65fdc3fb18a0da6",
+      "commit_index": 637,
+      "date": "2024-07-27",
+      "value": 69613.560208,
+      "pr": 826,
+      "pr_title": "Fix unexpected behavior when turning appendonly on and off within a transaction"
+    },
+    {
+      "commit": "f622e375a06bb8a2e700826c1af1af448155ad69",
+      "commit_index": 658,
+      "date": "2024-08-13",
+      "value": 71179.37617,
+      "pr": 867,
+      "pr_title": "Better messages when valkey-cli cluster --fix meet value check failed"
+    },
+    {
+      "commit": "4fe83207116b3986a2d021d38dfacfe06ba69604",
+      "commit_index": 700,
+      "date": "2024-08-28",
+      "value": 70606.356484,
+      "pr": 937,
+      "pr_title": "Add pause path coverage to replica migration tests"
+    },
+    {
+      "commit": "6a8540cefe490f61aaf5985be4909a7092e9002f",
+      "commit_index": 785,
+      "date": "2024-10-04",
+      "value": 69135.971194,
+      "pr": 1126,
+      "pr_title": "Fix some unitialized fields in `client` struct"
+    },
+    {
+      "commit": "4e2493e5c961b36e6832e8d6ea259939b0cf0fde",
+      "commit_index": 870,
+      "date": "2024-11-15",
+      "value": 69648.841237,
+      "pr": 1227,
+      "pr_title": "Kill diskless fork child asap when the last replica drop"
+    },
+    {
+      "commit": "979f4c1ceba9eecc0f984101775b101ab87b58fc",
+      "commit_index": 892,
+      "date": "2024-11-22",
+      "value": 68826.773079,
+      "pr": 1340,
+      "pr_title": "Add cmake-build-debug and cmake-build-release to gitignore"
+    },
+    {
+      "commit": "b9d224097a46dbe62ec0857cb91e7c67505a200e",
+      "commit_index": 893,
+      "date": "2024-11-23",
+      "value": 69076.986638,
+      "pr": 1295,
+      "pr_title": "Brocast a PONG to all node in cluster when role changed"
+    },
+    {
+      "commit": "9851006d6d7af570d7f38025f4b1de68f12c7731",
+      "commit_index": 894,
+      "date": "2024-11-23",
+      "value": 65300.373988,
+      "pr": 1249,
+      "pr_title": "Add short client info log to CLUSTER MEET / FORGET / RESET commands"
+    },
+    {
+      "commit": "33f42d7fb597ce28040f184ee57ed86d6f6ffbd8",
+      "commit_index": 895,
+      "date": "2024-11-22",
+      "value": 64914.291194,
+      "pr": 1276,
+      "pr_title": "CMake fixes + README update"
+    },
+    {
+      "commit": "653d5f7fe3d44adfb2a2e10c9110a3efacd3f0da",
+      "commit_index": 896,
+      "date": "2024-11-25",
+      "value": 66625.695888,
+      "pr": 1334,
+      "pr_title": "Support empty callback on function and free temp function in async way"
+    },
+    {
+      "commit": "c4920bca4a6681b2ba652e4dc52b72fe47db516a",
+      "commit_index": 897,
+      "date": "2024-11-25",
+      "value": 69190.506375,
+      "pr": 1260,
+      "pr_title": "Integrating fast_float to optionally replace strtod"
+    },
+    {
+      "commit": "cf1a1e0931bd2db77c23b0058d8660461873dc8f",
+      "commit_index": 898,
+      "date": "2024-11-25",
+      "value": 70490.486823,
+      "pr": 1342,
+      "pr_title": "Optimize sdscatrepr by batch processing printable characters"
+    },
+    {
+      "commit": "9305b49145172da781b8af2b5b96f9643e4367ec",
+      "commit_index": 901,
+      "date": "2024-11-26",
+      "value": 70640.91577,
+      "pr": 999,
+      "pr_title": "Add tag for dual-channel logs"
+    },
+    {
+      "commit": "66ae8b71352853ee90a0a9d4cddbbb406c189416",
+      "commit_index": 902,
+      "date": "2024-11-27",
+      "value": 70107.56085,
+      "pr": 1359,
+      "pr_title": "change the container image to ubuntu:plucky"
+    },
+    {
+      "commit": "5d08149e726bb7d393d76401c7be683ceaf67b7b",
+      "commit_index": 903,
+      "date": "2024-11-27",
+      "value": 66369.860274,
+      "pr": 1198,
+      "pr_title": "Use fake client flag to replace not conn check"
+    },
+    {
+      "commit": "3df609ef06f71c37a45049ec1df9611b9f763d55",
+      "commit_index": 913,
+      "date": "2024-12-03",
+      "value": 65316.658819,
+      "pr": 1293,
+      "pr_title": "Optimize PFCOUNT, PFMERGE command by SIMD acceleration"
+    },
+    {
+      "commit": "7e564887b93ea3d1008cd2ea2d2bb82c4a4b0a04",
+      "commit_index": 934,
+      "date": "2024-12-11",
+      "value": 64910.189552,
+      "pr": 1408,
+      "pr_title": "Set HIDDEN_CONFIG flag on events-per-io-thread"
+    },
+    {
+      "commit": "4efff42f041733d786a73f1cdfa65f6e04c3c4b8",
+      "commit_index": 937,
+      "date": "2024-11-18",
+      "value": 64450.63015,
+      "pr": 1065,
+      "pr_title": "Replace dict with hashtable in command tables"
+    },
+    {
+      "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
+      "commit_index": 938,
+      "date": "2024-09-11",
+      "value": 56228.183319,
+      "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
+    },
+    {
+      "commit": "1acf7f71c0324747de6b0ed9118f065dde0a5a92",
+      "commit_index": 939,
+      "date": "2024-12-11",
+      "value": 56352.180276,
+      "pr": 1421,
+      "pr_title": "Fix memory leak in the new hashtable unittest"
+    },
+    {
+      "commit": "0c8ad5cd34129bacf5a3dda30b37b156e7cdfb98",
+      "commit_index": 940,
+      "date": "2024-12-11",
+      "value": 56149.935675,
+      "pr": 1420,
+      "pr_title": "defrag: allow defrag to start during AOF loading"
+    },
+    {
+      "commit": "32f2c73cb5c93516ac5abc5259023caf75326b6a",
+      "commit_index": 945,
+      "date": "2024-12-12",
+      "value": 56026.948723,
+      "pr": 1430,
+      "pr_title": "defrag: eliminate persistent kvstore pointer and edge case fixes"
+    },
+    {
+      "commit": "7892bf808b6f748684af7defa0c0a8611cc4be50",
+      "commit_index": 955,
+      "date": "2024-12-17",
+      "value": 57613.843998,
+      "pr": 1379,
+      "pr_title": "Fix test_reclaimFilePageCache to avoid tmpfs"
+    },
+    {
+      "commit": "e9b8970e72754461d92b8bf22055a58540878d59",
+      "commit_index": 1040,
+      "date": "2025-01-27",
+      "value": 58015.896809,
+      "pr": 1604,
+      "pr_title": "Relaxed RDB version check"
+    },
+    {
+      "commit": "e7dbce3a11c0f3c78cd3f4b36bb0b5be61871005",
+      "commit_index": 1051,
+      "date": "2025-02-03",
+      "value": 58787.623496,
+      "pr": 1572,
+      "pr_title": "Enable module API SendClusterMessage to use light message header type"
+    },
+    {
+      "commit": "da3f1c6144cf3e748545adc13fe607bcdf96609f",
+      "commit_index": 1062,
+      "date": "2025-02-06",
+      "value": 60619.021413,
+      "pr": 1564,
+      "pr_title": "Add paused_reason to INFO CLIENTS"
+    },
+    {
+      "commit": "4e0149a381ac5e030537712f046c235110168b60",
+      "commit_index": 1083,
+      "date": "2025-02-11",
+      "value": 60691.126101,
+      "pr": 1710,
+      "pr_title": "Fix new benchmark test under the TLS"
+    },
+    {
+      "commit": "3f6581b6253fc9df665251004813c6bf13a693f7",
+      "commit_index": 1125,
+      "date": "2025-02-28",
+      "value": 61097.078854,
+      "pr": 1762,
+      "pr_title": "Update and stabilize defrag tests"
+    },
+    {
+      "commit": "4571886b4178d4afa7f23fe7b3d6593870b4242c",
+      "commit_index": 1210,
+      "date": "2025-05-05",
+      "value": 61944.336918,
+      "pr": 2038,
+      "pr_title": "Fix VALKEYCLI_AUTH env variable fallback to REDISCLI_AUTH mistake"
+    },
+    {
+      "commit": "28f48ff638ec00409a1a2b5ddae979c90ed2bb1c",
+      "commit_index": 1253,
+      "date": "2025-05-25",
+      "value": 61649.046403,
+      "pr": 2120,
+      "pr_title": "Changes and fixes for the new DELIFEQ command"
+    },
+    {
+      "commit": "51e96c1df2f980d679a33926d3e9dca86929ad27",
+      "commit_index": 1274,
+      "date": "2025-05-30",
+      "value": 58373.329844,
+      "pr": 2149,
+      "pr_title": "Add ricardo as a commiter"
+    },
+    {
+      "commit": "838ba44cd65b15822f4136a4aed33cc13caa4cae",
+      "commit_index": 1285,
+      "date": "2025-06-08",
+      "value": 42520.76414,
+      "pr": 2078,
+      "pr_title": "Reply Copy Avoidance"
+    },
+    {
+      "commit": "b5e012a1083cbfda3ab27c6df3fc8d82534d6a80",
+      "commit_index": 1290,
+      "date": "2025-06-10",
+      "value": 59619.199219,
+      "pr": 2097,
+      "pr_title": "Fix invalid functionname processMultibulkBuffer typo in comments."
+    },
+    {
+      "commit": "47716606896c9c6ea4f7aa024957fb946f5b0e9f",
+      "commit_index": 1293,
+      "date": "2025-06-10",
+      "value": 59076.290836,
+      "pr": 2192,
+      "pr_title": "Update extended-redis-compatibility conf to remove the specific words"
+    },
+    {
+      "commit": "1b531e560b6256a26692382ad622fc975a683f36",
+      "commit_index": 1294,
+      "date": "2025-06-10",
+      "value": 42989.748688,
+      "pr": 1566,
+      "pr_title": "Call makeObjectShared to normalize a shared object into a true shared object"
+    },
+    {
+      "commit": "c41ffc3401acd3f9b7c2bfc50314626805718dd0",
+      "commit_index": 1295,
+      "date": "2025-06-10",
+      "value": 43223.590174,
+      "pr": 2193,
+      "pr_title": "valkey-check-rdb: Fix truncated long aux fields"
+    },
+    {
+      "commit": "2f3e363c154edbe2483415730f096758e3a1b293",
+      "commit_index": 1338,
+      "date": "2025-07-03",
+      "value": 60624.303423,
+      "pr": 2276,
+      "pr_title": "Log test details at the end when the test times out"
+    },
+    {
+      "commit": "1fbf5fb1fe595ee015ec51cb786e6feb151008aa",
+      "commit_index": 1380,
+      "date": "2025-08-01",
+      "value": 59842.153113,
+      "pr": 2378,
+      "pr_title": "support negative filtering for client command filters"
+    },
+    {
+      "commit": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
+      "commit_index": 1423,
+      "date": "2025-08-12",
+      "value": 60817.457295,
+      "pr": 2473,
+      "pr_title": "Deflake hashexpire tests"
+    },
+    {
+      "commit": "a97d584cc20013c6797843a30633f0f268874d28",
+      "commit_index": 1444,
+      "date": "2025-08-19",
+      "value": 43865.378757,
+      "pr": 2466,
+      "pr_title": "Fix slot-info expand not working, kvstoreHashtableExpand always creat\u2026"
+    },
+    {
+      "commit": "2db4eeb1fcd8316a792476c3023e705be24fdd70",
+      "commit_index": 1455,
+      "date": "2025-08-21",
+      "value": 60629.179621,
+      "pr_title": "Remove temporary build correction for RDMA and libvalkey 0.1.0"
+    },
+    {
+      "commit": "ac515159a1e79ada6e43ed49c9ed9cb11178c50d",
+      "commit_index": 1460,
+      "date": "2025-08-22",
+      "value": 60550.522164,
+      "pr": 2535,
+      "pr_title": "Remove debug logging from cluster-flush-slot.tcl"
+    },
+    {
+      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
+      "commit_index": 1461,
+      "date": "2025-08-22",
+      "value": 34265.62095,
+      "pr": 2092,
+      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
+    },
+    {
+      "commit": "8c55547999a980680997a2c0c2bd292a7112da9c",
+      "commit_index": 1462,
+      "date": "2025-08-23",
+      "value": 36566.923945,
+      "pr": 2497,
+      "pr_title": "Don't allow slot migration to myself node"
+    },
+    {
+      "commit": "9aeab8ccbac0ca4923676c749c98d0de4718c872",
+      "commit_index": 1463,
+      "date": "2025-08-24",
+      "value": 35965.114738,
+      "pr": 2538,
+      "pr_title": "Consistently use static_assert across code"
+    },
+    {
+      "commit": "3086e61d4b06a81602fc74163eb7d4eb6b6bfe41",
+      "commit_index": 1465,
+      "date": "2025-08-26",
+      "value": 36419.77088,
+      "pr": 2541,
+      "pr_title": "Update reply schema for LMOVE and BLMOVE"
+    },
+    {
+      "commit": "861d0794b7bdf2237d98502a5b405faf19db24dc",
+      "commit_index": 1550,
+      "date": "2025-10-25",
+      "value": 31124.509697,
+      "pr": 2763,
+      "pr_title": "Sentinel: Skip IS-PRIMARY-DOWN-BY-ADDR requests when primary not SDOWN"
+    },
+    {
+      "commit": "0a9cb985c8c37c54c5007bc0af2dcd0b6752a529",
+      "commit_index": 1635,
+      "date": "2025-12-19",
+      "value": 35032.457864,
+      "pr": 2955,
+      "pr_title": "Fix lua module build failure when using CLANG"
+    },
+    {
+      "commit": "263d9ea41972d8005e739324b826efe945549acc",
+      "commit_index": 1657,
+      "date": "2026-01-04",
+      "value": 33447.899881,
+      "pr": 2998,
+      "pr_title": "Fix zero length hash creation with HSETEX"
+    },
+    {
+      "commit": "9f7cfc771902db5ea1f8e67f1d23c65c07cde11e",
+      "commit_index": 1663,
+      "date": "2026-01-06",
+      "value": 34500.069336,
+      "pr": 2986,
+      "pr_title": "Refactor clusterMsg type casting for improve type safety"
+    },
+    {
+      "commit": "1d23866b7dfd35438a4cbc0d158e75cba791c51a",
+      "commit_index": 1668,
+      "date": "2026-01-08",
+      "value": 34346.656668,
+      "pr": 2945,
+      "pr_title": "Trigger prepareCommand on argc change in module command filters"
+    },
+    {
+      "commit": "b7b11d77d621d8d5fed0f77faed676e4ecee5854",
+      "commit_index": 1678,
+      "date": "2026-01-14",
+      "value": 36134.781983,
+      "pr": 3046,
+      "pr_title": "Avoid duplicate calculations of network-bytes-out in slot stats with copy-avoidance"
+    },
+    {
+      "commit": "f5b0360fae0f8a8f135631636b1a569884791a57",
+      "commit_index": 1720,
+      "date": "2026-01-30",
+      "value": 33316.773915,
+      "pr": 3134,
+      "pr_title": "Add waits in test-ubuntu-reclaim-cache"
+    },
+    {
+      "commit": "dcfb9269f5ba4cf2f851e75fba77dc189c4a15aa",
+      "commit_index": 1805,
+      "date": "2026-03-05",
+      "value": 31822.418763,
+      "pr": 3316,
+      "pr_title": "Fix zset to operate defrag scan lexicographically"
+    },
+    {
+      "commit": "269b1c5eda9347fb7d4d485ac9d375d11d467edd",
+      "commit_index": 1890,
+      "date": "2026-04-20",
+      "value": 8743.231937,
+      "pr": 3306,
+      "pr_title": "Improve COB memory tracking with copy avoidance"
+    },
+    {
+      "commit": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55",
+      "commit_index": 1974,
+      "date": "2026-05-24",
+      "value": 8859.047519,
+      "pr": 3791,
+      "pr_title": "Restrict zmadvise_dontneed_range() to jemalloc builds"
+    }
+  ],
+  "landmarks": []
+}

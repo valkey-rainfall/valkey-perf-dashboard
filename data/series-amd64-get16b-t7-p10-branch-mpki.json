@@ -6,10 +6,632 @@
     "workload": "get16b-t7-p10",
     "metric": "branch-mpki",
     "unit": "misses/1Ki",
-    "generated": "2026-05-24T09:36:06.156018+00:00",
+    "generated": "2026-05-24T17:59:09.357983+00:00",
     "total_commits": 1976
   },
   "points": [
+    {
+      "commit": "3431b1f156b05866e4f9a368304216974f047c43",
+      "commit_index": 105,
+      "date": "2023-11-29",
+      "value": 0.024299,
+      "pr": 7351,
+      "pr_title": "format cpu config as redis style"
+    },
+    {
+      "commit": "adbb534f034f94453c619b106029500823f34cf6",
+      "commit_index": 134,
+      "date": "2023-12-15",
+      "value": 0.016635,
+      "pr": 12862,
+      "pr_title": "Always keep an in-memory history of all commands in redis-cli"
+    },
+    {
+      "commit": "2c5b51ad26b6129e161c2373fb48571648fc1393",
+      "commit_index": 149,
+      "date": "2023-12-28",
+      "value": 0.016811,
+      "pr": 12869,
+      "pr_title": "Bump github/codeql-action from 2 to 3"
+    },
+    {
+      "commit": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
+      "commit_index": 163,
+      "date": "2024-01-09",
+      "value": 0.016947,
+      "pr": 12924,
+      "pr_title": "Fix possible corruption in sdsResize (CVE-2023-41056)"
+    },
+    {
+      "commit": "813327b231d4abbe2f5f9394b005680b1712f04b",
+      "commit_index": 220,
+      "date": "2024-02-08",
+      "value": 0.017123,
+      "pr": 13042,
+      "pr_title": "Fix SORT STORE quicklist with the right options"
+    },
+    {
+      "commit": "0aaae734f46101e621f9d56d76c42d04029d3c99",
+      "commit_index": 276,
+      "date": "2024-03-21",
+      "value": 0.017259,
+      "pr_title": "Fix incorrect find/replace"
+    },
+    {
+      "commit": "b19ebaf551de6b8b4aa35e1d054aece8dd8b900f",
+      "commit_index": 334,
+      "date": "2024-04-03",
+      "value": 0.018072,
+      "pr": 174,
+      "pr_title": "Rename redisCommand to serverCommand"
+    },
+    {
+      "commit": "b669af0eabe602850fc02f0cdc452ce071f9adda",
+      "commit_index": 390,
+      "date": "2024-04-10",
+      "value": 0.026903,
+      "pr": 268,
+      "pr_title": "Rename 'redis_tls_ctx' and 'redis_tls_client_ctx' global variables"
+    },
+    {
+      "commit": "f4e10eee06cd978452a17e69d684e8afc8eeae3f",
+      "commit_index": 447,
+      "date": "2024-04-30",
+      "value": 0.020058,
+      "pr": 350,
+      "pr_title": "CRC64 perf improvements from Redis patches"
+    },
+    {
+      "commit": "c4782066e76ba20848fab95fd4909507cc069c3b",
+      "commit_index": 503,
+      "date": "2024-05-23",
+      "value": 0.016866,
+      "pr": 53,
+      "pr_title": "Cache CLUSTER SLOTS response for improving throughput and reduced latency."
+    },
+    {
+      "commit": "4135894a5d40f7270a2127d601fbf4f81ca4ab26",
+      "commit_index": 560,
+      "date": "2024-06-17",
+      "value": 0.019429,
+      "pr": 660,
+      "pr_title": "Update remaining `master` references to `primary`"
+    },
+    {
+      "commit": "24208812a658c5dbb843dc20f9615e801be37d46",
+      "commit_index": 588,
+      "date": "2024-07-01",
+      "value": 0.018589,
+      "pr": 717,
+      "pr_title": "Increase ping and cluster timeout for cluster-slots test"
+    },
+    {
+      "commit": "1ea49e5845a11250a13273c725720822c26860f1",
+      "commit_index": 595,
+      "date": "2024-07-02",
+      "value": 0.016755,
+      "pr": 731,
+      "pr_title": "Make valkey compatible with redis-sentinel to start sentinel"
+    },
+    {
+      "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
+      "commit_index": 596,
+      "date": "2024-07-02",
+      "value": 0.034839,
+      "pr": 541,
+      "pr_title": "Embed key into dict entry"
+    },
+    {
+      "commit": "b298dfd6ef5c8572965c8154526ea76381fa29d2",
+      "commit_index": 597,
+      "date": "2024-07-03",
+      "value": 0.031615,
+      "pr": 724,
+      "pr_title": "Use 'primary' instead of 'master' in Sentinel tcl testing."
+    },
+    {
+      "commit": "2d6791bb1157af52e20ffd1fb4ca025c283153d3",
+      "commit_index": 598,
+      "date": "2024-07-04",
+      "value": 0.02106,
+      "pr": 735,
+      "pr_title": "Use clusterNodeIsVotingPrimary function to check the right"
+    },
+    {
+      "commit": "6bf1d02edf962674cb32dc2e4f2f13d3d8cece3f",
+      "commit_index": 599,
+      "date": "2024-07-04",
+      "value": 0.018084,
+      "pr": 723,
+      "pr_title": "Nested MULTI or WATCH in MULTI now will abort the transaction"
+    },
+    {
+      "commit": "5f0ccf1478452598490683be4f78cf3e69ee259f",
+      "commit_index": 602,
+      "date": "2024-07-07",
+      "value": 0.018927,
+      "pr": 755,
+      "pr_title": "Remove duplicate definition of UNUSED(V)"
+    },
+    {
+      "commit": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483",
+      "commit_index": 603,
+      "date": "2024-07-09",
+      "value": 0.051434,
+      "pr": 758,
+      "pr_title": "Async IO threads"
+    },
+    {
+      "commit": "548b4e0ea943da765a4fec46e73484b0742f58f8",
+      "commit_index": 604,
+      "date": "2024-07-09",
+      "value": 0.05175,
+      "pr": 725,
+      "pr_title": "Calculate the actual mask to be removed in the eventloop before aeApiDelEvent"
+    },
+    {
+      "commit": "6a5a11f21c6b6a5c8678c50e96b559919962ba10",
+      "commit_index": 606,
+      "date": "2024-07-09",
+      "value": 0.053966,
+      "pr": 752,
+      "pr_title": "Fix ULong config boundary checking"
+    },
+    {
+      "commit": "a4ee8dada4fcff9805cb6820e274fdb0d924ed83",
+      "commit_index": 609,
+      "date": "2024-07-12",
+      "value": 0.048881,
+      "pr": 775,
+      "pr_title": "Fix WAITAOF test in external test due to appendonly is enabled"
+    },
+    {
+      "commit": "1a8bd045f3037699f2db92a974f1f3be215f11c6",
+      "commit_index": 616,
+      "date": "2024-07-15",
+      "value": 0.047883,
+      "pr": 647,
+      "pr_title": "Replace master-reboot-down-after-period with primary-reboot-down-after-period in sentinel.conf"
+    },
+    {
+      "commit": "36e81d9e79ea934b888f133ccee313a5fe0b9297",
+      "commit_index": 620,
+      "date": "2024-07-18",
+      "value": 0.049344,
+      "pr": 801,
+      "pr_title": "Fix rdb_child_exit_pipe incorrect close call"
+    },
+    {
+      "commit": "8b480310a629300c7cb28576f04df889bda21198",
+      "commit_index": 621,
+      "date": "2024-07-18",
+      "value": 0.051155,
+      "pr": 803,
+      "pr_title": "Remove read handler upon RDB connection close"
+    },
+    {
+      "commit": "94bc15cb7147773d3b45e5a2f9c7e8d7de6f97c7",
+      "commit_index": 622,
+      "date": "2024-07-19",
+      "value": 0.098883,
+      "pr": 763,
+      "pr_title": "Io thread work offload"
+    },
+    {
+      "commit": "816accea762271458e89016e3ed6ea27c9c1daff",
+      "commit_index": 624,
+      "date": "2024-07-19",
+      "value": 0.092807,
+      "pr": 790,
+      "pr_title": "Generate correct slot information in cluster shards command on primary failure"
+    },
+    {
+      "commit": "59aa00823c3691c50da452f2df2c4bc24e46696d",
+      "commit_index": 631,
+      "date": "2024-07-23",
+      "value": 0.099274,
+      "pr": 762,
+      "pr_title": "Replicas with the same offset queue up for election"
+    },
+    {
+      "commit": "4b8de6b1be24b2c64f6e3e188b6dd6d9bca575b1",
+      "commit_index": 645,
+      "date": "2024-07-31",
+      "value": 0.093013,
+      "pr": 851,
+      "pr_title": "Update replica version comparison to handle version 8 RC candidates"
+    },
+    {
+      "commit": "1ff2a3b6aeca0645d3dd38aa8ae3b5087adc8d4a",
+      "commit_index": 698,
+      "date": "2024-08-27",
+      "value": 0.092334,
+      "pr": 908,
+      "pr_title": "Remove `dual-channel-replication` Feature Flag's Protection"
+    },
+    {
+      "commit": "09def3cf03b93586bd49f689753b7d749e3bea55",
+      "commit_index": 751,
+      "date": "2024-09-13",
+      "value": 0.102673,
+      "pr": 943,
+      "pr_title": "Improve code readability in dict.c"
+    },
+    {
+      "commit": "ef971a34eb10ec20c006819997b9186a0ed0e9e0",
+      "commit_index": 804,
+      "date": "2024-10-12",
+      "value": 0.09587,
+      "pr": 1150,
+      "pr_title": "Correct the note details for deprecated config 'io-threads-do-reads'"
+    },
+    {
+      "commit": "07b3e7ae7a9e08101fa4dd50aebb8fa5fbdd4f1e",
+      "commit_index": 857,
+      "date": "2024-11-08",
+      "value": 0.1343,
+      "pr": 1196,
+      "pr_title": "Add CMake build system for valkey"
+    },
+    {
+      "commit": "c8ceb2ee255c899b0cb05b69f0511fc7dcf4ddca",
+      "commit_index": 910,
+      "date": "2024-12-01",
+      "value": 0.103742,
+      "pr": 1376,
+      "pr_title": "Use zfree_with_size for client buffer"
+    },
+    {
+      "commit": "b4c2a1804a20211a0cca634393d689e5bc96ddf7",
+      "commit_index": 937,
+      "date": "2024-12-10",
+      "value": 0.128733,
+      "pr": 1419,
+      "pr_title": "Fix flaky init_test proc in maxmemory test suite"
+    },
+    {
+      "commit": "4efff42f041733d786a73f1cdfa65f6e04c3c4b8",
+      "commit_index": 939,
+      "date": "2024-11-18",
+      "value": 0.094012,
+      "pr": 1065,
+      "pr_title": "Replace dict with hashtable in command tables"
+    },
+    {
+      "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
+      "commit_index": 940,
+      "date": "2024-09-11",
+      "value": 0.147114,
+      "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
+    },
+    {
+      "commit": "1acf7f71c0324747de6b0ed9118f065dde0a5a92",
+      "commit_index": 941,
+      "date": "2024-12-11",
+      "value": 0.145548,
+      "pr": 1421,
+      "pr_title": "Fix memory leak in the new hashtable unittest"
+    },
+    {
+      "commit": "2d924045223a9f2396b6a08a939b66e2fe5c5d65",
+      "commit_index": 944,
+      "date": "2024-12-12",
+      "value": 0.112924,
+      "pr": 1414,
+      "pr_title": "Avoid defragging scripts during EVAL command execution"
+    },
+    {
+      "commit": "7d72fada2c349eb5b91c7e33099adc167abb0e99",
+      "commit_index": 950,
+      "date": "2024-12-14",
+      "value": 0.146485,
+      "pr": 1437,
+      "pr_title": "Fix wrong file name in build-release-packages.yml"
+    },
+    {
+      "commit": "079f4edf2d7aabd98bd37ffaac608b54dea62b6a",
+      "commit_index": 963,
+      "date": "2024-12-18",
+      "value": 0.108824,
+      "pr": 1459,
+      "pr_title": "Add a hint about the current file for TCL debugging"
+    },
+    {
+      "commit": "ad592f73d7c245f530f428af786ee39042208784",
+      "commit_index": 1016,
+      "date": "2025-01-12",
+      "value": 0.102051,
+      "pr": 1545,
+      "pr_title": "Skip CLI tests with reply schema validation"
+    },
+    {
+      "commit": "de3672a7ffba8773871bebda0553f370906a7ae3",
+      "commit_index": 1069,
+      "date": "2025-02-09",
+      "value": 0.108134,
+      "pr": 1485,
+      "pr_title": "Offload replication writes to IO threads"
+    },
+    {
+      "commit": "c5ae37f223cc00ce9f1ea0633693eba64566dfa1",
+      "commit_index": 1093,
+      "date": "2025-02-13",
+      "value": 0.122854,
+      "pr": 1730,
+      "pr_title": "Add spellchecker ignore section"
+    },
+    {
+      "commit": "5d6e77f1c5ccaa798f01286a29f6f204368cd989",
+      "commit_index": 1183,
+      "date": "2025-04-17",
+      "value": 0.099928,
+      "pr": 1904,
+      "pr_title": "Add sentinel_total_tilt to sentinel INFO sentinel"
+    },
+    {
+      "commit": "8b0d952c2b2431b59831d99730c1059a5f2c86aa",
+      "commit_index": 1240,
+      "date": "2025-05-19",
+      "value": 0.105195,
+      "pr": 2096,
+      "pr_title": "Further improve performance of sdssplitargs"
+    },
+    {
+      "commit": "053bf9e5bfa63b7dc6cccdc95ff7619c38846c5f",
+      "commit_index": 1254,
+      "date": "2025-05-23",
+      "value": 0.105498,
+      "pr": 2130,
+      "pr_title": "Mark string2ll_resolver as used"
+    },
+    {
+      "commit": "872ee0d6f77bff004b32ef974235b4f6adab4593",
+      "commit_index": 1268,
+      "date": "2025-05-27",
+      "value": 0.074601,
+      "pr": 2115,
+      "pr_title": "Add size_t cast in modules"
+    },
+    {
+      "commit": "1b531e560b6256a26692382ad622fc975a683f36",
+      "commit_index": 1296,
+      "date": "2025-06-10",
+      "value": 0.132512,
+      "pr": 1566,
+      "pr_title": "Call makeObjectShared to normalize a shared object into a true shared object"
+    },
+    {
+      "commit": "dcf32220c914588123e6d7001a72e7643d428130",
+      "commit_index": 1353,
+      "date": "2025-07-08",
+      "value": 0.1056,
+      "pr": 2328,
+      "pr_title": "handle prefetch-batch-max-size config update from zero to positive value"
+    },
+    {
+      "commit": "1c5572fed0c6d1fe3dc0094cb72283555df0bb48",
+      "commit_index": 1381,
+      "date": "2025-07-31",
+      "value": 0.104544,
+      "pr": 2402,
+      "pr_title": "Update check times for AOF loading in memefficiency.tcl"
+    },
+    {
+      "commit": "ba19ec861a660059ac9e22652166c562cdd75493",
+      "commit_index": 1409,
+      "date": "2025-08-07",
+      "value": 0.086243,
+      "pr": 2447,
+      "pr_title": "Fix hashexpire test toggle active expire"
+    },
+    {
+      "commit": "d32f9be04ab85eddf5c627ddf789cc950a1c6ef4",
+      "commit_index": 1417,
+      "date": "2025-08-11",
+      "value": 0.08668,
+      "pr": 2432,
+      "pr_title": "Use bool for return types in hashtable functions"
+    },
+    {
+      "commit": "725c3608f0676aee50a83e1e33f98ed6538220aa",
+      "commit_index": 1421,
+      "date": "2025-08-11",
+      "value": 0.086444,
+      "pr": 2469,
+      "pr_title": "Throw a useful error when underlying operations failed with tls"
+    },
+    {
+      "commit": "d7993b78d82d9c9d2f9298159acd8f5a2fc997d4",
+      "commit_index": 1422,
+      "date": "2025-08-11",
+      "value": 0.105626,
+      "pr": 1949,
+      "pr_title": "Introduce atomic slot migration"
+    },
+    {
+      "commit": "8131c2b07bcff0dd62c79f8495e45563eacadec1",
+      "commit_index": 1423,
+      "date": "2025-08-12",
+      "value": 0.107575,
+      "pr": 2456,
+      "pr_title": "Add test for failover sub-replica replication loop case"
+    },
+    {
+      "commit": "7a9ef29f1ae6baa571a1ca30e68eed1fa0304fa2",
+      "commit_index": 1424,
+      "date": "2025-08-12",
+      "value": 0.09411,
+      "pr": 2431,
+      "pr_title": "Change the same shard failover assert to if condition to avoid crash"
+    },
+    {
+      "commit": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
+      "commit_index": 1425,
+      "date": "2025-08-12",
+      "value": 0.10425,
+      "pr": 2473,
+      "pr_title": "Deflake hashexpire tests"
+    },
+    {
+      "commit": "e364c57e3dd10c908aa98926c4a58148d1fe5bff",
+      "commit_index": 1438,
+      "date": "2025-08-17",
+      "value": 0.083533,
+      "pr": 2495,
+      "pr_title": "simplify COPY Preserves TTLs hashexpire test"
+    },
+    {
+      "commit": "7a5c0d0ebf72354f122c64cd52788c671ae04064",
+      "commit_index": 1442,
+      "date": "2025-08-18",
+      "value": 0.084468,
+      "pr": 2503,
+      "pr_title": "Fix memory leak in saveSnapshotToConnectionSockets"
+    },
+    {
+      "commit": "fb9503bfd12bf8331647b151c3af0b28fa4d7e7a",
+      "commit_index": 1444,
+      "date": "2025-08-19",
+      "value": 0.086004,
+      "pr": 2500,
+      "pr_title": "CLUSTER SYNCSLOTS ESTABLISH added source node == myself check"
+    },
+    {
+      "commit": "bb81f8d14f6b32df7b4798dd8e35f45f257f6968",
+      "commit_index": 1445,
+      "date": "2025-08-19",
+      "value": 0.103541,
+      "pr": 2505,
+      "pr_title": "fix hash ignore ttl management during active expiry"
+    },
+    {
+      "commit": "23112fad87e65380d4774233fc0fa1edb65c9364",
+      "commit_index": 1452,
+      "date": "2025-08-20",
+      "value": 0.102135,
+      "pr": 2509,
+      "pr_title": "fix hsetex handling of wrong number of fields"
+    },
+    {
+      "commit": "85a0a017d28c1471885a0e10c3c9c3be64c3e4e8",
+      "commit_index": 1459,
+      "date": "2025-08-21",
+      "value": 0.086034,
+      "pr": 2517,
+      "pr_title": "Wait for log message occurrence in module test on message received"
+    },
+    {
+      "commit": "a68040789e7566ab2aabad28459fa07dad43db60",
+      "commit_index": 1461,
+      "date": "2025-08-21",
+      "value": 0.08598,
+      "pr": 2442,
+      "pr_title": "Adds benchmark on demand workflow"
+    },
+    {
+      "commit": "ac515159a1e79ada6e43ed49c9ed9cb11178c50d",
+      "commit_index": 1462,
+      "date": "2025-08-22",
+      "value": 0.086448,
+      "pr": 2535,
+      "pr_title": "Remove debug logging from cluster-flush-slot.tcl"
+    },
+    {
+      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
+      "commit_index": 1463,
+      "date": "2025-08-22",
+      "value": 0.218586,
+      "pr": 2092,
+      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
+    },
+    {
+      "commit": "9d682bad0bb731de8e21e15e4a1795c73aee9d0d",
+      "commit_index": 1466,
+      "date": "2025-08-25",
+      "value": 0.220745,
+      "pr": 2530,
+      "pr_title": "bio.c: Organize all worker data in a struct"
+    },
+    {
+      "commit": "5bbbc6bd9a3ec44c9a47b0cbb91219370e798088",
+      "commit_index": 1522,
+      "date": "2025-10-08",
+      "value": 0.169793,
+      "pr": 2568,
+      "pr_title": "Add shard id field to CLUSTER SHARDS response"
+    },
+    {
+      "commit": "b7a3fc988a8e92b7b0c326bbbf28e87fe1092e89",
+      "commit_index": 1579,
+      "date": "2025-11-11",
+      "value": 0.23475,
+      "pr": 2827,
+      "pr_title": "Fix Test dual-channel: primary tracking replica backlog refcount"
+    },
+    {
+      "commit": "e9014fd02b6e378ea647013097452558c20f0540",
+      "commit_index": 1636,
+      "date": "2025-12-19",
+      "value": 0.184163,
+      "pr": 2472,
+      "pr_title": "Adding support for sharing memory between the module and the engine"
+    },
+    {
+      "commit": "3c092caa08fd7e202e52791bc7c523d80c8247ea",
+      "commit_index": 1693,
+      "date": "2026-01-20",
+      "value": 0.153405,
+      "pr": 3020,
+      "pr_title": "Automatic TLS reload"
+    },
+    {
+      "commit": "42e6a0b7653caa21739d3c60301cb953f0eda517",
+      "commit_index": 1749,
+      "date": "2026-02-10",
+      "value": 0.283847,
+      "pr": 3161,
+      "pr_title": "Separate jobs for large memory tests with sanitizers"
+    },
+    {
+      "commit": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
+      "commit_index": 1837,
+      "date": "2026-03-13",
+      "value": 0.305187,
+      "pr": 3340,
+      "pr_title": "Weekly tests branches are not honored on scheduled workflow"
+    },
+    {
+      "commit": "d2db0c268cc73ede427f46ad206cb93685c0b10f",
+      "commit_index": 1906,
+      "date": "2026-04-23",
+      "value": 0.451366,
+      "pr": 3545,
+      "pr_title": "Fix module commandresult event cleanup during unsubscribe and module unload"
+    },
+    {
+      "commit": "2f161077123e8c2aa6e1b9301eb3d3e62be45711",
+      "commit_index": 1941,
+      "date": "2026-05-06",
+      "value": 0.48026,
+      "pr": 3641,
+      "pr_title": "Add null check in updateSSLPendingFlag"
+    },
+    {
+      "commit": "390a11c895d5dd1aa570ef7b6e78206ab1bf9776",
+      "commit_index": 1958,
+      "date": "2026-05-15",
+      "value": 0.474686,
+      "pr": 3703,
+      "pr_title": "Set repl-timeout for slotmigrations tests to prevent disconnections"
+    },
+    {
+      "commit": "82740995e01887f3fc7ff8ea05714a27c28001d7",
+      "commit_index": 1967,
+      "date": "2026-05-19",
+      "value": 0.433397,
+      "pr": 3766,
+      "pr_title": "Fix flaky block_keyspace_notification test for HGETDEL notify race"
+    },
     {
       "commit": "c59b247132a5ee5a9bc476b8e195e59e41b3cb73",
       "commit_index": 1975,

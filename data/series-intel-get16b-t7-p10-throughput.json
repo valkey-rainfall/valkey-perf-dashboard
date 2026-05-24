@@ -3,20 +3,34 @@
     "repo": "valkey-io/valkey",
     "branch": "unstable",
     "platform": "intel/sapphire-rapids/8488c",
-    "workload": "throughput",
-    "generated": "2026-05-24T17:12:19.020594+00:00",
+    "workload": "get16b-t7-p10",
+    "generated": "2026-05-24T17:59:55.984513+00:00",
     "total_commits": 1975
   },
   "workloads": [
-    "throughput"
+    "get16b-t7-p10"
   ],
   "points": [
+    {
+      "commit": "3431b1f156b05866e4f9a368304216974f047c43",
+      "date": "2023-11-29",
+      "commit_index": 104,
+      "results": {
+        "get16b-t7-p10": {
+          "rps": 752607.2330555555,
+          "cv": 0.3691284838842787,
+          "reps": 3
+        }
+      },
+      "pr": 7351,
+      "pr_title": "format cpu config as redis style"
+    },
     {
       "commit": "38f02349462d5aefa9b25386a130ebd67db1a4de",
       "date": "2024-01-04",
       "commit_index": 153,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 754640.2253443525,
           "cv": 0.2081988762146255,
           "reps": 3
@@ -30,7 +44,7 @@
       "date": "2024-02-18",
       "commit_index": 230,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 760636.4865771349,
           "cv": 0.24709098800012275,
           "reps": 3
@@ -44,7 +58,7 @@
       "date": "2024-03-31",
       "commit_index": 307,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 748636.0829683194,
           "cv": 0.21499849053250908,
           "reps": 3
@@ -58,7 +72,7 @@
       "date": "2024-04-10",
       "commit_index": 384,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 755535.5083425163,
           "cv": 0.33040770619508314,
           "reps": 3
@@ -72,7 +86,7 @@
       "date": "2024-05-06",
       "commit_index": 461,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 750257.9438888889,
           "cv": 0.152320675578758,
           "reps": 3
@@ -86,7 +100,7 @@
       "date": "2024-06-09",
       "commit_index": 538,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 750870.3841666667,
           "cv": 0.170195497026083,
           "reps": 3
@@ -100,7 +114,7 @@
       "date": "2024-06-27",
       "commit_index": 577,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 750293.3126721764,
           "cv": 0.12822206462998667,
           "reps": 3
@@ -114,7 +128,7 @@
       "date": "2024-07-01",
       "commit_index": 587,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 740797.954432966,
           "cv": 0.16939354661971448,
           "reps": 3
@@ -128,7 +142,7 @@
       "date": "2024-07-01",
       "commit_index": 592,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 749026.498888889,
           "cv": 0.2036253408002187,
           "reps": 3
@@ -142,7 +156,7 @@
       "date": "2024-07-02",
       "commit_index": 593,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 748639.9912918141,
           "cv": 0.5113764852427415,
           "reps": 7
@@ -156,7 +170,7 @@
       "date": "2024-07-02",
       "commit_index": 594,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 800255.8997222222,
           "cv": 0.023199193219239776,
           "reps": 3
@@ -170,7 +184,7 @@
       "date": "2024-07-04",
       "commit_index": 596,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 799696.6066115702,
           "cv": 0.21782258483271622,
           "reps": 3
@@ -184,7 +198,7 @@
       "date": "2024-07-04",
       "commit_index": 599,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 801354.0610514234,
           "cv": 0.17490842702640608,
           "reps": 3
@@ -198,7 +212,7 @@
       "date": "2024-07-07",
       "commit_index": 600,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 801853.4661157028,
           "cv": 0.2663367341182168,
           "reps": 3
@@ -212,7 +226,7 @@
       "date": "2024-07-09",
       "commit_index": 601,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 979751.4300275479,
           "cv": 0.4822866761955722,
           "reps": 3
@@ -226,7 +240,7 @@
       "date": "2024-07-11",
       "commit_index": 606,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 978605.6108618655,
           "cv": 0.5224919860345704,
           "reps": 7
@@ -240,7 +254,7 @@
       "date": "2024-07-16",
       "commit_index": 615,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 986403.069366391,
           "cv": 0.17419837350816048,
           "reps": 3
@@ -254,7 +268,7 @@
       "date": "2024-07-18",
       "commit_index": 618,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 987819.7366391185,
           "cv": 0.09957750147464155,
           "reps": 3
@@ -268,7 +282,7 @@
       "date": "2024-07-18",
       "commit_index": 619,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 976833.3815426998,
           "cv": 0.16361179727942798,
           "reps": 3
@@ -282,7 +296,7 @@
       "date": "2024-07-19",
       "commit_index": 620,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 759278.7800472255,
           "cv": 1.6910227206488042,
           "reps": 7
@@ -296,7 +310,7 @@
       "date": "2024-07-19",
       "commit_index": 621,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 757122.5102715468,
           "cv": 1.469545147245713,
           "reps": 7
@@ -310,7 +324,7 @@
       "date": "2024-07-22",
       "commit_index": 626,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 754823.2511147187,
           "cv": 0.8738614074408574,
           "reps": 7
@@ -324,7 +338,7 @@
       "date": "2024-07-27",
       "commit_index": 637,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 749901.7447255017,
           "cv": 1.3689295291071006,
           "reps": 7
@@ -338,7 +352,7 @@
       "date": "2024-08-13",
       "commit_index": 658,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 746973.3284149941,
           "cv": 1.1662962607378549,
           "reps": 7
@@ -352,7 +366,7 @@
       "date": "2024-08-28",
       "commit_index": 700,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 751682.8573789847,
           "cv": 2.010748990382103,
           "reps": 7
@@ -366,7 +380,7 @@
       "date": "2024-10-04",
       "commit_index": 785,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 754751.1670179063,
           "cv": 1.5985301537568688,
           "reps": 7
@@ -380,7 +394,7 @@
       "date": "2024-11-15",
       "commit_index": 870,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 758636.1740102322,
           "cv": 0.6761500657210664,
           "reps": 7
@@ -394,7 +408,7 @@
       "date": "2024-11-22",
       "commit_index": 892,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 768746.6273232324,
           "cv": 0.1448163697371068,
           "reps": 3
@@ -408,7 +422,7 @@
       "date": "2024-11-23",
       "commit_index": 893,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 768549.6746556472,
           "cv": 0.4435681022159458,
           "reps": 3
@@ -422,7 +436,7 @@
       "date": "2024-11-23",
       "commit_index": 894,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 802493.288997442,
           "cv": 1.2904559439781715,
           "reps": 7
@@ -436,7 +450,7 @@
       "date": "2024-11-22",
       "commit_index": 895,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 802212.3555119378,
           "cv": 0.15356374952992344,
           "reps": 3
@@ -450,7 +464,7 @@
       "date": "2024-11-25",
       "commit_index": 896,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 792175.7253896103,
           "cv": 0.7911732987013925,
           "reps": 7
@@ -464,7 +478,7 @@
       "date": "2024-11-25",
       "commit_index": 897,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 764292.1698888234,
           "cv": 0.612304375466204,
           "reps": 7
@@ -478,7 +492,7 @@
       "date": "2024-11-25",
       "commit_index": 898,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 752758.6861904762,
           "cv": 0.7020804625073593,
           "reps": 7
@@ -492,7 +506,7 @@
       "date": "2024-11-26",
       "commit_index": 901,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 750126.8194031222,
           "cv": 0.19084181002395262,
           "reps": 3
@@ -506,7 +520,7 @@
       "date": "2024-11-27",
       "commit_index": 902,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 752149.2564583335,
           "cv": 0.49007595796650244,
           "reps": 4
@@ -520,7 +534,7 @@
       "date": "2024-11-27",
       "commit_index": 903,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 794345.449491342,
           "cv": 0.9217888475643428,
           "reps": 7
@@ -534,7 +548,7 @@
       "date": "2024-12-03",
       "commit_index": 913,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 804030.8694047619,
           "cv": 0.797807271042743,
           "reps": 7
@@ -548,7 +562,7 @@
       "date": "2024-12-11",
       "commit_index": 934,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 797538.6236111111,
           "cv": 0.24385129631122798,
           "reps": 3
@@ -562,7 +576,7 @@
       "date": "2024-11-18",
       "commit_index": 937,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 806673.397332743,
           "cv": 0.793651867796173,
           "reps": 7
@@ -576,7 +590,7 @@
       "date": "2024-09-11",
       "commit_index": 938,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 924224.4551170799,
           "cv": 2.2708235047696683,
           "reps": 7
@@ -589,7 +603,7 @@
       "date": "2024-12-11",
       "commit_index": 939,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 919444.0429761905,
           "cv": 1.6721979154342692,
           "reps": 7
@@ -603,7 +617,7 @@
       "date": "2024-12-11",
       "commit_index": 940,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 908231.8931995278,
           "cv": 0.632417703826074,
           "reps": 7
@@ -617,7 +631,7 @@
       "date": "2024-12-12",
       "commit_index": 945,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 908451.5344795357,
           "cv": 2.0158968852983117,
           "reps": 7
@@ -631,7 +645,7 @@
       "date": "2024-12-17",
       "commit_index": 955,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 897762.7661111113,
           "cv": 0.4099294270253302,
           "reps": 3
@@ -645,7 +659,7 @@
       "date": "2025-01-27",
       "commit_index": 1040,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 894274.5269972453,
           "cv": 0.2766365285405992,
           "reps": 3
@@ -659,7 +673,7 @@
       "date": "2025-02-03",
       "commit_index": 1051,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 890483.5825,
           "cv": 0.09372858417096294,
           "reps": 3
@@ -673,7 +687,7 @@
       "date": "2025-02-06",
       "commit_index": 1062,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 863535.9177833532,
           "cv": 3.21947948498818,
           "reps": 7
@@ -687,7 +701,7 @@
       "date": "2025-02-11",
       "commit_index": 1083,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 846411.1385783155,
           "cv": 1.6134507867919312,
           "reps": 7
@@ -701,7 +715,7 @@
       "date": "2025-02-28",
       "commit_index": 1125,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 855264.9159779615,
           "cv": 0.29025794966211027,
           "reps": 3
@@ -715,7 +729,7 @@
       "date": "2025-05-05",
       "commit_index": 1210,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 851948.2244047619,
           "cv": 1.3078066043611698,
           "reps": 7
@@ -729,7 +743,7 @@
       "date": "2025-05-25",
       "commit_index": 1253,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 846476.8798110979,
           "cv": 1.23748750586608,
           "reps": 7
@@ -743,7 +757,7 @@
       "date": "2025-05-30",
       "commit_index": 1274,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 847506.3762770564,
           "cv": 2.7170136454871523,
           "reps": 7
@@ -757,7 +771,7 @@
       "date": "2025-06-08",
       "commit_index": 1285,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 825215.2741440379,
           "cv": 0.8981497793228475,
           "reps": 7
@@ -771,7 +785,7 @@
       "date": "2025-06-10",
       "commit_index": 1290,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 823993.8993900039,
           "cv": 0.7535098170781236,
           "reps": 7
@@ -785,7 +799,7 @@
       "date": "2025-06-10",
       "commit_index": 1293,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 826856.0767857144,
           "cv": 2.5291407872106038,
           "reps": 7
@@ -799,7 +813,7 @@
       "date": "2025-06-10",
       "commit_index": 1294,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 824744.9051731601,
           "cv": 1.0148164313547217,
           "reps": 7
@@ -813,7 +827,7 @@
       "date": "2025-06-10",
       "commit_index": 1295,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 801572.2090476191,
           "cv": 0.7698633507629877,
           "reps": 7
@@ -827,7 +841,7 @@
       "date": "2025-07-03",
       "commit_index": 1338,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 815281.328830185,
           "cv": 0.5717614988815303,
           "reps": 7
@@ -841,7 +855,7 @@
       "date": "2025-08-01",
       "commit_index": 1380,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 821090.5837032665,
           "cv": 2.399609147303584,
           "reps": 7
@@ -855,7 +869,7 @@
       "date": "2025-08-12",
       "commit_index": 1423,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 814115.3337121212,
           "cv": 0.4705588748391091,
           "reps": 4
@@ -869,7 +883,7 @@
       "date": "2025-08-19",
       "commit_index": 1444,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 810104.6291460055,
           "cv": 0.3078035975059322,
           "reps": 3
@@ -883,7 +897,7 @@
       "date": "2025-08-21",
       "commit_index": 1455,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 814327.7678905942,
           "cv": 1.0611769639356705,
           "reps": 7
@@ -896,7 +910,7 @@
       "date": "2025-08-22",
       "commit_index": 1460,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 814937.2564049587,
           "cv": 0.4878559657096252,
           "reps": 4
@@ -910,7 +924,7 @@
       "date": "2025-08-22",
       "commit_index": 1461,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1161043.8499232586,
           "cv": 1.7733543177282236,
           "reps": 7
@@ -924,7 +938,7 @@
       "date": "2025-08-23",
       "commit_index": 1462,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1151754.4989285714,
           "cv": 1.9843773825703654,
           "reps": 7
@@ -938,7 +952,7 @@
       "date": "2025-08-24",
       "commit_index": 1463,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1159808.4484523807,
           "cv": 2.7420390448442356,
           "reps": 7
@@ -952,7 +966,7 @@
       "date": "2025-08-26",
       "commit_index": 1465,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1151107.3708382528,
           "cv": 2.5251973694949816,
           "reps": 7
@@ -966,7 +980,7 @@
       "date": "2025-10-25",
       "commit_index": 1550,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1176379.6594608421,
           "cv": 3.315438536908698,
           "reps": 7
@@ -980,7 +994,7 @@
       "date": "2025-12-19",
       "commit_index": 1635,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1146710.6425236126,
           "cv": 1.5152191808190374,
           "reps": 7
@@ -994,7 +1008,7 @@
       "date": "2026-01-04",
       "commit_index": 1657,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1146888.2150914995,
           "cv": 2.6881697956778474,
           "reps": 7
@@ -1008,7 +1022,7 @@
       "date": "2026-01-06",
       "commit_index": 1663,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1136199.0605942544,
           "cv": 2.4473874495838492,
           "reps": 7
@@ -1022,7 +1036,7 @@
       "date": "2026-01-08",
       "commit_index": 1668,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1112282.1346428574,
           "cv": 1.5300002382713398,
           "reps": 7
@@ -1036,7 +1050,7 @@
       "date": "2026-01-14",
       "commit_index": 1678,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1115737.40782074,
           "cv": 2.19203780512281,
           "reps": 7
@@ -1050,7 +1064,7 @@
       "date": "2026-01-30",
       "commit_index": 1720,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1113332.5854761906,
           "cv": 2.768113509636322,
           "reps": 7
@@ -1064,7 +1078,7 @@
       "date": "2026-03-05",
       "commit_index": 1805,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1133041.8055627705,
           "cv": 2.2357488521488955,
           "reps": 7
@@ -1078,7 +1092,7 @@
       "date": "2026-04-20",
       "commit_index": 1890,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1139666.8850295157,
           "cv": 2.1483619228127395,
           "reps": 7
@@ -1092,7 +1106,7 @@
       "date": "2026-05-24",
       "commit_index": 1974,
       "results": {
-        "throughput": {
+        "get16b-t7-p10": {
           "rps": 1159170.7523425817,
           "cv": 2.35724667702937,
           "reps": 7
@@ -1107,7 +1121,7 @@
     {
       "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
       "delta": 0.0689,
-      "workload": "throughput",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr": 541,
       "pr_title": "Embed key into dict entry"
@@ -1115,7 +1129,7 @@
     {
       "commit": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483",
       "delta": 0.2219,
-      "workload": "throughput",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr": 758,
       "pr_title": "Async IO threads"
@@ -1123,7 +1137,7 @@
     {
       "commit": "94bc15cb7147773d3b45e5a2f9c7e8d7de6f97c7",
       "delta": -0.2227,
-      "workload": "throughput",
+      "workload": "get16b-t7-p10",
       "type": "regression",
       "pr": 763,
       "pr_title": "Io thread work offload"
@@ -1131,7 +1145,7 @@
     {
       "commit": "9851006d6d7af570d7f38025f4b1de68f12c7731",
       "delta": 0.0442,
-      "workload": "throughput",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr": 1249,
       "pr_title": "Add short client info log to CLUSTER MEET / FORGET / RESET commands"
@@ -1139,7 +1153,7 @@
     {
       "commit": "c4920bca4a6681b2ba652e4dc52b72fe47db516a",
       "delta": -0.0352,
-      "workload": "throughput",
+      "workload": "get16b-t7-p10",
       "type": "regression",
       "pr": 1260,
       "pr_title": "Integrating fast_float to optionally replace strtod"
@@ -1147,7 +1161,7 @@
     {
       "commit": "5d08149e726bb7d393d76401c7be683ceaf67b7b",
       "delta": 0.0561,
-      "workload": "throughput",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr": 1198,
       "pr_title": "Use fake client flag to replace not conn check"
@@ -1155,14 +1169,14 @@
     {
       "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
       "delta": 0.1457,
-      "workload": "throughput",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
     },
     {
       "commit": "c41ffc3401acd3f9b7c2bfc50314626805718dd0",
       "delta": -0.0281,
-      "workload": "throughput",
+      "workload": "get16b-t7-p10",
       "type": "regression",
       "pr": 2193,
       "pr_title": "valkey-check-rdb: Fix truncated long aux fields"
@@ -1170,7 +1184,7 @@
     {
       "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
       "delta": 0.4247,
-      "workload": "throughput",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr": 2092,
       "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"

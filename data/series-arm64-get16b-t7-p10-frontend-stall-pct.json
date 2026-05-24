@@ -6,7 +6,7 @@
     "workload": "get16b-t7-p10",
     "metric": "frontend-stall-pct",
     "unit": "%",
-    "generated": "2026-05-24T09:36:14.063204+00:00",
+    "generated": "2026-05-24T17:59:10.371995+00:00",
     "total_commits": 1977
   },
   "points": [
@@ -17,6 +17,708 @@
       "value": 0.674248,
       "pr": 12924,
       "pr_title": "Fix possible corruption in sdsResize (CVE-2023-41056)"
+    },
+    {
+      "commit": "b669af0eabe602850fc02f0cdc452ce071f9adda",
+      "commit_index": 390,
+      "date": "2024-04-10",
+      "value": 0.631549,
+      "pr": 268,
+      "pr_title": "Rename 'redis_tls_ctx' and 'redis_tls_client_ctx' global variables"
+    },
+    {
+      "commit": "c41dd77a3e93e02be3c4bc75d8c76b7b4169a4ce",
+      "commit_index": 504,
+      "date": "2024-05-22",
+      "value": 0.656538,
+      "pr": 323,
+      "pr_title": "Add clang-format configs"
+    },
+    {
+      "commit": "278ce0cae04342c392ebb865d155cbecd6672313",
+      "commit_index": 533,
+      "date": "2024-06-06",
+      "value": 0.709418,
+      "pr": 603,
+      "pr_title": "Rebrand the Lua debugger"
+    },
+    {
+      "commit": "b33f932c5670749bea67933c10578336c67f16e6",
+      "commit_index": 561,
+      "date": "2024-06-17",
+      "value": 0.899513,
+      "pr": 662,
+      "pr_title": "Add missing commas from debug command"
+    },
+    {
+      "commit": "752b6ee8ff75a72c364feca8b667f9e723df0c4c",
+      "commit_index": 589,
+      "date": "2024-07-01",
+      "value": 0.61587,
+      "pr": 721,
+      "pr_title": "Avoid compilation error oin valkey-cli"
+    },
+    {
+      "commit": "3323e422ad0c0dc81859017798cb04a9621d6522",
+      "commit_index": 593,
+      "date": "2024-07-02",
+      "value": 0.617144,
+      "pr": 674,
+      "pr_title": "Introduce thread-local storage variable to update thread's own used_memory and sum when reading to reduce atomic contention."
+    },
+    {
+      "commit": "1ea49e5845a11250a13273c725720822c26860f1",
+      "commit_index": 595,
+      "date": "2024-07-02",
+      "value": 0.635049,
+      "pr": 731,
+      "pr_title": "Make valkey compatible with redis-sentinel to start sentinel"
+    },
+    {
+      "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
+      "commit_index": 596,
+      "date": "2024-07-02",
+      "value": 0.749208,
+      "pr": 541,
+      "pr_title": "Embed key into dict entry"
+    },
+    {
+      "commit": "16803788451bfe8d5e6b757e5263653650cbd274",
+      "commit_index": 600,
+      "date": "2024-07-04",
+      "value": 0.764042,
+      "pr": 706,
+      "pr_title": "Update redis keyword to valkey in some sentinel functions (Redis Legacy)"
+    },
+    {
+      "commit": "5f0ccf1478452598490683be4f78cf3e69ee259f",
+      "commit_index": 602,
+      "date": "2024-07-07",
+      "value": 0.763775,
+      "pr": 755,
+      "pr_title": "Remove duplicate definition of UNUSED(V)"
+    },
+    {
+      "commit": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483",
+      "commit_index": 603,
+      "date": "2024-07-09",
+      "value": 1.002474,
+      "pr": 758,
+      "pr_title": "Async IO threads"
+    },
+    {
+      "commit": "66d0f7d9a116ee6c58da4c18532825130dcae773",
+      "commit_index": 617,
+      "date": "2024-07-16",
+      "value": 0.876108,
+      "pr": 754,
+      "pr_title": "Ensure only primary sender drives slot ownership updates"
+    },
+    {
+      "commit": "e8ae5b1852474ff89cfe23d4485a88dc59b5c0a3",
+      "commit_index": 1070,
+      "date": "2025-02-09",
+      "value": 1.977246,
+      "pr": 1691,
+      "pr_title": "Fix log message \"DB 9: 100 keys (0 volatile) in 16 slots HT\""
+    },
+    {
+      "commit": "c8bfd23d910708f40919c62d443839e080db9fc9",
+      "commit_index": 1184,
+      "date": "2025-04-17",
+      "value": 2.151212,
+      "pr": 1952,
+      "pr_title": "Fix incorrect lag reported in XINFO GROUPS"
+    },
+    {
+      "commit": "daea05b1e26db29bfd1c033e27f9d519a2f8ccbb",
+      "commit_index": 1241,
+      "date": "2025-05-19",
+      "value": 2.252588,
+      "pr": 2098,
+      "pr_title": "Allow mixing quoted and unquoted inline args"
+    },
+    {
+      "commit": "ff7135836b5d9ccaa19d5dbaf2a0b0325755c8b4",
+      "commit_index": 1269,
+      "date": "2025-05-27",
+      "value": 2.556757,
+      "pr": 2142,
+      "pr_title": "Update GEOSEARCH and GEOSEARCHSTORE history documentation for the BYPOLYGON option"
+    },
+    {
+      "commit": "3789b29e92d4997252352bd9748bffaf7d8f712b",
+      "commit_index": 1283,
+      "date": "2025-06-04",
+      "value": 2.231269,
+      "pr": 2165,
+      "pr_title": "Offload slot calculation and cross-slot detection to I/O threads"
+    },
+    {
+      "commit": "4dae83dba19ee06191dcd927e7c9ae20d79f4324",
+      "commit_index": 1285,
+      "date": "2025-06-05",
+      "value": 2.159406,
+      "pr": 2175,
+      "pr_title": "Remove unnecessary refcount increment in propagateDelete"
+    },
+    {
+      "commit": "988297d19abea59799cdfaedcf7d0b01f0a559d8",
+      "commit_index": 1286,
+      "date": "2025-06-05",
+      "value": 2.124658,
+      "pr": 2010,
+      "pr_title": "Avoid log spam about cluster node failure detection by each primary"
+    },
+    {
+      "commit": "838ba44cd65b15822f4136a4aed33cc13caa4cae",
+      "commit_index": 1287,
+      "date": "2025-06-08",
+      "value": 2.149341,
+      "pr": 2078,
+      "pr_title": "Reply Copy Avoidance"
+    },
+    {
+      "commit": "3bc40be6cdef24f9db8a30e5f8659ea5c404027a",
+      "commit_index": 1290,
+      "date": "2025-06-10",
+      "value": 2.353334,
+      "pr": 2117,
+      "pr_title": "CLIENT UNBLOCK should't be able to unpause paused clients"
+    },
+    {
+      "commit": "c41ffc3401acd3f9b7c2bfc50314626805718dd0",
+      "commit_index": 1297,
+      "date": "2025-06-10",
+      "value": 2.330962,
+      "pr": 2193,
+      "pr_title": "valkey-check-rdb: Fix truncated long aux fields"
+    },
+    {
+      "commit": "6e24028f7b68ea74644d13158dddfb7dc103680e",
+      "commit_index": 1354,
+      "date": "2025-07-10",
+      "value": 2.163832,
+      "pr": 2334,
+      "pr_title": "Change default values of valkey-cli to use valkey naming, and added fallback to old values"
+    },
+    {
+      "commit": "1fbf5fb1fe595ee015ec51cb786e6feb151008aa",
+      "commit_index": 1382,
+      "date": "2025-08-01",
+      "value": 2.107316,
+      "pr": 2378,
+      "pr_title": "support negative filtering for client command filters"
+    },
+    {
+      "commit": "b7fe0b6435efbe584dd5d3063aca47554edd6e4b",
+      "commit_index": 1396,
+      "date": "2025-08-05",
+      "value": 2.127562,
+      "pr": 2418,
+      "pr_title": "Strengthen undefined behavior prevention in checkSignedBitfieldOverflow"
+    },
+    {
+      "commit": "5a5848a44cb0c098e214a33135d5bfa3b313b1ec",
+      "commit_index": 1400,
+      "date": "2025-08-05",
+      "value": 2.355714,
+      "pr_title": "Add ACTIVE-EXPIRY and ACTIVE-DEFRAG for hash objects with volatile items"
+    },
+    {
+      "commit": "ba7334c7c61abd854109f1d19f807098e5f22cb1",
+      "commit_index": 1403,
+      "date": "2025-08-06",
+      "value": 2.29448,
+      "pr": 2436,
+      "pr_title": "Fix hfe no malloc size unit"
+    },
+    {
+      "commit": "70d336d892297d1a5e208bee6fc18df363d2ac5e",
+      "commit_index": 1410,
+      "date": "2025-08-07",
+      "value": 2.395546,
+      "pr": 2421,
+      "pr_title": "Increase latency for big list test in defrag"
+    },
+    {
+      "commit": "410976d509eb276cbdefd145257f83adafa9738f",
+      "commit_index": 1439,
+      "date": "2025-08-17",
+      "value": 2.590641,
+      "pr": 2491,
+      "pr_title": "Add test failure template to contributing guide"
+    },
+    {
+      "commit": "ab3ee2ca9530ba527959fa36b1c3b0222a2675a6",
+      "commit_index": 1453,
+      "date": "2025-08-20",
+      "value": 2.359124,
+      "pr": 2524,
+      "pr_title": "Fix total test count while running over loop"
+    },
+    {
+      "commit": "d2eee78a151884518441572c53fc378bf6689e81",
+      "commit_index": 1460,
+      "date": "2025-08-21",
+      "value": 2.283586,
+      "pr": 2522,
+      "pr_title": "Module API: Add READONLY flag to ClientInfo.flags output structure"
+    },
+    {
+      "commit": "ac515159a1e79ada6e43ed49c9ed9cb11178c50d",
+      "commit_index": 1462,
+      "date": "2025-08-22",
+      "value": 2.32071,
+      "pr": 2535,
+      "pr_title": "Remove debug logging from cluster-flush-slot.tcl"
+    },
+    {
+      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
+      "commit_index": 1463,
+      "date": "2025-08-22",
+      "value": 3.037326,
+      "pr": 2092,
+      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
+    },
+    {
+      "commit": "8c55547999a980680997a2c0c2bd292a7112da9c",
+      "commit_index": 1464,
+      "date": "2025-08-23",
+      "value": 2.934648,
+      "pr": 2497,
+      "pr_title": "Don't allow slot migration to myself node"
+    },
+    {
+      "commit": "3086e61d4b06a81602fc74163eb7d4eb6b6bfe41",
+      "commit_index": 1467,
+      "date": "2025-08-26",
+      "value": 2.985687,
+      "pr": 2541,
+      "pr_title": "Update reply schema for LMOVE and BLMOVE"
+    },
+    {
+      "commit": "93d7ccab03779afe70762740129bd34b840e663f",
+      "commit_index": 1495,
+      "date": "2025-09-15",
+      "value": 3.051401,
+      "pr": 2602,
+      "pr_title": "Fix accounting for dual channel RDB bytes in replication stats"
+    },
+    {
+      "commit": "155b0bb82196c8fc70245823856a8e966525d55a",
+      "commit_index": 1523,
+      "date": "2025-10-08",
+      "value": 2.924389,
+      "pr": 2362,
+      "pr_title": "Fix memory leak with CLIENT LIST/KILL duplicate filters"
+    },
+    {
+      "commit": "e9014fd02b6e378ea647013097452558c20f0540",
+      "commit_index": 1636,
+      "date": "2025-12-19",
+      "value": 2.926138,
+      "pr": 2472,
+      "pr_title": "Adding support for sharing memory between the module and the engine"
+    },
+    {
+      "commit": "0f5db6a5d17d8273d2535aeac2d9eaca23635861",
+      "commit_index": 1750,
+      "date": "2026-02-10",
+      "value": 4.049614,
+      "pr": 3168,
+      "pr_title": "Steps to run daily workflow in forked repo"
+    },
+    {
+      "commit": "546020e54c98f4a0c829b9e4470da1410bc26c6e",
+      "commit_index": 1758,
+      "date": "2026-02-15",
+      "value": 5.69283,
+      "pr": 3143,
+      "pr_title": "Add test-tls-only CI job"
+    },
+    {
+      "commit": "fde31b08f7b00ed0bc1bb153e7a315ff435270f2",
+      "commit_index": 1760,
+      "date": "2026-02-15",
+      "value": 4.09686,
+      "pr": 3201,
+      "pr_title": "Optimize endian conversion functions"
+    },
+    {
+      "commit": "80bd689accbb434a8b77f9db0ef778e196801478",
+      "commit_index": 1762,
+      "date": "2026-02-16",
+      "value": 3.801231,
+      "pr": 3215,
+      "pr_title": "Fix database ACL check for alldbs commands"
+    },
+    {
+      "commit": "48419e46ea245cce1c21933c3637c22b0476e842",
+      "commit_index": 1764,
+      "date": "2026-02-16",
+      "value": 3.820583,
+      "pr": 3213,
+      "pr_title": "Enable USE_LIBBACKTRACE Across CI and Fix Alpine Builds"
+    },
+    {
+      "commit": "051a5ebaabdbe99b47e6cc46fb8d65d044c14544",
+      "commit_index": 1765,
+      "date": "2026-02-16",
+      "value": 3.856799,
+      "pr": 3178,
+      "pr_title": "Fixes memory leak when the job crashes before it's freed"
+    },
+    {
+      "commit": "537cb07942f1e4233e9e8a60a5015a6b3dee6e2d",
+      "commit_index": 1779,
+      "date": "2026-02-24",
+      "value": 4.085777,
+      "pr": 3192,
+      "pr_title": "Logging fix or improvement around new shard ID generation"
+    },
+    {
+      "commit": "dcfb9269f5ba4cf2f851e75fba77dc189c4a15aa",
+      "commit_index": 1807,
+      "date": "2026-03-05",
+      "value": 3.808231,
+      "pr": 3316,
+      "pr_title": "Fix zset to operate defrag scan lexicographically"
+    },
+    {
+      "commit": "fc217fca2d7de246ab8494d9d8619b7348235f47",
+      "commit_index": 1814,
+      "date": "2026-03-08",
+      "value": 3.984349,
+      "pr": 3280,
+      "pr_title": "Update cluster config file when NOFAILOVER changes"
+    },
+    {
+      "commit": "6fee1aa61cecadcdfe719a67d5a47981eb3c6ea9",
+      "commit_index": 1821,
+      "date": "2026-03-10",
+      "value": 3.784924,
+      "pr": 3258,
+      "pr_title": "Use dictGetSomeKeys instead of dictGetRandomKey for gossip node population"
+    },
+    {
+      "commit": "8051de740dd38172476b04e892e5517630e3eaed",
+      "commit_index": 1828,
+      "date": "2026-03-11",
+      "value": 3.942691,
+      "pr": 3344,
+      "pr_title": "Inherit LDFLAGS for TLS and RDMA modules"
+    },
+    {
+      "commit": "6414720504f689a3fc699338bf22565bb70c3829",
+      "commit_index": 1829,
+      "date": "2026-03-11",
+      "value": 3.674572,
+      "pr": 3329,
+      "pr_title": "Replace fast_float (C++) with ffc.h"
+    },
+    {
+      "commit": "7403b423c40e4bf2112a69fcef06b5f280a2d34c",
+      "commit_index": 1830,
+      "date": "2026-03-11",
+      "value": 4.411462,
+      "pr": 1546,
+      "pr_title": "Add unsigned 64-bit numeric config in module API"
+    },
+    {
+      "commit": "26522fc527d1f474d39bbd74482541aa54715bfb",
+      "commit_index": 1832,
+      "date": "2026-03-11",
+      "value": 4.986837,
+      "pr": 3352,
+      "pr_title": "Add availability-zone to the reply schema for CLUSTER SHARDS/SLOTS"
+    },
+    {
+      "commit": "c9ce3e09191305a455139f70b7807ebb0549b951",
+      "commit_index": 1835,
+      "date": "2026-03-11",
+      "value": 4.311226,
+      "pr": 3263,
+      "pr_title": "Fix OOM aborts in large-memory ASAN tests on GitHub runners"
+    },
+    {
+      "commit": "b58083d9e906f9fdd0d694d77d1ebf9a8a677eda",
+      "commit_index": 1836,
+      "date": "2026-03-13",
+      "value": 4.819667,
+      "pr": 3002,
+      "pr_title": "Optimize streams range hot path"
+    },
+    {
+      "commit": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
+      "commit_index": 1837,
+      "date": "2026-03-13",
+      "value": 5.423078,
+      "pr": 3340,
+      "pr_title": "Weekly tests branches are not honored on scheduled workflow"
+    },
+    {
+      "commit": "ed9016a2f79941ffee86e4b52214aacba7dffb29",
+      "commit_index": 1839,
+      "date": "2026-03-17",
+      "value": 4.826533,
+      "pr": 3370,
+      "pr_title": "Make macOS leaks check skippable"
+    },
+    {
+      "commit": "0027b7d4533a90944d6175a83257f874d8ffd2a3",
+      "commit_index": 1842,
+      "date": "2026-03-18",
+      "value": 5.058868,
+      "pr": 3371,
+      "pr_title": "Add AGENTS.md file for agentic coding assistant steering"
+    },
+    {
+      "commit": "3c46f667bcc96f52f008371b7cfc2fc58d218268",
+      "commit_index": 1849,
+      "date": "2026-03-23",
+      "value": 4.159868,
+      "pr": 3209,
+      "pr_title": "Fix `valkey-cli --cluster del-node` for unreachable nodes"
+    },
+    {
+      "commit": "f3b647050269003cd0ae40c5ec359c62163aff2a",
+      "commit_index": 1863,
+      "date": "2026-04-02",
+      "value": 3.845733,
+      "pr": 3430,
+      "pr_title": "Fix some flaky tests"
+    },
+    {
+      "commit": "fb655dbf5cfaf254e0b8bb6617f1f734dbebc07d",
+      "commit_index": 1864,
+      "date": "2026-04-02",
+      "value": 4.910687,
+      "pr": 3366,
+      "pr_title": "Replace dict with thin wrapper around hashtable"
+    },
+    {
+      "commit": "1db8bab50851cc22aa97d91aeccb4b8385be1672",
+      "commit_index": 1865,
+      "date": "2026-04-03",
+      "value": 5.257716,
+      "pr": 3401,
+      "pr_title": "Big endian bitmap byte order mismatch fix"
+    },
+    {
+      "commit": "e8ca6c07b22ceb89692c17b7f51c4a8f03a268ba",
+      "commit_index": 1866,
+      "date": "2026-04-03",
+      "value": 6.184909,
+      "pr": 3439,
+      "pr_title": "Fix VLA warning in linenoise and enable -Werror"
+    },
+    {
+      "commit": "c35dbdfc83b7860a66d2b88685b1d31739ceb962",
+      "commit_index": 1872,
+      "date": "2026-04-08",
+      "value": 3.873009,
+      "pr": 3452,
+      "pr_title": "Fix some flaky tests using CLIENT REPLY OFF"
+    },
+    {
+      "commit": "be52d8b81a82b81d3b3482ff89236513d195e3b1",
+      "commit_index": 1877,
+      "date": "2026-04-09",
+      "value": 4.742689,
+      "pr": 3453,
+      "pr_title": "Fix trivial double-free issue in rdbLoadObject"
+    },
+    {
+      "commit": "0ec173351658e2b74b5936125233ab77da017e57",
+      "commit_index": 1881,
+      "date": "2026-04-13",
+      "value": 3.781721,
+      "pr": 3122,
+      "pr_title": "Adds new (hidden) ValkeyModule_CallArgv API functions"
+    },
+    {
+      "commit": "a3a839972ff10a68b1a7069d70d8ce1fffb8f02a",
+      "commit_index": 1882,
+      "date": "2026-04-13",
+      "value": 3.119505,
+      "pr": 3324,
+      "pr_title": "Redesign IO threading communication model"
+    },
+    {
+      "commit": "c4db208e9b2c1d41b3a8c6db8a8b982df2dc11c0",
+      "commit_index": 1883,
+      "date": "2026-04-14",
+      "value": 3.269293,
+      "pr": 3472,
+      "pr_title": "enhance raxLowWalk: use memchr() for child-edge lookup in non-compressed nodes"
+    },
+    {
+      "commit": "baa5a48b5acb2afebdf463ca5b91f3ad77bdaec6",
+      "commit_index": 1884,
+      "date": "2026-04-14",
+      "value": 3.070417,
+      "pr": 3402,
+      "pr_title": "Env: Read VALKEYCLI_HOST and VALKEYCLI_PORT environment variables"
+    },
+    {
+      "commit": "8a91a123980bf7715a851792b5f00c45b993aeba",
+      "commit_index": 1888,
+      "date": "2026-04-16",
+      "value": 3.324213,
+      "pr": 3460,
+      "pr_title": "Unique samples in hashtableSampleEntries"
+    },
+    {
+      "commit": "4a42c95853c0f3978715cb509a774f457edc182b",
+      "commit_index": 1891,
+      "date": "2026-04-17",
+      "value": 3.420426,
+      "pr": 3516,
+      "pr_title": "Fix HPERSIST RESP protocol violation on wrong-type key"
+    },
+    {
+      "commit": "9d51f5ff8a8634a20f29fc38f39d592b848ddc14",
+      "commit_index": 1894,
+      "date": "2026-04-21",
+      "value": 2.962279,
+      "pr": 3520,
+      "pr_title": "Document VALKEYCLI_HOST/PORT variables in help"
+    },
+    {
+      "commit": "fc00f7be030784ac115e088ddf31bc94266cb01d",
+      "commit_index": 1896,
+      "date": "2026-04-22",
+      "value": 4.721402,
+      "pr": 3518,
+      "pr_title": "Fix VLA warning in io_threads"
+    },
+    {
+      "commit": "04896c1e6dab95f6da6c0cf6c2fa2d3d23330bb8",
+      "commit_index": 1899,
+      "date": "2026-04-22",
+      "value": 5.831244,
+      "pr": 3462,
+      "pr_title": "Deflake many-slot-migration under valgrind"
+    },
+    {
+      "commit": "d2db0c268cc73ede427f46ad206cb93685c0b10f",
+      "commit_index": 1906,
+      "date": "2026-04-23",
+      "value": 5.159462,
+      "pr": 3545,
+      "pr_title": "Fix module commandresult event cleanup during unsubscribe and module unload"
+    },
+    {
+      "commit": "a7d495352ac0ba724eeec51fd57b615e8e805f52",
+      "commit_index": 1908,
+      "date": "2026-04-23",
+      "value": 4.150931,
+      "pr_title": "extra UT"
+    },
+    {
+      "commit": "c86118476267c1b36b7e0fc49bc85fd493e9a5fc",
+      "commit_index": 1909,
+      "date": "2026-04-26",
+      "value": 3.502394,
+      "pr": 3109,
+      "pr_title": "Implement Provenance Guard"
+    },
+    {
+      "commit": "edc0d26ada082b34cd693fe862a5e2005dd66dd7",
+      "commit_index": 1910,
+      "date": "2026-04-26",
+      "value": 6.988887,
+      "pr": 3555,
+      "pr_title": "Strip LTO flags from static Lua module build"
+    },
+    {
+      "commit": "a3e44a55d3da5bc590b5ee596f195e56f187f70e",
+      "commit_index": 1913,
+      "date": "2026-04-27",
+      "value": 4.32197,
+      "pr": 3548,
+      "pr_title": "Fix lua-enable-insecure-api default value cannot be changed to yes"
+    },
+    {
+      "commit": "28ecbd204fceec9f0bf1aa1b2d791b0f7e9fc7e5",
+      "commit_index": 1914,
+      "date": "2026-04-26",
+      "value": 5.700505,
+      "pr": 3554,
+      "pr_title": "Ensure client slot migration pointer is cleared during reset"
+    },
+    {
+      "commit": "6dbb7f81a97f7d687cf7fcc88bdcbe78bf6cf170",
+      "commit_index": 1915,
+      "date": "2026-04-27",
+      "value": 5.532935,
+      "pr": 3503,
+      "pr_title": "Fix remove cached eval scripts on engine unregister"
+    },
+    {
+      "commit": "8091c6c10a3bd80fcb639a036dde882580f61fcb",
+      "commit_index": 1917,
+      "date": "2026-04-28",
+      "value": 5.174961,
+      "pr": 3573,
+      "pr_title": "Remove redundant count division in genericHgetallCommand"
+    },
+    {
+      "commit": "16ed690fec06ddfb32f3da863e1201cc5cc9c9d6",
+      "commit_index": 1919,
+      "date": "2026-04-28",
+      "value": 4.339848,
+      "pr": 3584,
+      "pr_title": "fix LTO compilation warning in eval"
+    },
+    {
+      "commit": "39036c7c06f4ac1942aa7a36058cc79e555c9fde",
+      "commit_index": 1920,
+      "date": "2026-04-29",
+      "value": 5.76628,
+      "pr": 2823,
+      "pr_title": "Add structured datasets loading capability in valkey benchmark"
+    },
+    {
+      "commit": "89b7baa598b177286572e0784a4391810910f3d2",
+      "commit_index": 1948,
+      "date": "2026-05-07",
+      "value": 3.779522,
+      "pr": 3606,
+      "pr_title": "Speed up cluster startup by 10 seconds"
+    },
+    {
+      "commit": "ca9dee353d2f0c1f48f4471fd191d5583043407d",
+      "commit_index": 1950,
+      "date": "2026-05-10",
+      "value": 3.352066,
+      "pr": 2993,
+      "pr_title": "Add optional REPLACE argument to MOVE"
+    },
+    {
+      "commit": "d4337d66625a276fdbeb1d03a350b3f0a49e3387",
+      "commit_index": 1952,
+      "date": "2026-05-13",
+      "value": 4.088113,
+      "pr": 3679,
+      "pr_title": "Fix CLUSTERSCAN fingerprint to use configurable_hash_seed"
+    },
+    {
+      "commit": "a813df05461d9fd6e613ebbed5dbeee51482ee06",
+      "commit_index": 1955,
+      "date": "2026-05-13",
+      "value": 4.952956,
+      "pr": 3674,
+      "pr_title": "Improve CLUSTERSCAN error handling test with broader coverage"
+    },
+    {
+      "commit": "69bd02b2e490b69c7edea63c75627950962b4e3e",
+      "commit_index": 1962,
+      "date": "2026-05-18",
+      "value": 4.005098,
+      "pr": 3505,
+      "pr_title": "Extend CAPA REDIRECT to cover keyless commands on cluster replicas"
     },
     {
       "commit": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55",
