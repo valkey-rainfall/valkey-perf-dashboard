@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:50:14.901741Z",
+  "timestamp": "2026-05-24T15:52:21.827631Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,23 +7,16 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_15.46.25.191971",
-    "type": "perf-get",
+    "id": "2026.05.24_15.46.25.207116",
+    "type": "mem-set",
     "state": "running",
-    "progress_pct": 55.1,
-    "elapsed_sec": 230,
-    "steps": "135/245"
+    "progress_pct": 33.3,
+    "elapsed_sec": 2,
+    "steps": "1/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_15.46.25.191971",
-        "type": "PerfTaskData",
-        "note": "[sweep] Backfill: 226 commits in gap",
-        "source": "valkey",
-        "specifier": "e9014fd02b6e378ea647013097452558c20f0540"
-      },
       {
         "id": "2026.05.24_15.46.25.207116",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.46.25.191971",
+      "method": "perf-get",
+      "score": 1937317.9223347108,
+      "commit": "e9014fd0",
+      "source": "valkey",
+      "specifier": "e9014fd02b6e378ea647013097452558c20f0540",
+      "note": "[sweep] Backfill: 226 commits in gap",
+      "completed": "2026.05.24_15.52.19.332494"
+    },
     {
       "task_id": "2026.05.24_15.40.25.741218",
       "method": "perf-get",
@@ -73,17 +76,7 @@
       "specifier": "d2db0c268cc73ede427f46ad206cb93685c0b10f",
       "note": "[sweep] Bisecting 5.4% improvement between 6c329dfe and c59b2471",
       "completed": "2026.05.24_15.28.22.584106"
-    },
-    {
-      "task_id": "2026.05.24_15.17.38.398963",
-      "method": "perf-get",
-      "score": 1941157.5911068479,
-      "commit": "6c329dfe",
-      "source": "valkey",
-      "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
-      "note": "[sweep] Release 9.1",
-      "completed": "2026.05.24_15.22.56.780001"
     }
   ],
-  "eta_minutes": 8.1
+  "eta_minutes": 2.6
 }
