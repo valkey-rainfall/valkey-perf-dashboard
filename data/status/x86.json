@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T16:29:02.612653Z",
+  "timestamp": "2026-05-24T16:31:08.775909Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,33 +7,43 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_16.23.59.321690",
+    "id": "2026.05.24_16.30.41.602679",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 69.4,
-    "elapsed_sec": 303,
-    "steps": "170/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 27,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_16.23.59.321690",
+        "id": "2026.05.24_16.30.41.602679",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 2.1% improvement between adbb534f and f7b1d028",
+        "note": "[sweep] Backfill: 113 commits in gap",
         "source": "valkey",
-        "specifier": "2c5b51ad26b6129e161c2373fb48571648fc1393"
+        "specifier": "b7a3fc988a8e92b7b0c326bbbf28e87fe1092e89"
       },
       {
-        "id": "2026.05.24_16.23.59.338367",
+        "id": "2026.05.24_16.30.41.619813",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 105 commits in gap",
         "source": "valkey",
-        "specifier": "a2b0701d2cf64c62f9bb41c01ad44586f01c2c5b"
+        "specifier": "b26e8e321346518574ed7093df1fb6b8be9fd7d9"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_16.23.59.321690",
+      "method": "perf-get",
+      "score": 760457.6471074381,
+      "commit": "2c5b51ad",
+      "source": "valkey",
+      "specifier": "2c5b51ad26b6129e161c2373fb48571648fc1393",
+      "note": "[sweep] Bisecting 2.1% improvement between adbb534f and f7b1d028",
+      "completed": "2026.05.24_16.30.35.531549"
+    },
     {
       "task_id": "2026.05.24_16.17.15.799585",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "10357ceda5dce8baf42a4a585b913d490f11e56f",
       "note": "[memory-sweep] Backfill: 112 commits in gap",
       "completed": "2026.05.24_16.07.01.553143"
-    },
-    {
-      "task_id": "2026.05.24_16.05.21.691178",
-      "method": "mem-set",
-      "score": 84.1474896,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "b19ebaf551de6b8b4aa35e1d054aece8dd8b900f",
-      "note": "[memory-sweep] Backfill: 112 commits in gap",
-      "completed": "2026.05.24_16.06.09.472181"
     }
   ],
-  "eta_minutes": 7.2
+  "eta_minutes": 7.5
 }
