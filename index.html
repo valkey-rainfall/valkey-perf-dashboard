@@ -48,23 +48,25 @@
   </style>
 </head>
 <body>
-  <h1>Valkey Unstable — Performance History</h1>
-  <p class="subtitle">Adaptive sweep: progressive bisection identifies impactful PRs</p>
-  <p class="subtitle" id="workload-label"></p>
-
-  <div class="controls">
-    <select id="platformSelect"></select>
-    <select id="workloadSelect" style="display:none"></select>
-  </div>
-
-  <div class="stats" id="stats"></div>
-
-  <div class="chart-container">
-    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap">
+  <header style="position:sticky;top:0;z-index:100;background:var(--bg);padding:0.75rem 1.5rem;margin:-1.5rem -1.5rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+    <div>
+      <h1 style="font-size:1.1rem;margin:0;">Valkey Unstable — Performance History</h1>
+      <span class="subtitle" id="workload-label" style="margin:0;"></span>
+    </div>
+    <div class="controls" style="margin:0;">
+      <select id="platformSelect"></select>
+      <select id="workloadSelect" style="display:none"></select>
+    </div>
+    <div style="display:flex;gap:0.4rem;">
       <button onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
       <button onclick="zoomAll('last100')" class="zoom-btn">Last 100 Commits</button>
       <button onclick="zoomAll('reset')" class="zoom-btn">Reset Zoom</button>
     </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="chart-container">
     <canvas id="chart"></canvas>
   </div>
 
