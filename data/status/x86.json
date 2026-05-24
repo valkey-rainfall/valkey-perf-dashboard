@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T14:48:00.097230Z",
+  "timestamp": "2026-05-24T14:50:07.934211Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,33 +7,43 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_14.43.31.758141",
+    "id": "2026.05.24_14.49.32.879995",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 69.4,
-    "elapsed_sec": 268,
-    "steps": "170/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 35,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_14.43.31.758141",
+        "id": "2026.05.24_14.49.32.879995",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 14.5% improvement between b4c2a180 and 7d72fada",
+        "note": "[sweep] Bisecting 13.8% improvement between b4c2a180 and 2d924045",
         "source": "valkey",
-        "specifier": "2d924045223a9f2396b6a08a939b66e2fe5c5d65"
+        "specifier": "1acf7f71c0324747de6b0ed9118f065dde0a5a92"
       },
       {
-        "id": "2026.05.24_14.43.31.772680",
+        "id": "2026.05.24_14.49.32.894659",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "2c41b135052125490a76c0d1cca968f86b10570a"
+        "specifier": "53294e537cd6c267b96320e68dde5c36a4ac4ffb"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_14.43.31.758141",
+      "method": "perf-get",
+      "score": 1303500.6984651713,
+      "commit": "2d924045",
+      "source": "valkey",
+      "specifier": "2d924045223a9f2396b6a08a939b66e2fe5c5d65",
+      "note": "[sweep] Bisecting 14.5% improvement between b4c2a180 and 7d72fada",
+      "completed": "2026.05.24_14.49.26.772726"
+    },
     {
       "task_id": "2026.05.24_14.37.30.946184",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "079f4edf2d7aabd98bd37ffaac608b54dea62b6a",
       "note": "[sweep] Bisecting 11.7% improvement between 07b3e7ae and de3672a7",
       "completed": "2026.05.24_14.25.19.852982"
-    },
-    {
-      "task_id": "2026.05.24_14.13.29.300874",
-      "method": "perf-get",
-      "score": 1257286.174380165,
-      "commit": "8b480310",
-      "source": "valkey",
-      "specifier": "8b480310a629300c7cb28576f04df889bda21198",
-      "note": "[sweep] Bisecting 13.9% regression between 36e81d9e and 94bc15cb",
-      "completed": "2026.05.24_14.19.19.507477"
     }
   ],
-  "eta_minutes": 7.0
+  "eta_minutes": 7.5
 }
