@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T09:24:38.874632Z",
+  "timestamp": "2026-05-24T09:26:47.277228Z",
   "host": "arm",
   "runner": {
     "pid": 846525,
@@ -7,29 +7,29 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_09.23.38.301323",
+    "id": "2026.05.24_09.24.43.672143",
     "type": "perf-get",
-    "state": "starting",
-    "progress_pct": 0.0,
-    "elapsed_sec": 61,
-    "steps": "0/245"
+    "state": "running",
+    "progress_pct": 18.4,
+    "elapsed_sec": 124,
+    "steps": "45/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_09.23.38.301323",
+        "id": "2026.05.24_09.24.43.672143",
         "type": "PerfTaskData",
-        "note": "[sweep] Release Valkey created",
+        "note": "[sweep] Release 7.2.4",
         "source": "valkey",
-        "specifier": "2b8cde71bb553713cf93794a0fb30a1618c0c955"
+        "specifier": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b"
       },
       {
-        "id": "2026.05.24_09.23.38.307526",
+        "id": "2026.05.24_09.24.43.678662",
         "type": "MemTaskData",
-        "note": "[memory-sweep] Release Valkey created",
+        "note": "[memory-sweep] Release 7.2.4",
         "source": "valkey",
-        "specifier": "2b8cde71bb553713cf93794a0fb30a1618c0c955"
+        "specifier": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b"
       }
     ]
   },
@@ -85,5 +85,5 @@
       "completed": "2026.05.23_00.09.27.057719"
     }
   ],
-  "eta_minutes": 7.5
+  "eta_minutes": 14.2
 }
