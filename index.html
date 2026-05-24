@@ -90,9 +90,14 @@
     let chart = null;
     let currentData = null;
 
+    function getWorkloadId() {
+      return (manifest && manifest.workloads && manifest.workloads[0]) ? manifest.workloads[0].id : 'get16b-t7-p10';
+    }
+
     async function loadPlatform(platform) {
       try {
-        const resp = await fetch(`data/series-${platform}-throughput.json`);
+        const workloadId = getWorkloadId();
+        const resp = await fetch(`data/series-${platform}-${workloadId}-throughput.json`);
         if (!resp.ok) return null;
         return await resp.json();
       } catch { return null; }
@@ -311,7 +316,7 @@
 
       // Memory chart
       try {
-        const memResp = await fetch(`data/series-${platform}-memory.json`);
+        const memResp = await fetch(`data/series-${platform}-${getWorkloadId()}-memory.json`);
         if (memResp.ok) {
           const memData = await memResp.json();
           const memWorkload = memData.workloads[0];
