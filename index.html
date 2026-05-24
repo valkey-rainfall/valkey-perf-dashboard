@@ -88,6 +88,7 @@
 
   <script>
     const PLATFORMS = ['amd64', 'arm64', 'intel'];
+    Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left') axis.width = 60; };
     const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
     let chart = null;
     let currentData = null;
