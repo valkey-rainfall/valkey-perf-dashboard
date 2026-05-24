@@ -1,32 +1,27 @@
 {
-  "timestamp": "2026-05-24T06:01:21.469349Z",
+  "timestamp": "2026-05-24T06:04:32.254813Z",
   "host": "arm",
   "runner": {
     "pid": 703167,
     "state": "running",
     "uptime_hours": 494228.8
   },
-  "current_task": {
-    "id": "2026.05.24_06.00.42.359615",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 11.4,
-    "elapsed_sec": 38,
-    "steps": "20/175"
-  },
+  "current_task": null,
   "queue": {
-    "depth": 1,
-    "tasks": [
-      {
-        "id": "2026.05.24_06.00.42.359615",
-        "type": "PerfTaskData",
-        "note": "canary-exp2-day20260524",
-        "source": "valkey-rainfall",
-        "specifier": "0321a69e62f5148096d03358e26a1b884af3b969"
-      }
-    ]
+    "depth": 0,
+    "tasks": []
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_06.00.42.359615",
+      "method": "perf-get",
+      "score": 2346445.9914049585,
+      "commit": "0321a69e",
+      "source": "valkey-rainfall",
+      "specifier": "0321a69e62f5148096d03358e26a1b884af3b969",
+      "note": "canary-exp2-day20260524",
+      "completed": "2026.05.24_06.04.30.670596"
+    },
     {
       "task_id": "2026.05.23_06.00.16.995122",
       "method": "perf-get",
@@ -66,17 +61,7 @@
       "specifier": "oi/pr4-fbtree",
       "note": "skiplist io-threads=9",
       "completed": "2026.05.22_23.12.49.535689"
-    },
-    {
-      "task_id": "2026.05.22_18.29.45.454787",
-      "method": "perf-zrank",
-      "score": 585448.3477731444,
-      "commit": "707e6dc7",
-      "source": "rainsupreme",
-      "specifier": "oi/pr4-fbtree",
-      "note": "skiplist io-threads=9",
-      "completed": "2026.05.22_22.44.30.748920"
     }
   ],
-  "eta_minutes": 7.4
+  "eta_minutes": 0.0
 }
