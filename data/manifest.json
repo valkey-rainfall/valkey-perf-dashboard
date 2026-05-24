@@ -1,7 +1,9 @@
 {
   "version": 1,
   "platforms": [
-    "amd64"
+    "amd64",
+    "arm64",
+    "intel"
   ],
   "workloads": [
     {
