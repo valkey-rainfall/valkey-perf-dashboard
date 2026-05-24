@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:33:09.584210Z",
+  "timestamp": "2026-05-24T15:36:14.597793Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_15.32.11.569310",
+    "id": "2026.05.24_15.34.50.935205",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 8.2,
-    "elapsed_sec": 58,
-    "steps": "20/245"
+    "progress_pct": 14.3,
+    "elapsed_sec": 84,
+    "steps": "35/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_15.32.11.569310",
+        "id": "2026.05.24_15.34.50.935205",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 22.3% improvement between f2bbd1ff and bbfd0418",
+        "note": "[sweep] Bisecting 6.6% improvement between 7719dbb8 and 2d6791bb",
         "source": "valkey",
-        "specifier": "5f0ccf1478452598490683be4f78cf3e69ee259f"
+        "specifier": "752b6ee8ff75a72c364feca8b667f9e723df0c4c"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.32.11.569310",
+      "method": "perf-get",
+      "score": 801853.4661157028,
+      "commit": "5f0ccf14",
+      "source": "valkey",
+      "specifier": "5f0ccf1478452598490683be4f78cf3e69ee259f",
+      "note": "[sweep] Bisecting 22.3% improvement between f2bbd1ff and bbfd0418",
+      "completed": "2026.05.24_15.34.50.726963"
+    },
     {
       "task_id": "2026.05.24_15.29.32.516673",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "2d6791bb1157af52e20ffd1fb4ca025c283153d3",
       "note": "[sweep] Bisecting 31.5% improvement between 7719dbb8 and 66d0f7d9",
       "completed": "2026.05.24_15.21.22.558065"
-    },
-    {
-      "task_id": "2026.05.24_15.16.04.318323",
-      "method": "perf-get",
-      "score": 750293.3126721764,
-      "commit": "7719dbb8",
-      "source": "valkey",
-      "specifier": "7719dbb84bbe6861ac60277915ab22d208159680",
-      "note": "[sweep] Bisecting 31.4% improvement between 71dd85dc and 66d0f7d9",
-      "completed": "2026.05.24_15.18.43.409960"
     }
   ],
-  "eta_minutes": 13.3
+  "eta_minutes": 10.9
 }
