@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:25:49.602626Z",
+  "timestamp": "2026-05-24T15:28:50.920370Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_15.21.22.767941",
+    "id": "2026.05.24_15.26.54.877691",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 75.5,
-    "elapsed_sec": 267,
-    "steps": "185/245"
+    "progress_pct": 28.6,
+    "elapsed_sec": 116,
+    "steps": "70/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_15.21.22.767941",
+        "id": "2026.05.24_15.26.54.877691",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 23.3% improvement between 2d6791bb and 66d0f7d9",
+        "note": "[sweep] Bisecting 22.4% improvement between 2d6791bb and 9948f07a",
         "source": "valkey",
-        "specifier": "9948f07a01c90174074d4bf1f7db10768307e052"
+        "specifier": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.21.22.767941",
+      "method": "perf-get",
+      "score": 978605.6108618655,
+      "commit": "9948f07a",
+      "source": "valkey",
+      "specifier": "9948f07a01c90174074d4bf1f7db10768307e052",
+      "note": "[sweep] Bisecting 23.3% improvement between 2d6791bb and 66d0f7d9",
+      "completed": "2026.05.24_15.26.54.667708"
+    },
     {
       "task_id": "2026.05.24_15.18.43.617657",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "6e7af9471c0576e9567b62821b23aa13edf4e866",
       "note": "[sweep] Bisecting 31.8% improvement between af1b0de9 and 66d0f7d9",
       "completed": "2026.05.24_15.13.24.706812"
-    },
-    {
-      "task_id": "2026.05.24_15.08.05.554731",
-      "method": "perf-get",
-      "score": 748636.0829683194,
-      "commit": "af1b0de9",
-      "source": "valkey",
-      "specifier": "af1b0de92de2ace4a01e74cf9ed7d7d6f3dedf70",
-      "note": "[sweep] Backfill: 615 commits in gap",
-      "completed": "2026.05.24_15.10.44.985869"
     }
   ],
-  "eta_minutes": 3.9
+  "eta_minutes": 7.3
 }
