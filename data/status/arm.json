@@ -1,18 +1,18 @@
 {
-  "timestamp": "2026-05-24T17:46:41.421392Z",
+  "timestamp": "2026-05-24T17:48:51.432471Z",
   "host": "arm",
   "runner": {
-    "pid": 3047048,
-    "state": "running",
-    "uptime_hours": 494229.0
+    "pid": null,
+    "state": "stopped",
+    "uptime_hours": null
   },
   "current_task": {
     "id": "2026.05.24_17.46.00.385714",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 2.0,
-    "elapsed_sec": 41,
-    "steps": "5/245"
+    "progress_pct": 26.5,
+    "elapsed_sec": 171,
+    "steps": "65/245"
   },
   "queue": {
     "depth": 2,
@@ -85,5 +85,5 @@
       "completed": "2026.05.24_17.25.44.857565"
     }
   ],
-  "eta_minutes": 7.5
+  "eta_minutes": 12.9
 }
