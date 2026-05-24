@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T19:09:42.247841Z",
+  "timestamp": "2026-05-24T19:12:48.261049Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,33 +7,43 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_19.05.25.301279",
+    "id": "2026.05.24_19.11.42.429634",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 79.6,
-    "elapsed_sec": 257,
-    "steps": "195/245"
+    "progress_pct": 18.4,
+    "elapsed_sec": 66,
+    "steps": "45/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_19.05.25.301279",
+        "id": "2026.05.24_19.11.42.429634",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 7.9% improvement between 7e564887 and 5f7fe9ef",
+        "note": "[sweep] Bisecting 7.8% improvement between 7e564887 and 3eb8314b",
         "source": "valkey",
-        "specifier": "3eb8314be6af0777e69f852b65f933dd9186d30b"
+        "specifier": "c8ee5c2c46c52bcb2b48e190a8f5131fdbcf355e"
       },
       {
-        "id": "2026.05.24_19.05.25.309552",
+        "id": "2026.05.24_19.11.42.437990",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 105 commits in gap",
         "source": "valkey",
-        "specifier": "bfa3931a04bddec8eb37c91c25d3a77c70e33000"
+        "specifier": "4031a187321be26fc96c044fec3ee759841e8379"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_19.05.25.301279",
+      "method": "perf-get",
+      "score": 1358733.9689492325,
+      "commit": "3eb8314b",
+      "source": "valkey",
+      "specifier": "3eb8314be6af0777e69f852b65f933dd9186d30b",
+      "note": "[sweep] Bisecting 7.9% improvement between 7e564887 and 5f7fe9ef",
+      "completed": "2026.05.24_19.10.40.527260"
+    },
     {
       "task_id": "2026.05.24_18.59.08.510753",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "2d48a39c2781e72200b2e360ef250009c6701711",
       "note": "[sweep] Bisecting 7.2% improvement between ab98f375 and 7892bf80",
       "completed": "2026.05.24_18.45.35.082154"
-    },
-    {
-      "task_id": "2026.05.24_18.37.04.748051",
-      "method": "perf-get",
-      "score": 1354706.4404958675,
-      "commit": "7892bf80",
-      "source": "valkey",
-      "specifier": "7892bf808b6f748684af7defa0c0a8611cc4be50",
-      "note": "[sweep] Bisecting 4.3% improvement between ab98f375 and e8ae5b18",
-      "completed": "2026.05.24_18.39.18.912180"
     }
   ],
-  "eta_minutes": 6.1
+  "eta_minutes": 9.9
 }
