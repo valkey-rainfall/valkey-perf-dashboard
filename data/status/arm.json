@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T11:43:51.451602Z",
+  "timestamp": "2026-05-24T11:47:05.269827Z",
   "host": "arm",
   "runner": {
     "pid": 1259781,
@@ -7,23 +7,16 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_11.43.08.222291",
-    "type": "perf-get",
+    "id": "2026.05.24_11.43.08.229760",
+    "type": "mem-set",
     "state": "running",
-    "progress_pct": 4.1,
-    "elapsed_sec": 43,
-    "steps": "10/245"
+    "progress_pct": 33.3,
+    "elapsed_sec": 36,
+    "steps": "1/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_11.43.08.222291",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 8.3% improvement between c9ce3e09 and ed9016a2",
-        "source": "valkey",
-        "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1"
-      },
       {
         "id": "2026.05.24_11.43.08.229760",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_11.43.08.222291",
+      "method": "perf-get",
+      "score": 2174753.602892562,
+      "commit": "6c329dfe",
+      "source": "valkey",
+      "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
+      "note": "[sweep] Bisecting 8.3% improvement between c9ce3e09 and ed9016a2",
+      "completed": "2026.05.24_11.46.28.749715"
+    },
     {
       "task_id": "2026.05.24_11.36.57.807626",
       "method": "mem-set",
@@ -73,17 +76,7 @@
       "specifier": "0027b7d4533a90944d6175a83257f874d8ffd2a3",
       "note": "[sweep] Bisecting 8.3% improvement between c9ce3e09 and 3c46f667",
       "completed": "2026.05.24_11.36.25.226896"
-    },
-    {
-      "task_id": "2026.05.24_11.28.01.567541",
-      "method": "mem-set",
-      "score": 84.1474896,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "1ea49e5845a11250a13273c725720822c26860f1",
-      "note": "[memory-sweep] Bisecting 9.5% regression between 3323e422 and 8faf2788",
-      "completed": "2026.05.24_11.30.50.731087"
     }
   ],
-  "eta_minutes": 7.5
+  "eta_minutes": 3.7
 }
