@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T13:20:44.570361Z",
+  "timestamp": "2026-05-24T13:22:54.572470Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_13.16.15.908587",
+    "id": "2026.05.24_13.21.58.163992",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 73.5,
-    "elapsed_sec": 269,
-    "steps": "180/245"
+    "progress_pct": 6.1,
+    "elapsed_sec": 56,
+    "steps": "15/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_13.16.15.908587",
+        "id": "2026.05.24_13.21.58.163992",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 14.0% improvement between 4efff42f and 1acf7f71",
+        "note": "[sweep] Bisecting 6.3% regression between 3f6581b6 and c41ffc34",
         "source": "valkey",
-        "specifier": "3eb8314be6af0777e69f852b65f933dd9186d30b"
+        "specifier": "4571886b4178d4afa7f23fe7b3d6593870b4242c"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_13.16.15.908587",
+      "method": "perf-get",
+      "score": 924224.4551170799,
+      "commit": "3eb8314b",
+      "source": "valkey",
+      "specifier": "3eb8314be6af0777e69f852b65f933dd9186d30b",
+      "note": "[sweep] Bisecting 14.0% improvement between 4efff42f and 1acf7f71",
+      "completed": "2026.05.24_13.21.57.965665"
+    },
     {
       "task_id": "2026.05.24_13.10.33.231471",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "32f2c73cb5c93516ac5abc5259023caf75326b6a",
       "note": "[sweep] Bisecting 12.6% improvement between 7e564887 and 7892bf80",
       "completed": "2026.05.24_12.59.08.304774"
-    },
-    {
-      "task_id": "2026.05.24_12.50.41.550142",
-      "method": "perf-get",
-      "score": 797538.6236111111,
-      "commit": "7e564887",
-      "source": "valkey",
-      "specifier": "7e564887b93ea3d1008cd2ea2d2bb82c4a4b0a04",
-      "note": "[sweep] Bisecting 11.7% improvement between 3df609ef and 7892bf80",
-      "completed": "2026.05.24_12.53.25.995534"
     }
   ],
-  "eta_minutes": 4.1
+  "eta_minutes": 16.9
 }
