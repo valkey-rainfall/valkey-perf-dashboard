@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T09:43:09.955923Z",
+  "timestamp": "2026-05-24T09:46:21.930150Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 3958030,
@@ -7,23 +7,16 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_09.40.26.564496",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 38.8,
-    "elapsed_sec": 163,
-    "steps": "95/245"
+    "id": "2026.05.24_09.40.26.575796",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 2,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_09.40.26.564496",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 167.2% improvement between f7b1d028 and c59b2471",
-        "source": "valkey",
-        "specifier": "de3672a7ffba8773871bebda0553f370906a7ae3"
-      },
       {
         "id": "2026.05.24_09.40.26.575796",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_09.40.26.564496",
+      "method": "perf-get",
+      "score": 1287736.16446281,
+      "commit": "de3672a7",
+      "source": "valkey",
+      "specifier": "de3672a7ffba8773871bebda0553f370906a7ae3",
+      "note": "[sweep] Bisecting 167.2% improvement between f7b1d028 and c59b2471",
+      "completed": "2026.05.24_09.46.19.488864"
+    },
     {
       "task_id": "2026.05.24_09.31.52.181568",
       "method": "mem-set",
@@ -73,17 +76,7 @@
       "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55",
       "note": "[sweep] New HEAD on unstable",
       "completed": "2026.05.24_09.31.26.419687"
-    },
-    {
-      "task_id": "2026.05.24_09.20.02.094513",
-      "method": "perf-get",
-      "score": 2045094.5883333334,
-      "commit": "c59b2471",
-      "source": "valkey",
-      "specifier": "c59b247132a5ee5a9bc476b8e195e59e41b3cb73",
-      "note": "[sweep] New HEAD on unstable",
-      "completed": "2026.05.24_09.22.56.581423"
     }
   ],
-  "eta_minutes": 9.3
+  "eta_minutes": 5.0
 }

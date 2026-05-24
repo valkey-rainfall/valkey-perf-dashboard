@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T09:43:41.495405Z",
+  "timestamp": "2026-05-24T09:45:46.451803Z",
   "host": "arm",
   "runner": {
     "pid": 846525,
@@ -7,23 +7,16 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_09.42.47.445347",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 8.2,
-    "elapsed_sec": 54,
-    "steps": "20/245"
+    "id": "2026.05.24_09.42.47.452996",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 20,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_09.42.47.445347",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 58.9% improvement between e8ae5b18 and 155b0bb8",
-        "source": "valkey",
-        "specifier": "c41ffc3401acd3f9b7c2bfc50314626805718dd0"
-      },
       {
         "id": "2026.05.24_09.42.47.452996",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_09.42.47.445347",
+      "method": "perf-get",
+      "score": 1253123.6225895314,
+      "commit": "c41ffc34",
+      "source": "valkey",
+      "specifier": "c41ffc3401acd3f9b7c2bfc50314626805718dd0",
+      "note": "[sweep] Bisecting 58.9% improvement between e8ae5b18 and 155b0bb8",
+      "completed": "2026.05.24_09.45.25.830518"
+    },
     {
       "task_id": "2026.05.24_09.36.58.761346",
       "method": "mem-set",
@@ -73,17 +76,7 @@
       "specifier": "e8ae5b1852474ff89cfe23d4485a88dc59b5c0a3",
       "note": "[sweep] Bisecting 154.3% improvement between f7b1d028 and cce8f49b",
       "completed": "2026.05.24_09.36.46.189111"
-    },
-    {
-      "task_id": "2026.05.24_09.24.43.678662",
-      "method": "mem-set",
-      "score": 84.1474704,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
-      "note": "[memory-sweep] Release 7.2.4",
-      "completed": "2026.05.24_09.31.08.333572"
     }
   ],
-  "eta_minutes": 15.1
+  "eta_minutes": 5.0
 }
