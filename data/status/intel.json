@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T16:01:59.552695Z",
+  "timestamp": "2026-05-24T16:05:14.561027Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_15.57.28.887190",
+    "id": "2026.05.24_16.03.11.223466",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 73.5,
-    "elapsed_sec": 271,
-    "steps": "180/245"
+    "progress_pct": 38.8,
+    "elapsed_sec": 123,
+    "steps": "95/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_15.57.28.887190",
+        "id": "2026.05.24_16.03.11.223466",
         "type": "PerfTaskData",
         "note": "[sweep] Backfill: 169 commits in gap",
         "source": "valkey",
-        "specifier": "861d0794b7bdf2237d98502a5b405faf19db24dc"
+        "specifier": "f5b0360fae0f8a8f135631636b1a569884791a57"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.57.28.887190",
+      "method": "perf-get",
+      "score": 1176379.6594608421,
+      "commit": "861d0794",
+      "source": "valkey",
+      "specifier": "861d0794b7bdf2237d98502a5b405faf19db24dc",
+      "note": "[sweep] Backfill: 169 commits in gap",
+      "completed": "2026.05.24_16.03.11.010305"
+    },
     {
       "task_id": "2026.05.24_15.54.05.760473",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "8faf2788a207373b2cb356188f939accaaf6ce37",
       "note": "[sweep] Bisecting 6.8% improvement between eff45f54 and 2d6791bb",
       "completed": "2026.05.24_15.42.47.788747"
-    },
-    {
-      "task_id": "2026.05.24_15.37.30.086802",
-      "method": "perf-get",
-      "score": 749026.498888889,
-      "commit": "eff45f54",
-      "source": "valkey",
-      "specifier": "eff45f546762577bd1877dfeece41c53b39926ad",
-      "note": "[sweep] Bisecting 8.0% improvement between 752b6ee8 and 2d6791bb",
-      "completed": "2026.05.24_15.40.09.119873"
     }
   ],
-  "eta_minutes": 4.1
+  "eta_minutes": 5.7
 }
