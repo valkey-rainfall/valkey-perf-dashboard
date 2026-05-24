@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T13:47:29.618603Z",
+  "timestamp": "2026-05-24T13:49:39.579503Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_13.41.58.325622",
+    "id": "2026.05.24_13.47.43.207656",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 93.9,
-    "elapsed_sec": 331,
-    "steps": "230/245"
+    "progress_pct": 26.5,
+    "elapsed_sec": 116,
+    "steps": "65/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_13.41.58.325622",
+        "id": "2026.05.24_13.47.43.207656",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 5.4% regression between 51e96c1d and c41ffc34",
+        "note": "[sweep] Bisecting 4.7% regression between 7892bf80 and 3f6581b6",
         "source": "valkey",
-        "specifier": "838ba44cd65b15822f4136a4aed33cc13caa4cae"
+        "specifier": "e9b8970e72754461d92b8bf22055a58540878d59"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_13.41.58.325622",
+      "method": "perf-get",
+      "score": 825215.2741440379,
+      "commit": "838ba44c",
+      "source": "valkey",
+      "specifier": "838ba44cd65b15822f4136a4aed33cc13caa4cae",
+      "note": "[sweep] Bisecting 5.4% regression between 51e96c1d and c41ffc34",
+      "completed": "2026.05.24_13.47.43.007131"
+    },
     {
       "task_id": "2026.05.24_13.36.12.795213",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "4571886b4178d4afa7f23fe7b3d6593870b4242c",
       "note": "[sweep] Bisecting 6.3% regression between 3f6581b6 and c41ffc34",
       "completed": "2026.05.24_13.27.42.385127"
-    },
-    {
-      "task_id": "2026.05.24_13.16.15.908587",
-      "method": "perf-get",
-      "score": 924224.4551170799,
-      "commit": "3eb8314b",
-      "source": "valkey",
-      "specifier": "3eb8314be6af0777e69f852b65f933dd9186d30b",
-      "note": "[sweep] Bisecting 14.0% improvement between 4efff42f and 1acf7f71",
-      "completed": "2026.05.24_13.21.57.965665"
     }
   ],
-  "eta_minutes": 2.9
+  "eta_minutes": 7.9
 }
