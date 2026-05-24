@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T14:11:10.108528Z",
+  "timestamp": "2026-05-24T14:14:23.840989Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,33 +7,43 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_14.07.30.413379",
+    "id": "2026.05.24_14.13.29.300874",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 55.1,
-    "elapsed_sec": 220,
-    "steps": "135/245"
+    "progress_pct": 6.1,
+    "elapsed_sec": 55,
+    "steps": "15/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_14.07.30.413379",
+        "id": "2026.05.24_14.13.29.300874",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 12.1% regression between 36e81d9e and 816accea",
+        "note": "[sweep] Bisecting 13.9% regression between 36e81d9e and 94bc15cb",
         "source": "valkey",
-        "specifier": "94bc15cb7147773d3b45e5a2f9c7e8d7de6f97c7"
+        "specifier": "8b480310a629300c7cb28576f04df889bda21198"
       },
       {
-        "id": "2026.05.24_14.07.30.529714",
+        "id": "2026.05.24_14.13.29.314798",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "5a1f4b9aec4b6351b6102a2d2057a319ead9d76a"
+        "specifier": "9ca8490315063a426793516e25a23065f3647679"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_14.07.30.413379",
+      "method": "perf-get",
+      "score": 1085890.6695395515,
+      "commit": "94bc15cb",
+      "source": "valkey",
+      "specifier": "94bc15cb7147773d3b45e5a2f9c7e8d7de6f97c7",
+      "note": "[sweep] Bisecting 12.1% regression between 36e81d9e and 816accea",
+      "completed": "2026.05.24_14.13.23.208779"
+    },
     {
       "task_id": "2026.05.24_14.01.34.357477",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "07b3e7ae7a9e08101fa4dd50aebb8fa5fbdd4f1e",
       "note": "[sweep] Bisecting 18.2% improvement between 4b8de6b1 and de3672a7",
       "completed": "2026.05.24_13.49.58.790136"
-    },
-    {
-      "task_id": "2026.05.24_13.38.36.404889",
-      "method": "perf-get",
-      "score": 1089299.7404958678,
-      "commit": "4b8de6b1",
-      "source": "valkey",
-      "specifier": "4b8de6b1be24b2c64f6e3e188b6dd6d9bca575b1",
-      "note": "[sweep] Release 8.0",
-      "completed": "2026.05.24_13.44.00.179911"
     }
   ],
-  "eta_minutes": 8.0
+  "eta_minutes": 19.1
 }
