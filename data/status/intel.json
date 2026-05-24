@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:47:59.592511Z",
+  "timestamp": "2026-05-24T15:50:04.614564Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_15.42.47.998457",
+    "id": "2026.05.24_15.48.23.250160",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 89.8,
-    "elapsed_sec": 312,
-    "steps": "220/245"
+    "progress_pct": 20.4,
+    "elapsed_sec": 101,
+    "steps": "50/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_15.42.47.998457",
+        "id": "2026.05.24_15.48.23.250160",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 6.8% improvement between eff45f54 and 8faf2788",
+        "note": "[sweep] Backfill: 338 commits in gap",
         "source": "valkey",
-        "specifier": "1ea49e5845a11250a13273c725720822c26860f1"
+        "specifier": "dcfb9269f5ba4cf2f851e75fba77dc189c4a15aa"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.42.47.998457",
+      "method": "perf-get",
+      "score": 748639.9912918141,
+      "commit": "1ea49e58",
+      "source": "valkey",
+      "specifier": "1ea49e5845a11250a13273c725720822c26860f1",
+      "note": "[sweep] Bisecting 6.8% improvement between eff45f54 and 8faf2788",
+      "completed": "2026.05.24_15.48.23.037568"
+    },
     {
       "task_id": "2026.05.24_15.40.09.330493",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "5f0ccf1478452598490683be4f78cf3e69ee259f",
       "note": "[sweep] Bisecting 22.3% improvement between f2bbd1ff and bbfd0418",
       "completed": "2026.05.24_15.34.50.726963"
-    },
-    {
-      "task_id": "2026.05.24_15.29.32.516673",
-      "method": "perf-get",
-      "score": 801354.0610514234,
-      "commit": "f2bbd1ff",
-      "source": "valkey",
-      "specifier": "f2bbd1ff0f650182e7df1fda1055551389bb79c2",
-      "note": "[sweep] Bisecting 22.5% improvement between 2d6791bb and bbfd0418",
-      "completed": "2026.05.24_15.32.11.359374"
     }
   ],
-  "eta_minutes": 3.1
+  "eta_minutes": 9.1
 }
