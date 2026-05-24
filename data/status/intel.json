@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T16:23:39.562264Z",
+  "timestamp": "2026-05-24T16:25:49.531756Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_16.19.49.472017",
+    "id": "2026.05.24_16.25.33.650960",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 61.2,
-    "elapsed_sec": 230,
-    "steps": "150/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 16,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_16.19.49.472017",
+        "id": "2026.05.24_16.25.33.650960",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 2.7% regression between 263d9ea4 and b7b11d77",
+        "note": "[sweep] Bisecting 3.0% regression between 263d9ea4 and 1d23866b",
         "source": "valkey",
-        "specifier": "1d23866b7dfd35438a4cbc0d158e75cba791c51a"
+        "specifier": "9f7cfc771902db5ea1f8e67f1d23c65c07cde11e"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_16.19.49.472017",
+      "method": "perf-get",
+      "score": 1112282.1346428574,
+      "commit": "1d23866b",
+      "source": "valkey",
+      "specifier": "1d23866b7dfd35438a4cbc0d158e75cba791c51a",
+      "note": "[sweep] Bisecting 2.7% regression between 263d9ea4 and b7b11d77",
+      "completed": "2026.05.24_16.25.33.437404"
+    },
     {
       "task_id": "2026.05.24_16.14.04.149797",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "861d0794b7bdf2237d98502a5b405faf19db24dc",
       "note": "[sweep] Backfill: 169 commits in gap",
       "completed": "2026.05.24_16.03.11.010305"
-    },
-    {
-      "task_id": "2026.05.24_15.54.05.760473",
-      "method": "perf-get",
-      "score": 754640.2253443525,
-      "commit": "38f02349",
-      "source": "valkey",
-      "specifier": "38f02349462d5aefa9b25386a130ebd67db1a4de",
-      "note": "[sweep] Backfill: 307 commits in gap",
-      "completed": "2026.05.24_15.57.28.677025"
     }
   ],
-  "eta_minutes": 4.9
+  "eta_minutes": 5.0
 }
