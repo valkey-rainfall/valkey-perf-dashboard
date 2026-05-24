@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:52:14.613737Z",
+  "timestamp": "2026-05-24T15:55:29.542448Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_15.48.23.250160",
+    "id": "2026.05.24_15.54.05.760473",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 61.2,
-    "elapsed_sec": 231,
-    "steps": "150/245"
+    "progress_pct": 0.0,
+    "elapsed_sec": 84,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_15.48.23.250160",
+        "id": "2026.05.24_15.54.05.760473",
         "type": "PerfTaskData",
-        "note": "[sweep] Backfill: 338 commits in gap",
+        "note": "[sweep] Backfill: 307 commits in gap",
         "source": "valkey",
-        "specifier": "dcfb9269f5ba4cf2f851e75fba77dc189c4a15aa"
+        "specifier": "38f02349462d5aefa9b25386a130ebd67db1a4de"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.48.23.250160",
+      "method": "perf-get",
+      "score": 1133041.8055627705,
+      "commit": "dcfb9269",
+      "source": "valkey",
+      "specifier": "dcfb9269f5ba4cf2f851e75fba77dc189c4a15aa",
+      "note": "[sweep] Backfill: 338 commits in gap",
+      "completed": "2026.05.24_15.54.05.549585"
+    },
     {
       "task_id": "2026.05.24_15.42.47.998457",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "752b6ee8ff75a72c364feca8b667f9e723df0c4c",
       "note": "[sweep] Bisecting 6.6% improvement between 7719dbb8 and 2d6791bb",
       "completed": "2026.05.24_15.37.29.878385"
-    },
-    {
-      "task_id": "2026.05.24_15.32.11.569310",
-      "method": "perf-get",
-      "score": 801853.4661157028,
-      "commit": "5f0ccf14",
-      "source": "valkey",
-      "specifier": "5f0ccf1478452598490683be4f78cf3e69ee259f",
-      "note": "[sweep] Bisecting 22.3% improvement between f2bbd1ff and bbfd0418",
-      "completed": "2026.05.24_15.34.50.726963"
     }
   ],
-  "eta_minutes": 4.9
+  "eta_minutes": 5.0
 }
