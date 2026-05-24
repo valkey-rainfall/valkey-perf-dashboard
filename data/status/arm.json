@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T23:13:58.699510Z",
+  "timestamp": "2026-05-24T23:16:01.758414Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,26 +7,36 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_23.09.26.762851",
+    "id": "2026.05.24_23.15.12.409091",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 73.5,
-    "elapsed_sec": 272,
-    "steps": "180/245"
+    "progress_pct": 6.1,
+    "elapsed_sec": 49,
+    "steps": "15/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_23.09.26.762851",
+        "id": "2026.05.24_23.15.12.409091",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 7.1% improvement between 4ad7628d and 920bf128",
+        "note": "[sweep] Bisecting 4.6% improvement between eb3f465e and 920bf128",
         "source": "valkey",
-        "specifier": "eb3f465e50701e94f42a6e930862bdfaa7d5fb0d"
+        "specifier": "1fd6d7156fbf438f471a680fbc7e5b6b087167be"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_23.09.26.762851",
+      "method": "perf-get",
+      "score": 1975569.2018890202,
+      "commit": "eb3f465e",
+      "source": "valkey",
+      "specifier": "eb3f465e50701e94f42a6e930862bdfaa7d5fb0d",
+      "note": "[sweep] Bisecting 7.1% improvement between 4ad7628d and 920bf128",
+      "completed": "2026.05.24_23.15.11.849944"
+    },
     {
       "task_id": "2026.05.24_23.03.42.712262",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "263d9ea41972d8005e739324b826efe945549acc",
       "note": "[sweep] Bisecting 3.0% regression between 7cef1e8e and 0ee42345",
       "completed": "2026.05.24_22.52.11.855551"
-    },
-    {
-      "task_id": "2026.05.24_22.40.38.742165",
-      "method": "perf-get",
-      "score": 2023688.3987012987,
-      "commit": "7cef1e8e",
-      "source": "valkey",
-      "specifier": "7cef1e8ee21bf67190a48fccdcbe73ba69b42a19",
-      "note": "[sweep] Bisecting 5.0% regression between e9014fd0 and 0ee42345",
-      "completed": "2026.05.24_22.46.24.894947"
     }
   ],
-  "eta_minutes": 4.1
+  "eta_minutes": 15.1
 }
