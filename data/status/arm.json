@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T23:26:06.732959Z",
+  "timestamp": "2026-05-24T23:28:08.698420Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,26 +7,36 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_23.20.56.833906",
+    "id": "2026.05.24_23.26.44.750979",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 85.7,
-    "elapsed_sec": 310,
-    "steps": "210/245"
+    "progress_pct": 14.3,
+    "elapsed_sec": 84,
+    "steps": "35/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_23.20.56.833906",
+        "id": "2026.05.24_23.26.44.750979",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 2.7% regression between 951d942a and 4ad7628d",
+        "note": "[sweep] Bisecting 2.7% regression between 263d9ea4 and 0ee42345",
         "source": "valkey",
-        "specifier": "18257cd2e32fd98ea630a209336858bd8c3d55c7"
+        "specifier": "82a312d8a595b71cc818fb045c84121cc13835ec"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_23.20.56.833906",
+      "method": "perf-get",
+      "score": 1961428.185950413,
+      "commit": "18257cd2",
+      "source": "valkey",
+      "specifier": "18257cd2e32fd98ea630a209336858bd8c3d55c7",
+      "note": "[sweep] Bisecting 2.7% regression between 951d942a and 4ad7628d",
+      "completed": "2026.05.24_23.26.44.189984"
+    },
     {
       "task_id": "2026.05.24_23.15.12.409091",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "4ad7628d05c87ae69996939fb5cbfa2fd899c478",
       "note": "[sweep] Bisecting 4.0% improvement between 951d942a and f5b0360f",
       "completed": "2026.05.24_23.03.42.158044"
-    },
-    {
-      "task_id": "2026.05.24_22.52.12.408577",
-      "method": "perf-get",
-      "score": 2063931.7268004725,
-      "commit": "f5b0360f",
-      "source": "valkey",
-      "specifier": "f5b0360fae0f8a8f135631636b1a569884791a57",
-      "note": "[sweep] Bisecting 3.0% improvement between 951d942a and 0f5db6a5",
-      "completed": "2026.05.24_22.57.56.857160"
     }
   ],
-  "eta_minutes": 3.4
+  "eta_minutes": 10.9
 }
