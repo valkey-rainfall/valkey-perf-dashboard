@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T23:02:31.264081Z",
+  "timestamp": "2026-05-24T23:04:36.474166Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,26 +7,36 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_22.57.57.410882",
+    "id": "2026.05.24_23.03.42.712262",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 75.5,
-    "elapsed_sec": 274,
-    "steps": "185/245"
+    "progress_pct": 6.1,
+    "elapsed_sec": 54,
+    "steps": "15/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_22.57.57.410882",
+        "id": "2026.05.24_23.03.42.712262",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 4.0% improvement between 951d942a and f5b0360f",
+        "note": "[sweep] Bisecting 6.9% improvement between 4ad7628d and f5b0360f",
         "source": "valkey",
-        "specifier": "4ad7628d05c87ae69996939fb5cbfa2fd899c478"
+        "specifier": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_22.57.57.410882",
+      "method": "perf-get",
+      "score": 1931015.8299881937,
+      "commit": "4ad7628d",
+      "source": "valkey",
+      "specifier": "4ad7628d05c87ae69996939fb5cbfa2fd899c478",
+      "note": "[sweep] Bisecting 4.0% improvement between 951d942a and f5b0360f",
+      "completed": "2026.05.24_23.03.42.158044"
+    },
     {
       "task_id": "2026.05.24_22.52.12.408577",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "0ee4234506ba5b37095160047daf75b857171c12",
       "note": "[sweep] Bisecting 3.9% regression between e9014fd0 and 951d942a",
       "completed": "2026.05.24_22.40.38.196295"
-    },
-    {
-      "task_id": "2026.05.24_22.29.04.277178",
-      "method": "perf-get",
-      "score": 1985184.6170011805,
-      "commit": "951d942a",
-      "source": "valkey",
-      "specifier": "951d942ab20178b89c07420f8f4c13ae7a764749",
-      "note": "[sweep] Backfill: 112 commits in gap",
-      "completed": "2026.05.24_22.34.50.825282"
     }
   ],
-  "eta_minutes": 4.0
+  "eta_minutes": 16.4
 }
