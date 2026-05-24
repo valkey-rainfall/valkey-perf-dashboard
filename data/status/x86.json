@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T10:21:18.778596Z",
+  "timestamp": "2026-05-24T10:23:29.878609Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 3958030,
@@ -9,10 +9,10 @@
   "current_task": {
     "id": "2026.05.24_10.20.44.900600",
     "type": "perf-get",
-    "state": "starting",
-    "progress_pct": 0.0,
-    "elapsed_sec": 34,
-    "steps": "0/245"
+    "state": "completed",
+    "progress_pct": 100.0,
+    "elapsed_sec": 165,
+    "steps": "245/245"
   },
   "queue": {
     "depth": 2,
@@ -34,6 +34,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_10.20.44.900600",
+      "method": "perf-get",
+      "score": 1271269.4964187327,
+      "commit": "a4ee8dad",
+      "source": "valkey",
+      "specifier": "a4ee8dada4fcff9805cb6820e274fdb0d924ed83",
+      "note": "[sweep] Bisecting 52.5% improvement between 5f0ccf14 and 1a8bd045",
+      "completed": "2026.05.24_10.23.29.548661"
+    },
     {
       "task_id": "2026.05.24_10.14.07.312147",
       "method": "mem-set",
@@ -73,17 +83,7 @@
       "specifier": "5f0ccf1478452598490683be4f78cf3e69ee259f",
       "note": "[sweep] Bisecting 67.3% improvement between 24208812 and 1a8bd045",
       "completed": "2026.05.24_10.13.19.318282"
-    },
-    {
-      "task_id": "2026.05.24_10.06.54.531123",
-      "method": "mem-set",
-      "score": 30.920998400000002,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "269b1c5eda9347fb7d4d485ac9d375d11d467edd",
-      "note": "[memory-sweep] Bisecting 43.7% regression between f3b64705 and 39036c7c",
-      "completed": "2026.05.24_10.10.30.576662"
     }
   ],
-  "eta_minutes": 7.5
+  "eta_minutes": 5.0
 }
