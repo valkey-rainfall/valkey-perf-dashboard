@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T00:56:28.760118Z",
+  "timestamp": "2026-05-24T00:58:39.867723Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 2523523,
@@ -7,22 +7,29 @@
     "uptime_hours": 494218.7
   },
   "current_task": {
-    "id": "2026.05.24_00.50.01.432761",
-    "type": "mem-set",
-    "state": "starting",
-    "progress_pct": 0.0,
-    "elapsed_sec": 31,
-    "steps": "0/3"
+    "id": "2026.05.24_00.57.07.975823",
+    "type": "perf-get",
+    "state": "running",
+    "progress_pct": 16.3,
+    "elapsed_sec": 92,
+    "steps": "40/245"
   },
   "queue": {
-    "depth": 1,
+    "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_00.50.01.432761",
+        "id": "2026.05.24_00.57.07.975823",
+        "type": "PerfTaskData",
+        "note": "[sweep] Release 9.1",
+        "source": "valkey",
+        "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1"
+      },
+      {
+        "id": "2026.05.24_00.57.07.988736",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "7d68208a6ea7d57a58d9f3548ea5b11d2caed272"
+        "specifier": "a1c5171c1deab0c39efe517218f24eb5ca915fd5"
       }
     ]
   },
@@ -78,5 +85,5 @@
       "completed": "2026.05.24_00.26.51.254052"
     }
   ],
-  "eta_minutes": 5.0
+  "eta_minutes": 12.9
 }
