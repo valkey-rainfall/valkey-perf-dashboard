@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T09:21:31.453656Z",
+  "timestamp": "2026-05-24T09:24:38.874632Z",
   "host": "arm",
   "runner": {
     "pid": 846525,
@@ -7,33 +7,53 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_09.21.05.744441",
+    "id": "2026.05.24_09.23.38.301323",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 2.0,
-    "elapsed_sec": 26,
-    "steps": "5/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 61,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_09.21.05.744441",
+        "id": "2026.05.24_09.23.38.301323",
         "type": "PerfTaskData",
-        "note": "[sweep] New HEAD on unstable",
+        "note": "[sweep] Release Valkey created",
         "source": "valkey",
-        "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55"
+        "specifier": "2b8cde71bb553713cf93794a0fb30a1618c0c955"
       },
       {
-        "id": "2026.05.24_09.21.05.751040",
+        "id": "2026.05.24_09.23.38.307526",
         "type": "MemTaskData",
-        "note": "[memory-sweep] New HEAD on unstable",
+        "note": "[memory-sweep] Release Valkey created",
         "source": "valkey",
-        "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55"
+        "specifier": "2b8cde71bb553713cf93794a0fb30a1618c0c955"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_09.21.05.751040",
+      "method": "mem-set",
+      "score": 30.9115264,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55",
+      "note": "[memory-sweep] New HEAD on unstable",
+      "completed": "2026.05.24_09.23.38.030844"
+    },
+    {
+      "task_id": "2026.05.24_09.21.05.744441",
+      "method": "perf-get",
+      "score": 2357928.5449035815,
+      "commit": "cce8f49b",
+      "source": "valkey",
+      "specifier": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55",
+      "note": "[sweep] New HEAD on unstable",
+      "completed": "2026.05.24_09.23.26.888031"
+    },
     {
       "task_id": "2026.05.24_06.00.42.359615",
       "method": "perf-get",
@@ -63,26 +83,6 @@
       "specifier": "oi/pr4-fbtree",
       "note": "skiplist io-threads=9",
       "completed": "2026.05.23_00.09.27.057719"
-    },
-    {
-      "task_id": "2026.05.22_18.29.45.455219",
-      "method": "perf-zscore",
-      "score": 918030.1395119216,
-      "commit": "707e6dc7",
-      "source": "rainsupreme",
-      "specifier": "oi/pr4-fbtree",
-      "note": "skiplist io-threads=9",
-      "completed": "2026.05.22_23.41.08.500824"
-    },
-    {
-      "task_id": "2026.05.22_18.29.45.454957",
-      "method": "perf-zrank",
-      "score": 701732.4797065569,
-      "commit": "707e6dc7",
-      "source": "rainsupreme",
-      "specifier": "oi/pr4-fbtree",
-      "note": "skiplist io-threads=9",
-      "completed": "2026.05.22_23.12.49.535689"
     }
   ],
   "eta_minutes": 7.5
