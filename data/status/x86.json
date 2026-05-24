@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:38:39.849396Z",
+  "timestamp": "2026-05-24T15:40:43.768692Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,33 +7,43 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_15.34.28.030502",
+    "id": "2026.05.24_15.40.25.741218",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 67.3,
-    "elapsed_sec": 252,
-    "steps": "165/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 18,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_15.34.28.030502",
+        "id": "2026.05.24_15.40.25.741218",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 5.2% improvement between 2f161077 and c59b2471",
+        "note": "[sweep] Bisecting 5.5% improvement between 390a11c8 and c59b2471",
         "source": "valkey",
-        "specifier": "390a11c895d5dd1aa570ef7b6e78206ab1bf9776"
+        "specifier": "82740995e01887f3fc7ff8ea05714a27c28001d7"
       },
       {
-        "id": "2026.05.24_15.34.28.044935",
+        "id": "2026.05.24_15.40.25.756689",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "282b82e9d20433aa266cd9f16ef1ccbbee199ce0"
+        "specifier": "157e5d47b5326b27064955d30a694daf8f3b12cd"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.34.28.030502",
+      "method": "perf-get",
+      "score": 1937998.8259523811,
+      "commit": "390a11c8",
+      "source": "valkey",
+      "specifier": "390a11c895d5dd1aa570ef7b6e78206ab1bf9776",
+      "note": "[sweep] Bisecting 5.2% improvement between 2f161077 and c59b2471",
+      "completed": "2026.05.24_15.40.19.513321"
+    },
     {
       "task_id": "2026.05.24_15.28.28.949447",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
       "note": "[sweep] Release 9.0",
       "completed": "2026.05.24_15.17.31.781072"
-    },
-    {
-      "task_id": "2026.05.24_15.06.35.009894",
-      "method": "perf-get",
-      "score": 1237773.5257378984,
-      "commit": "c5ae37f2",
-      "source": "valkey",
-      "specifier": "c5ae37f223cc00ce9f1ea0633693eba64566dfa1",
-      "note": "[sweep] Release 8.1",
-      "completed": "2026.05.24_15.11.59.980957"
     }
   ],
-  "eta_minutes": 7.0
+  "eta_minutes": 7.5
 }
