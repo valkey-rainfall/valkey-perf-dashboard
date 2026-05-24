@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T16:59:57.289595Z",
+  "timestamp": "2026-05-24T17:02:06.491109Z",
   "host": "arm",
   "runner": {
     "pid": 1259781,
@@ -7,33 +7,43 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_16.56.51.614381",
+    "id": "2026.05.24_17.01.20.809885",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 46.9,
-    "elapsed_sec": 186,
-    "steps": "115/245"
+    "progress_pct": 4.1,
+    "elapsed_sec": 46,
+    "steps": "10/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_16.56.51.614381",
+        "id": "2026.05.24_17.01.20.809885",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 2.1% regression between baa5a48b and 4a42c958",
+        "note": "[sweep] Bisecting 2.0% improvement between 3086e61d and 155b0bb8",
         "source": "valkey",
-        "specifier": "8a91a123980bf7715a851792b5f00c45b993aeba"
+        "specifier": "93d7ccab03779afe70762740129bd34b840e663f"
       },
       {
-        "id": "2026.05.24_16.56.51.624363",
+        "id": "2026.05.24_17.01.20.819881",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "095d05786f5da31557de2654a41368a654e7598a"
+        "specifier": "7d68208a6ea7d57a58d9f3548ea5b11d2caed272"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_16.56.51.614381",
+      "method": "perf-get",
+      "score": 2464826.5010330575,
+      "commit": "8a91a123",
+      "source": "valkey",
+      "specifier": "8a91a123980bf7715a851792b5f00c45b993aeba",
+      "note": "[sweep] Bisecting 2.1% regression between baa5a48b and 4a42c958",
+      "completed": "2026.05.24_17.00.18.007776"
+    },
     {
       "task_id": "2026.05.24_16.50.05.971198",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "988297d19abea59799cdfaedcf7d0b01f0a559d8",
       "note": "[sweep] Bisecting 2.6% regression between 4dae83db and 838ba44c",
       "completed": "2026.05.24_16.35.29.203068"
-    },
-    {
-      "task_id": "2026.05.24_16.22.51.969004",
-      "method": "perf-get",
-      "score": 1313202.431641086,
-      "commit": "4dae83db",
-      "source": "valkey",
-      "specifier": "4dae83dba19ee06191dcd927e7c9ae20d79f4324",
-      "note": "[sweep] Bisecting 2.2% regression between 3789b29e and 838ba44c",
-      "completed": "2026.05.24_16.28.39.132801"
     }
   ],
-  "eta_minutes": 8.5
+  "eta_minutes": 7.5
 }
