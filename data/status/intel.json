@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T12:44:29.591419Z",
+  "timestamp": "2026-05-24T12:46:37.616340Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_12.39.14.716679",
+    "id": "2026.05.24_12.44.58.865311",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 87.8,
-    "elapsed_sec": 315,
-    "steps": "215/245"
+    "progress_pct": 18.4,
+    "elapsed_sec": 99,
+    "steps": "45/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_12.39.14.716679",
+        "id": "2026.05.24_12.44.58.865311",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 18.9% improvement between 6a8540ce and 7892bf80",
+        "note": "[sweep] Bisecting 18.3% improvement between 4e2493e5 and 7892bf80",
         "source": "valkey",
-        "specifier": "4e2493e5c961b36e6832e8d6ea259939b0cf0fde"
+        "specifier": "3df609ef06f71c37a45049ec1df9611b9f763d55"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_12.39.14.716679",
+      "method": "perf-get",
+      "score": 758636.1740102322,
+      "commit": "4e2493e5",
+      "source": "valkey",
+      "specifier": "4e2493e5c961b36e6832e8d6ea259939b0cf0fde",
+      "note": "[sweep] Bisecting 18.9% improvement between 6a8540ce and 7892bf80",
+      "completed": "2026.05.24_12.44.58.671400"
+    },
     {
       "task_id": "2026.05.24_12.36.37.327061",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "35a188833335332980a16239ac2efebf241c8a6a",
       "note": "[sweep] Bisecting 23.5% regression between 66d0f7d9 and ccafbb75",
       "completed": "2026.05.24_12.28.19.397393"
-    },
-    {
-      "task_id": "2026.05.24_12.16.59.438239",
-      "method": "perf-get",
-      "score": 754823.2511147187,
-      "commit": "ccafbb75",
-      "source": "valkey",
-      "specifier": "ccafbb750bebad7dddcc4a0266945a6d56281385",
-      "note": "[sweep] Bisecting 24.0% regression between 66d0f7d9 and e32518d6",
-      "completed": "2026.05.24_12.22.39.202976"
     }
   ],
-  "eta_minutes": 3.2
+  "eta_minutes": 9.8
 }
