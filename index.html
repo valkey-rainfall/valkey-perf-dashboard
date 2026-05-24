@@ -61,21 +61,21 @@
 
   <div class="chart-container">
     <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap">
-      <button onclick="zoomToLastRelease()" class="zoom-btn">Since Last Release</button>
-      <button onclick="zoomToLastN(100)" class="zoom-btn">Last 100 Commits</button>
-      <button onclick="chart.resetZoom()" class="zoom-btn">Reset Zoom</button>
+      <button onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
+      <button onclick="zoomAll('last100')" class="zoom-btn">Last 100 Commits</button>
+      <button onclick="zoomAll('reset')" class="zoom-btn">Reset Zoom</button>
     </div>
     <canvas id="chart"></canvas>
-  </div>
-
-  <h2 style="font-size:1rem; margin:1.5rem 0 0.5rem;">Memory Overhead</h2>
-  <div class="chart-container" style="height:250px">
-    <canvas id="memoryChart"></canvas>
   </div>
 
   <div id="perfChartsSection" style="display:none">
     <h2 style="font-size:1rem; margin:1.5rem 0 0.5rem;">Hardware Performance Counters</h2>
     <div id="perfCharts"></div>
+  </div>
+
+  <h2 style="font-size:1rem; margin:1.5rem 0 0.5rem;">Memory Overhead</h2>
+  <div class="chart-container" style="height:250px">
+    <canvas id="memoryChart"></canvas>
   </div>
 
   <h2 style="font-size:1rem; margin-bottom:0.75rem;">Notable Changes</h2>
@@ -89,6 +89,29 @@
     const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
     let chart = null;
     let currentData = null;
+    let allCharts = [];  // All charts for linked zoom
+
+    function syncZoom(sourceChart, min, max) {
+      allCharts.forEach(c => { if (c !== sourceChart) c.zoomScale('x', {min, max}, 'none'); });
+    }
+
+    function zoomAll(mode) {
+      if (!currentData) return;
+      let min, max;
+      if (mode === 'reset') {
+        allCharts.forEach(c => c.resetZoom('none'));
+        return;
+      } else if (mode === 'lastRelease') {
+        const landmarks = currentData.landmarks || [];
+        const last = landmarks[landmarks.length - 1];
+        min = last ? last.commit_index : 0;
+        max = currentData.metadata.total_commits;
+      } else if (mode === 'last100') {
+        max = currentData.metadata.total_commits;
+        min = max - 100;
+      }
+      allCharts.forEach(c => c.zoomScale('x', {min, max}, 'none'));
+    }
 
     function getWorkloadId() {
       return (manifest && manifest.workloads && manifest.workloads[0]) ? manifest.workloads[0].id : 'get16b-t7-p10';
@@ -194,6 +217,7 @@
 
       // Chart
       if (chart) chart.destroy();
+      allCharts = [];
       const ctx = document.getElementById('chart').getContext('2d');
       chart = new Chart(ctx, {
         type: 'line',
@@ -251,6 +275,7 @@
               zoom: {
                 drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' },
                 mode: 'x',
+                onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max),
               },
             },
             legend: { display: false },
@@ -301,18 +326,7 @@
         }
       });
 
-      // Zoom presets
-      window.zoomToLastRelease = () => {
-        const landmarks = data.landmarks || [];
-        const lastLandmark = landmarks[landmarks.length - 1];
-        if (lastLandmark && lastLandmark.commit_index) {
-          chart.zoomScale('x', { min: lastLandmark.commit_index, max: data.metadata.total_commits });
-        }
-      };
-      window.zoomToLastN = (n) => {
-        const totalCommits = data.metadata.total_commits || points[points.length-1].commit_index;
-        chart.zoomScale('x', { min: totalCommits - n, max: totalCommits });
-      };
+      allCharts.push(chart);
 
       // Memory chart
       try {
@@ -365,7 +379,7 @@
                 plugins: {
                   legend: { display: false },
                   annotation: { annotations: memLandmarks },
-                  zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x' } },
+                  zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
                   tooltip: {
                     callbacks: {
                       title: (items) => {
@@ -390,6 +404,7 @@
                 }
               }
             });
+            allCharts.push(window.memoryChart);
           }
         }
       } catch(e) { console.error('Memory chart error:', e); }
@@ -531,7 +546,7 @@
             maintainAspectRatio: false,
             plugins: {
               legend: { display: datasets.length > 1, labels: { color: '#e2e8f0', font: { size: 11 } } },
-              zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x' } },
+              zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
               tooltip: {
                 callbacks: {
                   title: (items) => `Commit index: ${items[0].raw.x}`,
@@ -543,6 +558,7 @@
           }
         });
         perfChartInstances.push(chartInstance);
+        allCharts.push(chartInstance);
       }
 
       section.style.display = hasAnyData ? 'block' : 'none';
