@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T11:46:49.535453Z",
+  "timestamp": "2026-05-24T11:48:59.531677Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_11.43.02.863798",
+    "id": "2026.05.24_11.48.43.923272",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 59.2,
-    "elapsed_sec": 227,
-    "steps": "145/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 16,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_11.43.02.863798",
+        "id": "2026.05.24_11.48.43.923272",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 41.3% improvement between ac515159 and 8c555479",
+        "note": "[sweep] Bisecting 18.7% regression between 66d0f7d9 and c41ffc34",
         "source": "valkey",
-        "specifier": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742"
+        "specifier": "7892bf808b6f748684af7defa0c0a8611cc4be50"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_11.43.02.863798",
+      "method": "perf-get",
+      "score": 1161043.8499232586,
+      "commit": "09fb436c",
+      "source": "valkey",
+      "specifier": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
+      "note": "[sweep] Bisecting 41.3% improvement between ac515159 and 8c555479",
+      "completed": "2026.05.24_11.48.43.736772"
+    },
     {
       "task_id": "2026.05.24_11.37.22.072075",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "2db4eeb1fcd8316a792476c3023e705be24fdd70",
       "note": "[sweep] Bisecting 42.1% improvement between a97d584c and 3086e61d",
       "completed": "2026.05.24_11.28.09.246382"
-    },
-    {
-      "task_id": "2026.05.24_11.19.36.361552",
-      "method": "perf-get",
-      "score": 810104.6291460055,
-      "commit": "a97d584c",
-      "source": "valkey",
-      "specifier": "a97d584cc20013c6797843a30633f0f268874d28",
-      "note": "[sweep] Bisecting 41.4% improvement between 6c2e4f95 and 3086e61d",
-      "completed": "2026.05.24_11.22.22.957599"
     }
   ],
-  "eta_minutes": 5.1
+  "eta_minutes": 5.0
 }
