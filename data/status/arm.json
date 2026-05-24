@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T13:26:07.244021Z",
+  "timestamp": "2026-05-24T13:28:13.814712Z",
   "host": "arm",
   "runner": {
     "pid": 1259781,
@@ -7,23 +7,16 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_13.24.34.325397",
-    "type": "perf-get",
+    "id": "2026.05.24_13.24.34.333792",
+    "type": "mem-set",
     "state": "running",
-    "progress_pct": 18.4,
-    "elapsed_sec": 93,
-    "steps": "45/245"
+    "progress_pct": 33.3,
+    "elapsed_sec": 59,
+    "steps": "1/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_13.24.34.325397",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 4.2% regression between 3789b29e and c41ffc34",
-        "source": "valkey",
-        "specifier": "3bc40be6cdef24f9db8a30e5f8659ea5c404027a"
-      },
       {
         "id": "2026.05.24_13.24.34.333792",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_13.24.34.325397",
+      "method": "perf-get",
+      "score": 1273999.6129476584,
+      "commit": "3bc40be6",
+      "source": "valkey",
+      "specifier": "3bc40be6cdef24f9db8a30e5f8659ea5c404027a",
+      "note": "[sweep] Bisecting 4.2% regression between 3789b29e and c41ffc34",
+      "completed": "2026.05.24_13.27.14.220796"
+    },
     {
       "task_id": "2026.05.24_13.17.49.213771",
       "method": "perf-get",
@@ -73,17 +76,7 @@
       "specifier": "89b7baa598b177286572e0784a4391810910f3d2",
       "note": "[sweep] Bisecting 3.6% improvement between 39036c7c and cce8f49b",
       "completed": "2026.05.24_13.06.27.149143"
-    },
-    {
-      "task_id": "2026.05.24_12.54.03.431080",
-      "method": "perf-get",
-      "score": 1299117.5173553717,
-      "commit": "ff713583",
-      "source": "valkey",
-      "specifier": "ff7135836b5d9ccaa19d5dbaf2a0b0325755c8b4",
-      "note": "[sweep] Bisecting 4.4% regression between daea05b1 and c41ffc34",
-      "completed": "2026.05.24_12.59.45.847101"
     }
   ],
-  "eta_minutes": 11.9
+  "eta_minutes": 4.5
 }
