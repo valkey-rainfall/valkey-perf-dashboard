@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:09:00.132636Z",
+  "timestamp": "2026-05-24T15:12:11.025098Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,33 +7,43 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_15.06.35.009894",
+    "id": "2026.05.24_15.12.06.244183",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 40.8,
-    "elapsed_sec": 145,
-    "steps": "100/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 5,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_15.06.35.009894",
+        "id": "2026.05.24_15.12.06.244183",
         "type": "PerfTaskData",
-        "note": "[sweep] Release 8.1",
+        "note": "[sweep] Release 9.0",
         "source": "valkey",
-        "specifier": "c5ae37f223cc00ce9f1ea0633693eba64566dfa1"
+        "specifier": "6c2e4f955310f956b25696fd9d008ea0e13d980e"
       },
       {
-        "id": "2026.05.24_15.06.35.024097",
+        "id": "2026.05.24_15.12.06.375225",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "dedbf99a80b2ae3447877f2abb7520f1285c82ea"
+        "specifier": "6223355cf37aa7d3186b63ca2dfc3be79750db8a"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.06.35.009894",
+      "method": "perf-get",
+      "score": 1237773.5257378984,
+      "commit": "c5ae37f2",
+      "source": "valkey",
+      "specifier": "c5ae37f223cc00ce9f1ea0633693eba64566dfa1",
+      "note": "[sweep] Release 8.1",
+      "completed": "2026.05.24_15.11.59.980957"
+    },
     {
       "task_id": "2026.05.24_15.01.05.606663",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "2d924045223a9f2396b6a08a939b66e2fe5c5d65",
       "note": "[sweep] Bisecting 14.5% improvement between b4c2a180 and 7d72fada",
       "completed": "2026.05.24_14.49.26.772726"
-    },
-    {
-      "task_id": "2026.05.24_14.37.30.946184",
-      "method": "perf-get",
-      "score": 1310813.8370720188,
-      "commit": "7d72fada",
-      "source": "valkey",
-      "specifier": "7d72fada2c349eb5b91c7e33099adc167abb0e99",
-      "note": "[sweep] Bisecting 14.2% improvement between b4c2a180 and 079f4edf",
-      "completed": "2026.05.24_14.43.25.651017"
     }
   ],
-  "eta_minutes": 8.5
+  "eta_minutes": 7.5
 }
