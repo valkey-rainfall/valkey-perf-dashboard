@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T21:39:42.575833Z",
+  "timestamp": "2026-05-24T21:41:48.338346Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,23 +7,16 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_21.35.34.173967",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 73.5,
-    "elapsed_sec": 248,
-    "steps": "180/245"
+    "id": "2026.05.24_21.35.34.182844",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 53,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_21.35.34.173967",
-        "type": "PerfTaskData",
-        "note": "[sweep] Release 9.0",
-        "source": "valkey",
-        "specifier": "6c2e4f955310f956b25696fd9d008ea0e13d980e"
-      },
       {
         "id": "2026.05.24_21.35.34.182844",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_21.35.34.173967",
+      "method": "perf-get",
+      "score": 1220702.5935064936,
+      "commit": "6c2e4f95",
+      "source": "valkey",
+      "specifier": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
+      "note": "[sweep] Release 9.0",
+      "completed": "2026.05.24_21.40.55.188210"
+    },
     {
       "task_id": "2026.05.24_21.29.12.733428",
       "method": "perf-get",
@@ -73,17 +76,7 @@
       "specifier": "3cca26881a1d9631a614352fc812e75d6ba2710b",
       "note": "[sweep] Bisecting 2.3% regression between f00c8f62 and 5c073a58",
       "completed": "2026.05.24_21.18.12.087462"
-    },
-    {
-      "task_id": "2026.05.24_21.08.53.518686",
-      "method": "perf-get",
-      "score": 1204479.6027548208,
-      "commit": "f622e375",
-      "source": "valkey",
-      "specifier": "f622e375a06bb8a2e700826c1af1af448155ad69",
-      "note": "[sweep] Bisecting 2.3% improvement between b728e417 and 829243e7",
-      "completed": "2026.05.24_21.11.29.863828"
     }
   ],
-  "eta_minutes": 6.5
+  "eta_minutes": 5.0
 }
