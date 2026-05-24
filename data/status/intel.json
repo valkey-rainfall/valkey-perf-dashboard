@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:04:29.569030Z",
+  "timestamp": "2026-05-24T15:06:36.805804Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_14.59.37.772106",
+    "id": "2026.05.24_15.05.20.394950",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 81.6,
-    "elapsed_sec": 292,
-    "steps": "200/245"
+    "progress_pct": 14.3,
+    "elapsed_sec": 76,
+    "steps": "35/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_14.59.37.772106",
+        "id": "2026.05.24_15.05.20.394950",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 4.4% improvement between 979f4c1c and 33f42d7f",
+        "note": "[sweep] Bisecting 4.4% improvement between 979f4c1c and 9851006d",
         "source": "valkey",
-        "specifier": "9851006d6d7af570d7f38025f4b1de68f12c7731"
+        "specifier": "b9d224097a46dbe62ec0857cb91e7c67505a200e"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_14.59.37.772106",
+      "method": "perf-get",
+      "score": 802493.288997442,
+      "commit": "9851006d",
+      "source": "valkey",
+      "specifier": "9851006d6d7af570d7f38025f4b1de68f12c7731",
+      "note": "[sweep] Bisecting 4.4% improvement between 979f4c1c and 33f42d7f",
+      "completed": "2026.05.24_15.05.20.096211"
+    },
     {
       "task_id": "2026.05.24_14.53.54.573607",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "2f3e363c154edbe2483415730f096758e3a1b293",
       "note": "[sweep] Bisecting 2.4% improvement between c41ffc34 and 1fbf5fb1",
       "completed": "2026.05.24_14.45.25.467236"
-    },
-    {
-      "task_id": "2026.05.24_14.33.55.990997",
-      "method": "perf-get",
-      "score": 824744.9051731601,
-      "commit": "1b531e56",
-      "source": "valkey",
-      "specifier": "1b531e560b6256a26692382ad622fc975a683f36",
-      "note": "[sweep] Bisecting 3.1% regression between 47716606 and c41ffc34",
-      "completed": "2026.05.24_14.39.40.418472"
     }
   ],
-  "eta_minutes": 3.6
+  "eta_minutes": 10.1
 }

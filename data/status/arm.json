@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:04:07.832229Z",
+  "timestamp": "2026-05-24T15:07:16.448848Z",
   "host": "arm",
   "runner": {
     "pid": 1259781,
@@ -7,23 +7,16 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_15.00.38.475400",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 57.1,
-    "elapsed_sec": 209,
-    "steps": "140/245"
+    "id": "2026.05.24_15.00.38.560750",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 58,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_15.00.38.475400",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 3.3% improvement between f3b64705 and 1db8bab5",
-        "source": "valkey",
-        "specifier": "fb655dbf5cfaf254e0b8bb6617f1f734dbebc07d"
-      },
       {
         "id": "2026.05.24_15.00.38.560750",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.00.38.475400",
+      "method": "perf-get",
+      "score": 2281369.6433293982,
+      "commit": "fb655dbf",
+      "source": "valkey",
+      "specifier": "fb655dbf5cfaf254e0b8bb6617f1f734dbebc07d",
+      "note": "[sweep] Bisecting 3.3% improvement between f3b64705 and 1db8bab5",
+      "completed": "2026.05.24_15.06.18.363073"
+    },
     {
       "task_id": "2026.05.24_14.53.55.956356",
       "method": "perf-get",
@@ -73,17 +76,7 @@
       "specifier": "04896c1e6dab95f6da6c0cf6c2fa2d3d23330bb8",
       "note": "[sweep] Bisecting 3.3% regression between 4a42c958 and d2db0c26",
       "completed": "2026.05.24_14.39.26.699911"
-    },
-    {
-      "task_id": "2026.05.24_14.27.04.519133",
-      "method": "perf-get",
-      "score": 2272947.440023613,
-      "commit": "1db8bab5",
-      "source": "valkey",
-      "specifier": "1db8bab50851cc22aa97d91aeccb4b8385be1672",
-      "note": "[sweep] Bisecting 3.9% improvement between f3b64705 and e8ca6c07",
-      "completed": "2026.05.24_14.32.43.639011"
     }
   ],
-  "eta_minutes": 7.6
+  "eta_minutes": 5.0
 }
