@@ -66,7 +66,7 @@
 
   <div class="stats" id="stats"></div>
 
-  <div class="chart-container">
+  <div class="chart-container" style="height:280px">
     <canvas id="chart"></canvas>
   </div>
 
@@ -101,6 +101,7 @@
           if (xVal != null && xVal !== crosshairX) {
             crosshairX = xVal;
             allCharts.forEach(c => { if (c !== chart) c.draw(); });
+            chart.draw();
           }
         } else if (evt.type === 'mouseout') {
           crosshairX = null;
@@ -295,6 +296,7 @@
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           interaction: { intersect: false, mode: 'index' },
           onClick: (evt, elements) => {
             if (elements.length && elements[0].datasetIndex === 2) {
@@ -570,7 +572,7 @@
           scales[axis.id] = {
             position: axis.id === 'right' ? 'right' : 'left',
             title: { display: true, text: axis.label, color: '#64748b' },
-            ticks: { color: '#64748b' },
+            ticks: { color: '#64748b', callback: v => v >= 1000 ? (v/1000).toFixed(1)+'k' : v >= 100 ? v.toFixed(0) : v.toFixed(2) },
             grid: { color: axis.id === 'left' ? '#2d3148' : 'transparent' },
           };
         }
