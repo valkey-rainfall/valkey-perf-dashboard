@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T18:05:39.626200Z",
+  "timestamp": "2026-05-24T18:07:49.571824Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 2208708,
@@ -7,22 +7,22 @@
     "uptime_hours": 494230.6
   },
   "current_task": {
-    "id": "2026.05.24_18.04.36.637121",
+    "id": "2026.05.24_18.07.04.880292",
     "type": "perf-get",
     "state": "starting",
     "progress_pct": 0.0,
-    "elapsed_sec": 63,
+    "elapsed_sec": 45,
     "steps": "0/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_18.04.36.637121",
+        "id": "2026.05.24_18.07.04.880292",
         "type": "PerfTaskData",
         "note": "[sweep] Backfill: 104 commits in gap",
         "source": "valkey",
-        "specifier": "044e29dd3472b6cbfca3915d445f484658effbb6"
+        "specifier": "4ba144a4eb26572caecfa080401a5e8a01d5763d"
       }
     ]
   },
