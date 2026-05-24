@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T10:09:07.013752Z",
+  "timestamp": "2026-05-24T10:11:14.519628Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 662113,
@@ -7,29 +7,29 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_10.07.53.463195",
+    "id": "2026.05.24_10.10.30.226918",
     "type": "perf-get",
     "state": "starting",
     "progress_pct": 0.0,
-    "elapsed_sec": 74,
+    "elapsed_sec": 44,
     "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_10.07.53.463195",
+        "id": "2026.05.24_10.10.30.226918",
         "type": "PerfTaskData",
-        "note": "[sweep] Release 7.2.4",
+        "note": "[sweep] Skeleton pass",
         "source": "valkey",
-        "specifier": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b"
+        "specifier": "0a12f380e8999dd01c2f30993c9522d4b8606f09"
       },
       {
-        "id": "2026.05.24_10.07.53.470317",
+        "id": "2026.05.24_10.10.30.233639",
         "type": "MemTaskData",
-        "note": "[memory-sweep] Release 7.2.4",
+        "note": "[memory-sweep] Skeleton pass",
         "source": "valkey",
-        "specifier": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b"
+        "specifier": "0a12f380e8999dd01c2f30993c9522d4b8606f09"
       }
     ]
   },
