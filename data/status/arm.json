@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T22:19:26.513643Z",
+  "timestamp": "2026-05-24T22:21:36.502089Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,26 +7,36 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_22.19.04.132713",
+    "id": "2026.05.24_22.21.23.309227",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 4.1,
-    "elapsed_sec": 22,
-    "steps": "10/245"
+    "progress_pct": 0.0,
+    "elapsed_sec": 13,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_22.19.04.132713",
+        "id": "2026.05.24_22.21.23.309227",
         "type": "PerfTaskData",
-        "note": "[sweep] Backfill: 163 commits in gap",
+        "note": "[sweep] Backfill: 113 commits in gap",
         "source": "valkey",
-        "specifier": "3431b1f156b05866e4f9a368304216974f047c43"
+        "specifier": "f4e10eee06cd978452a17e69d684e8afc8eeae3f"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_22.19.04.132713",
+      "method": "perf-get",
+      "score": 923649.5019283746,
+      "commit": "3431b1f1",
+      "source": "valkey",
+      "specifier": "3431b1f156b05866e4f9a368304216974f047c43",
+      "note": "[sweep] Backfill: 163 commits in gap",
+      "completed": "2026.05.24_22.21.22.764373"
+    },
     {
       "task_id": "2026.05.24_21.51.58.459958",
       "method": "perf-get",
@@ -66,16 +76,6 @@
       "specifier": "4b8de6b1be24b2c64f6e3e188b6dd6d9bca575b1",
       "note": "[sweep] Release 8.0",
       "completed": "2026.05.24_21.28.10.927567"
-    },
-    {
-      "task_id": "2026.05.24_21.19.13.811482",
-      "method": "perf-get",
-      "score": 1247837.7985832351,
-      "commit": "1c22680f",
-      "source": "valkey",
-      "specifier": "1c22680fa79d6f0145cd0596d84c53c376ca1a66",
-      "note": "[sweep] Bisecting 2.3% improvement between 14016d2d and ab98f375",
-      "completed": "2026.05.24_21.24.52.364942"
     }
   ],
   "eta_minutes": 5.0
