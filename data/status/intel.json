@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T15:28:50.920370Z",
+  "timestamp": "2026-05-24T15:30:59.614162Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_15.26.54.877691",
+    "id": "2026.05.24_15.29.32.516673",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 28.6,
-    "elapsed_sec": 116,
-    "steps": "70/245"
+    "progress_pct": 16.3,
+    "elapsed_sec": 87,
+    "steps": "40/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_15.26.54.877691",
+        "id": "2026.05.24_15.29.32.516673",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 22.4% improvement between 2d6791bb and 9948f07a",
+        "note": "[sweep] Bisecting 22.5% improvement between 2d6791bb and bbfd0418",
         "source": "valkey",
-        "specifier": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483"
+        "specifier": "f2bbd1ff0f650182e7df1fda1055551389bb79c2"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_15.26.54.877691",
+      "method": "perf-get",
+      "score": 979751.4300275479,
+      "commit": "bbfd0418",
+      "source": "valkey",
+      "specifier": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483",
+      "note": "[sweep] Bisecting 22.4% improvement between 2d6791bb and 9948f07a",
+      "completed": "2026.05.24_15.29.32.307202"
+    },
     {
       "task_id": "2026.05.24_15.21.22.767941",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "71dd85dc5a89a4e07d837efa14937990b01e317f",
       "note": "[sweep] Bisecting 31.5% improvement between 6e7af947 and 66d0f7d9",
       "completed": "2026.05.24_15.16.04.111120"
-    },
-    {
-      "task_id": "2026.05.24_15.10.45.192476",
-      "method": "perf-get",
-      "score": 750257.9438888889,
-      "commit": "6e7af947",
-      "source": "valkey",
-      "specifier": "6e7af9471c0576e9567b62821b23aa13edf4e866",
-      "note": "[sweep] Bisecting 31.8% improvement between af1b0de9 and 66d0f7d9",
-      "completed": "2026.05.24_15.13.24.706812"
     }
   ],
-  "eta_minutes": 7.3
+  "eta_minutes": 9.9
 }
