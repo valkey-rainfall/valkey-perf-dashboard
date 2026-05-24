@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T23:37:37.514233Z",
+  "timestamp": "2026-05-24T23:39:42.258035Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,26 +7,36 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_23.32.32.845089",
+    "id": "2026.05.24_23.38.20.785481",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 85.7,
-    "elapsed_sec": 305,
-    "steps": "210/245"
+    "progress_pct": 14.3,
+    "elapsed_sec": 81,
+    "steps": "35/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_23.32.32.845089",
+        "id": "2026.05.24_23.38.20.785481",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 3.6% regression between 82a312d8 and 0ee42345",
+        "note": "[sweep] Bisecting 2.3% improvement between 4ad7628d and eb3f465e",
         "source": "valkey",
-        "specifier": "9f7cfc771902db5ea1f8e67f1d23c65c07cde11e"
+        "specifier": "8d509a5d33a9eed7a47d116ff4273e61afb5189c"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_23.32.32.845089",
+      "method": "perf-get",
+      "score": 2030265.8805194807,
+      "commit": "9f7cfc77",
+      "source": "valkey",
+      "specifier": "9f7cfc771902db5ea1f8e67f1d23c65c07cde11e",
+      "note": "[sweep] Bisecting 3.6% regression between 82a312d8 and 0ee42345",
+      "completed": "2026.05.24_23.38.20.220240"
+    },
     {
       "task_id": "2026.05.24_23.26.44.750979",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "eb3f465e50701e94f42a6e930862bdfaa7d5fb0d",
       "note": "[sweep] Bisecting 7.1% improvement between 4ad7628d and 920bf128",
       "completed": "2026.05.24_23.15.11.849944"
-    },
-    {
-      "task_id": "2026.05.24_23.03.42.712262",
-      "method": "perf-get",
-      "score": 2067312.086540732,
-      "commit": "920bf128",
-      "source": "valkey",
-      "specifier": "920bf128b6c41caa1a2badeaccf9e5c58a3e86e8",
-      "note": "[sweep] Bisecting 6.9% improvement between 4ad7628d and f5b0360f",
-      "completed": "2026.05.24_23.09.26.207564"
     }
   ],
-  "eta_minutes": 3.3
+  "eta_minutes": 10.6
 }
