@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T11:58:34.596338Z",
+  "timestamp": "2026-05-24T12:00:44.614457Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_11.54.14.289024",
+    "id": "2026.05.24_11.59.55.789432",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 69.4,
-    "elapsed_sec": 260,
-    "steps": "170/245"
+    "progress_pct": 4.1,
+    "elapsed_sec": 49,
+    "steps": "10/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_11.54.14.289024",
+        "id": "2026.05.24_11.59.55.789432",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 9.0% regression between 66d0f7d9 and 7892bf80",
+        "note": "[sweep] Bisecting 23.5% regression between 66d0f7d9 and 6a8540ce",
         "source": "valkey",
-        "specifier": "6a8540cefe490f61aaf5985be4909a7092e9002f"
+        "specifier": "4fe83207116b3986a2d021d38dfacfe06ba69604"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_11.54.14.289024",
+      "method": "perf-get",
+      "score": 754751.1670179063,
+      "commit": "6a8540ce",
+      "source": "valkey",
+      "specifier": "6a8540cefe490f61aaf5985be4909a7092e9002f",
+      "note": "[sweep] Bisecting 9.0% regression between 66d0f7d9 and 7892bf80",
+      "completed": "2026.05.24_11.59.55.600258"
+    },
     {
       "task_id": "2026.05.24_11.51.28.718928",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "8c55547999a980680997a2c0c2bd292a7112da9c",
       "note": "[sweep] Bisecting 42.3% improvement between ac515159 and 9aeab8cc",
       "completed": "2026.05.24_11.43.02.677150"
-    },
-    {
-      "task_id": "2026.05.24_11.31.40.860992",
-      "method": "perf-get",
-      "score": 1159808.4484523807,
-      "commit": "9aeab8cc",
-      "source": "valkey",
-      "specifier": "9aeab8ccbac0ca4923676c749c98d0de4718c872",
-      "note": "[sweep] Bisecting 41.3% improvement between ac515159 and 3086e61d",
-      "completed": "2026.05.24_11.37.21.886658"
     }
   ],
-  "eta_minutes": 4.4
+  "eta_minutes": 5.0
 }
