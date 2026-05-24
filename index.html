@@ -72,7 +72,7 @@
 
   <div id="perfChartsSection" style="display:none">
     <h2 style="font-size:1rem; margin:1.5rem 0 0.5rem;">Hardware Performance Counters</h2>
-    <div id="perfCharts"></div>
+    <div id="perfCharts" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"></div>
   </div>
 
   <h2 style="font-size:1rem; margin:1.5rem 0 0.5rem;">Memory Overhead</h2>
@@ -88,7 +88,41 @@
 
   <script>
     const PLATFORMS = ['amd64', 'arm64', 'intel'];
-    Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left') axis.width = 60; };
+    Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
+
+    // Synced vertical crosshair across all charts
+    let crosshairX = null;
+    const crosshairPlugin = {
+      id: 'syncedCrosshair',
+      afterEvent(chart, args) {
+        const evt = args.event;
+        if (evt.type === 'mousemove' && chart.scales.x) {
+          const xVal = chart.scales.x.getValueForPixel(evt.x);
+          if (xVal != null && xVal !== crosshairX) {
+            crosshairX = xVal;
+            allCharts.forEach(c => { if (c !== chart) c.draw(); });
+          }
+        } else if (evt.type === 'mouseout') {
+          crosshairX = null;
+          allCharts.forEach(c => c.draw());
+        }
+      },
+      afterDraw(chart) {
+        if (crosshairX == null || !chart.scales.x) return;
+        const x = chart.scales.x.getPixelForValue(crosshairX);
+        if (x < chart.chartArea.left || x > chart.chartArea.right) return;
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x, chart.chartArea.top);
+        ctx.lineTo(x, chart.chartArea.bottom);
+        ctx.strokeStyle = 'rgba(99,102,241,0.4)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+      }
+    };
+    Chart.register(crosshairPlugin);
     const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
     let chart = null;
     let currentData = null;
@@ -516,7 +550,7 @@
         // Create chart container
         const chartDiv = document.createElement('div');
         chartDiv.className = 'chart-container';
-        chartDiv.style.height = '220px';
+        chartDiv.style.height = '180px';
         chartDiv.style.marginBottom = '1rem';
         chartDiv.innerHTML = `<div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem">${group.title}</div><canvas></canvas>`;
         container.appendChild(chartDiv);
