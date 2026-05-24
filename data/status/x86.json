@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T11:56:43.802651Z",
+  "timestamp": "2026-05-24T11:58:50.232241Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -7,26 +7,43 @@
     "uptime_hours": 494218.9
   },
   "current_task": {
-    "id": "2026.05.24_11.50.03.011145",
-    "type": "mem-set",
+    "id": "2026.05.24_11.56.45.056871",
+    "type": "perf-get",
     "state": "running",
-    "progress_pct": 33.3,
-    "elapsed_sec": 42,
-    "steps": "1/3"
+    "progress_pct": 26.5,
+    "elapsed_sec": 125,
+    "steps": "65/245"
   },
   "queue": {
-    "depth": 1,
+    "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_11.50.03.011145",
-        "type": "MemTaskData",
-        "note": "[memory-sweep] Bisecting 9.5% regression between c41dd77a and 66d0f7d9",
+        "id": "2026.05.24_11.56.45.056871",
+        "type": "PerfTaskData",
+        "note": "[sweep] Bisecting 7.8% improvement between 1ea49e58 and b298dfd6",
         "source": "valkey",
-        "specifier": "b33f932c5670749bea67933c10578336c67f16e6"
+        "specifier": "8faf2788a207373b2cb356188f939accaaf6ce37"
+      },
+      {
+        "id": "2026.05.24_11.56.45.168760",
+        "type": "MemTaskData",
+        "note": "[memory-sweep] Bisecting 9.5% regression between b33f932c and 66d0f7d9",
+        "source": "valkey",
+        "specifier": "752b6ee8ff75a72c364feca8b667f9e723df0c4c"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_11.50.03.011145",
+      "method": "mem-set",
+      "score": 84.1474896,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "b33f932c5670749bea67933c10578336c67f16e6",
+      "note": "[memory-sweep] Bisecting 9.5% regression between c41dd77a and 66d0f7d9",
+      "completed": "2026.05.24_11.56.44.499614"
+    },
     {
       "task_id": "2026.05.24_11.50.02.999808",
       "method": "perf-get",
@@ -66,17 +83,7 @@
       "specifier": "b669af0eabe602850fc02f0cdc452ce071f9adda",
       "note": "[memory-sweep] Bisecting 9.5% regression between f7b1d028 and 66d0f7d9",
       "completed": "2026.05.24_11.43.19.445890"
-    },
-    {
-      "task_id": "2026.05.24_11.37.06.967844",
-      "method": "perf-get",
-      "score": 751067.5370582447,
-      "commit": "1ea49e58",
-      "source": "valkey",
-      "specifier": "1ea49e5845a11250a13273c725720822c26860f1",
-      "note": "[sweep] Bisecting 9.7% improvement between 24208812 and 5f0ccf14",
-      "completed": "2026.05.24_11.43.04.069429"
     }
   ],
-  "eta_minutes": 3.9
+  "eta_minutes": 10.8
 }

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T11:56:37.260491Z",
+  "timestamp": "2026-05-24T11:58:47.255261Z",
   "host": "arm",
   "runner": {
     "pid": 1259781,
@@ -7,23 +7,16 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_11.52.52.160641",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 61.2,
-    "elapsed_sec": 225,
-    "steps": "150/245"
+    "id": "2026.05.24_11.52.52.239934",
+    "type": "mem-set",
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 20,
+    "steps": "0/3"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.24_11.52.52.160641",
-        "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 4.9% regression between dcfb9269 and c9ce3e09",
-        "source": "valkey",
-        "specifier": "6fee1aa61cecadcdfe719a67d5a47981eb3c6ea9"
-      },
       {
         "id": "2026.05.24_11.52.52.239934",
         "type": "MemTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_11.52.52.160641",
+      "method": "perf-get",
+      "score": 2165209.882762692,
+      "commit": "6fee1aa6",
+      "source": "valkey",
+      "specifier": "6fee1aa61cecadcdfe719a67d5a47981eb3c6ea9",
+      "note": "[sweep] Bisecting 4.9% regression between dcfb9269 and c9ce3e09",
+      "completed": "2026.05.24_11.58.26.800748"
+    },
     {
       "task_id": "2026.05.24_11.47.06.150708",
       "method": "mem-set",
@@ -73,17 +76,7 @@
       "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
       "note": "[sweep] Bisecting 8.3% improvement between c9ce3e09 and ed9016a2",
       "completed": "2026.05.24_11.46.28.749715"
-    },
-    {
-      "task_id": "2026.05.24_11.36.57.807626",
-      "method": "mem-set",
-      "score": 54.925718399999994,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "c5ae37f223cc00ce9f1ea0633693eba64566dfa1",
-      "note": "[memory-sweep] Release 8.1",
-      "completed": "2026.05.24_11.43.07.866065"
     }
   ],
-  "eta_minutes": 7.4
+  "eta_minutes": 5.0
 }
