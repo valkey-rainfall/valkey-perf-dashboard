@@ -4,13 +4,180 @@
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
     "workload": "throughput",
-    "generated": "2026-05-23T19:29:28.044727+00:00",
+    "generated": "2026-05-24T08:37:19.218267+00:00",
     "total_commits": 1974
   },
   "workloads": [
     "throughput"
   ],
   "points": [
+    {
+      "commit": "3431b1f156b05866e4f9a368304216974f047c43",
+      "date": "2023-11-29",
+      "commit_index": 105,
+      "results": {
+        "throughput": {
+          "rps": 750126.4998809524,
+          "cv": 1.819681011367274,
+          "reps": 7
+        }
+      },
+      "pr": 7351,
+      "pr_title": "format cpu config as redis style"
+    },
+    {
+      "commit": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
+      "date": "2024-01-09",
+      "commit_index": 163,
+      "results": {
+        "throughput": {
+          "rps": 761678.8236904761,
+          "cv": 1.5805768999440182,
+          "reps": 7
+        }
+      },
+      "pr": 12924,
+      "pr_title": "Fix possible corruption in sdsResize (CVE-2023-41056)"
+    },
+    {
+      "commit": "1e8dc1da0de0add40d56fcbab9b64a3c5e61b6dd",
+      "date": "2024-02-08",
+      "commit_index": 219,
+      "results": {
+        "throughput": {
+          "rps": 759206.1767857143,
+          "cv": 1.5839861233844927,
+          "reps": 7
+        }
+      },
+      "pr": 13040,
+      "pr_title": "Fix crash due to merge of quicklist node introduced by #12955"
+    },
+    {
+      "commit": "763827c98144fa83b4fc50eb4cae7ec4d63e7925",
+      "date": "2024-02-28",
+      "commit_index": 247,
+      "results": {
+        "throughput": {
+          "rps": 749517.262857143,
+          "cv": 1.8238418769071674,
+          "reps": 7
+        }
+      },
+      "pr": 13092,
+      "pr_title": "Fix redis-cli --count (for --scan, --bigkeys, etc) was ignored unless --pattern was also used"
+    },
+    {
+      "commit": "da727ad445a640950baa097124070468a0316cc9",
+      "date": "2024-03-12",
+      "commit_index": 261,
+      "results": {
+        "throughput": {
+          "rps": 756183.0978571427,
+          "cv": 1.679707389053827,
+          "reps": 7
+        }
+      },
+      "pr": 12958,
+      "pr_title": "Fix redis-check-aof incorrectly considering data in manifest format as MP-AOF"
+    },
+    {
+      "commit": "3f725b8619ad9ae9eb129e760a47e635972be3ee",
+      "date": "2024-03-17",
+      "commit_index": 268,
+      "results": {
+        "throughput": {
+          "rps": 755536.0505952381,
+          "cv": 1.6969469774000558,
+          "reps": 7
+        }
+      },
+      "pr": 13150,
+      "pr_title": "Change mmap rand bits as a temporary mitigation to resolve asan bug"
+    },
+    {
+      "commit": "aeada20140570643cda084d374056469a5c27bf2",
+      "date": "2024-03-19",
+      "commit_index": 271,
+      "results": {
+        "throughput": {
+          "rps": 755814.1221428572,
+          "cv": 1.6590491614025673,
+          "reps": 7
+        }
+      },
+      "pr": 13143,
+      "pr_title": "Avoid unnecessary dict shrink in zremrangeGenericCommand"
+    },
+    {
+      "commit": "bad33f8738b4be5f58c4439a0c78312e4afbe432",
+      "date": "2024-03-19",
+      "commit_index": 273,
+      "results": {
+        "throughput": {
+          "rps": 749867.0310714287,
+          "cv": 2.109887388235745,
+          "reps": 7
+        }
+      },
+      "pr": 13148,
+      "pr_title": "fix wrong data type conversion in zrangeResultBeginStore"
+    },
+    {
+      "commit": "e64d91c37105bc2e23816b6f81b9ffc5e5d99801",
+      "date": "2024-03-21",
+      "commit_index": 274,
+      "results": {
+        "throughput": {
+          "rps": 1341890.496547619,
+          "cv": 1.0664582926979946,
+          "reps": 7
+        }
+      },
+      "pr": 13154,
+      "pr_title": "Fix dict use-after-free problem in kvs->rehashing"
+    },
+    {
+      "commit": "0aaae734f46101e621f9d56d76c42d04029d3c99",
+      "date": "2024-03-21",
+      "commit_index": 276,
+      "results": {
+        "throughput": {
+          "rps": 754798.1514285714,
+          "cv": 1.5873645866444477,
+          "reps": 7
+        }
+      },
+      "pr_title": "Fix incorrect find/replace"
+    },
+    {
+      "commit": "57789d4d08fbe794c178a7d6a7c267f15a32b7b4",
+      "date": "2024-03-28",
+      "commit_index": 301,
+      "results": {
+        "throughput": {
+          "rps": 752656.3980952381,
+          "cv": 1.5642261108664697,
+          "reps": 7
+        }
+      },
+      "pr": 62,
+      "pr_title": "Update naming to to Valkey"
+    },
+    {
+      "commit": "c0a83c00583ed2959079ae34ed8ca4cf7f90a264",
+      "date": "2024-04-02",
+      "commit_index": 324,
+      "results": {
+        "throughput": {
+          "rps": 754226.5551190475,
+          "cv": 1.6905343651425435,
+          "reps": 7
+        }
+      },
+      "pr": 150,
+      "pr_title": "Fix CI centos issue"
+    },
     {
       "commit": "ebfb44062982d29fc031e20c916be68c127f5ddc",
       "date": "2024-04-08",
@@ -38,6 +205,20 @@
       },
       "pr": 318,
       "pr_title": "Fix typo in comment"
+    },
+    {
+      "commit": "cde8ec1b414e5da00ee90cbaf21c1c7ae37e93e9",
+      "date": "2024-05-08",
+      "commit_index": 465,
+      "results": {
+        "throughput": {
+          "rps": 758846.9646428572,
+          "cv": 1.8590483698983065,
+          "reps": 7
+        }
+      },
+      "pr": 451,
+      "pr_title": "Don't try to set SO_REUSEADDR on sockets of AF_UNIX"
     },
     {
       "commit": "30f277a86d35e3f70314f50ca7b59562838bd429",
@@ -290,6 +471,20 @@
       },
       "pr": 783,
       "pr_title": "Fix incorrect usage of process_is_paused in tests"
+    },
+    {
+      "commit": "816accea762271458e89016e3ed6ea27c9c1daff",
+      "date": "2024-07-19",
+      "commit_index": 624,
+      "results": {
+        "throughput": {
+          "rps": 1096029.8123809525,
+          "cv": 7.703649211449738,
+          "reps": 7
+        }
+      },
+      "pr": 790,
+      "pr_title": "Generate correct slot information in cluster shards command on primary failure"
     },
     {
       "commit": "15a82902316b59e2cbf8962ac2665e4b6b038f4c",
@@ -1172,6 +1367,20 @@
       "pr_title": "Redact user data when hide-user-data-from-log enabled"
     },
     {
+      "commit": "8131c2b07bcff0dd62c79f8495e45563eacadec1",
+      "date": "2025-08-12",
+      "commit_index": 1423,
+      "results": {
+        "throughput": {
+          "rps": 1194045.3429761906,
+          "cv": 8.4499231868204,
+          "reps": 7
+        }
+      },
+      "pr": 2456,
+      "pr_title": "Add test for failover sub-replica replication loop case"
+    },
+    {
       "commit": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
       "date": "2025-08-12",
       "commit_index": 1425,
@@ -1311,6 +1520,76 @@
       "pr_title": "Remove debug logging from cluster-flush-slot.tcl"
     },
     {
+      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
+      "date": "2025-08-22",
+      "commit_index": 1463,
+      "results": {
+        "throughput": {
+          "rps": 1982136.3754761901,
+          "cv": 1.8496846904772435,
+          "reps": 7
+        }
+      },
+      "pr": 2092,
+      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
+    },
+    {
+      "commit": "8c55547999a980680997a2c0c2bd292a7112da9c",
+      "date": "2025-08-23",
+      "commit_index": 1464,
+      "results": {
+        "throughput": {
+          "rps": 1961402.8634523812,
+          "cv": 2.5806564399309955,
+          "reps": 7
+        }
+      },
+      "pr": 2497,
+      "pr_title": "Don't allow slot migration to myself node"
+    },
+    {
+      "commit": "9aeab8ccbac0ca4923676c749c98d0de4718c872",
+      "date": "2025-08-24",
+      "commit_index": 1465,
+      "results": {
+        "throughput": {
+          "rps": 1948096.0165476191,
+          "cv": 4.75808221376769,
+          "reps": 7
+        }
+      },
+      "pr": 2538,
+      "pr_title": "Consistently use static_assert across code"
+    },
+    {
+      "commit": "3086e61d4b06a81602fc74163eb7d4eb6b6bfe41",
+      "date": "2025-08-26",
+      "commit_index": 1467,
+      "results": {
+        "throughput": {
+          "rps": 1978426.1182142857,
+          "cv": 2.630818644430202,
+          "reps": 7
+        }
+      },
+      "pr": 2541,
+      "pr_title": "Update reply schema for LMOVE and BLMOVE"
+    },
+    {
+      "commit": "1ba622bad5369ece4e88946e7a9b1d65541bc8db",
+      "date": "2025-08-27",
+      "commit_index": 1469,
+      "results": {
+        "throughput": {
+          "rps": 1935206.587857143,
+          "cv": 4.066819853760396,
+          "reps": 7
+        }
+      },
+      "pr": 2542,
+      "pr_title": "Update tests/xxx/tmp/.gitignore to ignore everything"
+    },
+    {
       "commit": "682fc0b4197311a2bc0ea2512151ee29a2b1d327",
       "date": "2025-08-29",
       "commit_index": 1471,
@@ -1323,6 +1602,20 @@
       },
       "pr": 2560,
       "pr_title": "Remove the trailing chars of the --cluster reshard log message in valkey-cli"
+    },
+    {
+      "commit": "39fade42d11a22d4a13beb98d6e36adaa12ecba3",
+      "date": "2025-08-29",
+      "commit_index": 1472,
+      "results": {
+        "throughput": {
+          "rps": 1978929.5041666667,
+          "cv": 2.8656358723433097,
+          "reps": 7
+        }
+      },
+      "pr": 2547,
+      "pr_title": "Do not migrate function in new atomic slot migration"
     },
     {
       "commit": "cf90acbc6137ede7ae17fb1450c8aa19a62d163c",
@@ -1365,6 +1658,20 @@
       },
       "pr": 2574,
       "pr_title": "Delete the previous comment explaining why changed latency from 5 to 40"
+    },
+    {
+      "commit": "861d0794b7bdf2237d98502a5b405faf19db24dc",
+      "date": "2025-10-25",
+      "commit_index": 1552,
+      "results": {
+        "throughput": {
+          "rps": 1956765.2946428573,
+          "cv": 3.1998147656853466,
+          "reps": 7
+        }
+      },
+      "pr": 2763,
+      "pr_title": "Sentinel: Skip IS-PRIMARY-DOWN-BY-ADDR requests when primary not SDOWN"
     },
     {
       "commit": "04d0bba398afe056a7a269ae46a81da574020ada",
@@ -1437,6 +1744,20 @@
       "pr_title": "Instrumenting used active time metrics for I/O threads"
     },
     {
+      "commit": "0422fc66cfcced854f4fe30515467fb258dd9e61",
+      "date": "2026-01-28",
+      "commit_index": 1711,
+      "results": {
+        "throughput": {
+          "rps": 1950624.6457142858,
+          "cv": 5.803554460838122,
+          "reps": 7
+        }
+      },
+      "pr": 3103,
+      "pr_title": "Enable HW clock by default"
+    },
+    {
       "commit": "1fd6d7156fbf438f471a680fbc7e5b6b087167be",
       "date": "2026-01-28",
       "commit_index": 1714,
@@ -1451,6 +1772,20 @@
       "pr_title": "decouple lru/lfu from server.h"
     },
     {
+      "commit": "8a9c3717d13e7857b19a792058f9075f045868f4",
+      "date": "2026-01-29",
+      "commit_index": 1716,
+      "results": {
+        "throughput": {
+          "rps": 1947222.680595238,
+          "cv": 9.264176839936102,
+          "reps": 7
+        }
+      },
+      "pr": 3067,
+      "pr_title": "Don't exit the process when locale-collate fails to be set from env during startup"
+    },
+    {
       "commit": "1cc268de9fad8e9ed363e2de9e782393418bf697",
       "date": "2026-01-29",
       "commit_index": 1718,
@@ -1463,6 +1798,20 @@
       },
       "pr": 3126,
       "pr_title": "Fix mixup of reply-larger-than and request-larger-than"
+    },
+    {
+      "commit": "b8650a5a31ad80b65f42fd37652a304c8020caef",
+      "date": "2026-01-29",
+      "commit_index": 1720,
+      "results": {
+        "throughput": {
+          "rps": 1911213.4977380955,
+          "cv": 7.804495552420798,
+          "reps": 7
+        }
+      },
+      "pr": 3123,
+      "pr_title": "Fix Lua Module Build For MacOS Compatibility"
     },
     {
       "commit": "f5b0360fae0f8a8f135631636b1a569884791a57",
@@ -1507,6 +1856,20 @@
       "pr_title": "Extend hashtableGetStatsMsg to always show empty table and rehash index"
     },
     {
+      "commit": "79c8948edcdbc4e2deb887e0e3fbb54067432fd7",
+      "date": "2026-02-03",
+      "commit_index": 1728,
+      "results": {
+        "throughput": {
+          "rps": 1919611.3889285713,
+          "cv": 6.752319731190061,
+          "reps": 7
+        }
+      },
+      "pr": 3141,
+      "pr_title": "Optimize rehash completion check for empty hash table"
+    },
+    {
       "commit": "d64f2072efd80e760e53351e8fab1e1ce1320975",
       "date": "2026-02-03",
       "commit_index": 1729,
@@ -1533,6 +1896,34 @@
       },
       "pr": 3155,
       "pr_title": "Fix arr bound err in test-sanitizer-undefined (gcc)"
+    },
+    {
+      "commit": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
+      "date": "2026-03-13",
+      "commit_index": 1837,
+      "results": {
+        "throughput": {
+          "rps": 1945087.3326190475,
+          "cv": 5.940686370554376,
+          "reps": 7
+        }
+      },
+      "pr": 3340,
+      "pr_title": "Weekly tests branches are not honored on scheduled workflow"
+    },
+    {
+      "commit": "d2db0c268cc73ede427f46ad206cb93685c0b10f",
+      "date": "2026-04-23",
+      "commit_index": 1906,
+      "results": {
+        "throughput": {
+          "rps": 1930244.8090476193,
+          "cv": 7.302257921682695,
+          "reps": 7
+        }
+      },
+      "pr": 3545,
+      "pr_title": "Fix module commandresult event cleanup during unsubscribe and module unload"
     }
   ],
   "landmarks": [
@@ -1581,6 +1972,14 @@
   ],
   "annotations": [
     {
+      "commit": "e64d91c37105bc2e23816b6f81b9ffc5e5d99801",
+      "delta": 0.7895,
+      "workload": "throughput",
+      "type": "improvement",
+      "pr": 13154,
+      "pr_title": "Fix dict use-after-free problem in kvs->rehashing"
+    },
+    {
       "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
       "delta": 0.0884,
       "workload": "throughput",
@@ -1626,6 +2025,22 @@
       "workload": "throughput",
       "type": "improvement",
       "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
+    },
+    {
+      "commit": "09fb436cf0e8804b1e16c8d83ccf9c27775e8742",
+      "delta": 0.5793,
+      "workload": "throughput",
+      "type": "improvement",
+      "pr": 2092,
+      "pr_title": "Optimize pipelining by parsing and prefetching multiple commands"
+    },
+    {
+      "commit": "39fade42d11a22d4a13beb98d6e36adaa12ecba3",
+      "delta": 0.0293,
+      "workload": "throughput",
+      "type": "improvement",
+      "pr": 2547,
+      "pr_title": "Do not migrate function in new atomic slot migration"
     },
     {
       "commit": "88cd2086aef25183ae0c5fb8bc154d8206dd07f1",

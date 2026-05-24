@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "platforms": [
+    "amd64"
+  ],
+  "workloads": [
+    {
+      "id": "get16b-t7-p10",
+      "label": "get16b-t7-p10"
+    }
+  ],
+  "groups": [
+    {
+      "id": "throughput",
+      "title": "Throughput",
+      "series": [
+        "throughput"
+      ],
+      "y_axes": [
+        {
+          "id": "left",
+          "label": "requests/sec",
+          "series": [
+            "throughput"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory",
+      "title": "Memory Overhead",
+      "series": [
+        "memory"
+      ],
+      "y_axes": [
+        {
+          "id": "left",
+          "label": "bytes/key",
+          "series": [
+            "memory"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "efficiency",
+      "title": "Execution Efficiency",
+      "series": [
+        "ipc",
+        "instructions-per-req"
+      ],
+      "y_axes": [
+        {
+          "id": "left",
+          "label": "IPC",
+          "series": [
+            "ipc"
+          ]
+        },
+        {
+          "id": "right",
+          "label": "insn/request",
+          "series": [
+            "instructions-per-req"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cache",
+      "title": "Cache Pressure",
+      "series": [
+        "icache-mpki",
+        "llc-mpki"
+      ],
+      "y_axes": [
+        {
+          "id": "left",
+          "label": "misses per 1K instructions",
+          "series": [
+            "icache-mpki",
+            "llc-mpki"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pipeline",
+      "title": "Pipeline Stalls",
+      "series": [
+        "frontend-stall-pct",
+        "backend-stall-pct"
+      ],
+      "y_axes": [
+        {
+          "id": "left",
+          "label": "% of cycles stalled",
+          "series": [
+            "frontend-stall-pct",
+            "backend-stall-pct"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "branching",
+      "title": "Branch Prediction",
+      "series": [
+        "branch-mpki"
+      ],
+      "y_axes": [
+        {
+          "id": "left",
+          "label": "misses per 1K instructions",
+          "series": [
+            "branch-mpki"
+          ]
+        }
+      ]
+    }
+  ]
+}
