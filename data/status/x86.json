@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T12:49:28.827158Z",
+  "timestamp": "2026-05-24T12:51:35.211008Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 19738,
@@ -10,9 +10,9 @@
     "id": "2026.05.24_12.48.38.959891",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 2.0,
-    "elapsed_sec": 50,
-    "steps": "5/245"
+    "progress_pct": 40.8,
+    "elapsed_sec": 176,
+    "steps": "100/245"
   },
   "queue": {
     "depth": 2,
@@ -85,5 +85,5 @@
       "completed": "2026.05.24_12.42.27.078092"
     }
   ],
-  "eta_minutes": 7.5
+  "eta_minutes": 9.3
 }
