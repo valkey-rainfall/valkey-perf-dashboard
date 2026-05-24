@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T16:31:09.565684Z",
+  "timestamp": "2026-05-24T16:33:19.001375Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_16.25.33.650960",
+    "id": "2026.05.24_16.31.17.492789",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 95.9,
-    "elapsed_sec": 336,
-    "steps": "235/245"
+    "progress_pct": 26.5,
+    "elapsed_sec": 122,
+    "steps": "65/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_16.25.33.650960",
+        "id": "2026.05.24_16.31.17.492789",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 3.0% regression between 263d9ea4 and 1d23866b",
+        "note": "[sweep] Backfill: 168 commits in gap",
         "source": "valkey",
-        "specifier": "9f7cfc771902db5ea1f8e67f1d23c65c07cde11e"
+        "specifier": "269b1c5eda9347fb7d4d485ac9d375d11d467edd"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_16.25.33.650960",
+      "method": "perf-get",
+      "score": 1136199.0605942544,
+      "commit": "9f7cfc77",
+      "source": "valkey",
+      "specifier": "9f7cfc771902db5ea1f8e67f1d23c65c07cde11e",
+      "note": "[sweep] Bisecting 3.0% regression between 263d9ea4 and 1d23866b",
+      "completed": "2026.05.24_16.31.17.277944"
+    },
     {
       "task_id": "2026.05.24_16.19.49.472017",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "f5b0360fae0f8a8f135631636b1a569884791a57",
       "note": "[sweep] Backfill: 169 commits in gap",
       "completed": "2026.05.24_16.08.19.766822"
-    },
-    {
-      "task_id": "2026.05.24_15.57.28.887190",
-      "method": "perf-get",
-      "score": 1176379.6594608421,
-      "commit": "861d0794",
-      "source": "valkey",
-      "specifier": "861d0794b7bdf2237d98502a5b405faf19db24dc",
-      "note": "[sweep] Backfill: 169 commits in gap",
-      "completed": "2026.05.24_16.03.11.010305"
     }
   ],
-  "eta_minutes": 2.7
+  "eta_minutes": 8.1
 }
