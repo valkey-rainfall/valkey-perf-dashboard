@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T23:49:12.394090Z",
+  "timestamp": "2026-05-24T23:51:22.307657Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,26 +7,36 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_23.44.07.148699",
+    "id": "2026.05.24_23.49.52.919823",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 85.7,
-    "elapsed_sec": 305,
-    "steps": "210/245"
+    "progress_pct": 16.3,
+    "elapsed_sec": 89,
+    "steps": "40/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_23.44.07.148699",
+        "id": "2026.05.24_23.49.52.919823",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 2.2% improvement between 8d509a5d and eb3f465e",
+        "note": "[sweep] Bisecting 2.0% regression between e9014fd0 and 7cef1e8e",
         "source": "valkey",
-        "specifier": "0422fc66cfcced854f4fe30515467fb258dd9e61"
+        "specifier": "7385586fdf9f47462b52b2bd4c8ffba9de069a93"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_23.44.07.148699",
+      "method": "perf-get",
+      "score": 1998408.9982290438,
+      "commit": "0422fc66",
+      "source": "valkey",
+      "specifier": "0422fc66cfcced854f4fe30515467fb258dd9e61",
+      "note": "[sweep] Bisecting 2.2% improvement between 8d509a5d and eb3f465e",
+      "completed": "2026.05.24_23.49.52.352773"
+    },
     {
       "task_id": "2026.05.24_23.38.20.785481",
       "method": "perf-get",
@@ -66,17 +76,7 @@
       "specifier": "18257cd2e32fd98ea630a209336858bd8c3d55c7",
       "note": "[sweep] Bisecting 2.7% regression between 951d942a and 4ad7628d",
       "completed": "2026.05.24_23.26.44.189984"
-    },
-    {
-      "task_id": "2026.05.24_23.15.12.409091",
-      "method": "perf-get",
-      "score": 2006671.0637544272,
-      "commit": "1fd6d715",
-      "source": "valkey",
-      "specifier": "1fd6d7156fbf438f471a680fbc7e5b6b087167be",
-      "note": "[sweep] Bisecting 4.6% improvement between eb3f465e and 920bf128",
-      "completed": "2026.05.24_23.20.56.270371"
     }
   ],
-  "eta_minutes": 3.3
+  "eta_minutes": 10.1
 }
