@@ -1,0 +1,656 @@
+{
+  "metadata": {
+    "repo": "valkey-io/valkey",
+    "branch": "unstable",
+    "platform": "arm64/c7g.metal/graviton3",
+    "workload": "memory",
+    "generated": "2026-05-24T17:12:19.720003+00:00",
+    "total_commits": 1977
+  },
+  "workloads": [
+    "memory"
+  ],
+  "points": [
+    {
+      "commit": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
+      "date": "2024-01-09",
+      "commit_index": 163,
+      "results": {
+        "memory": {
+          "rps": 84.1474704,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 12924,
+      "pr_title": "Fix possible corruption in sdsResize (CVE-2023-41056)"
+    },
+    {
+      "commit": "e64d91c37105bc2e23816b6f81b9ffc5e5d99801",
+      "date": "2024-03-21",
+      "commit_index": 274,
+      "results": {
+        "memory": {
+          "rps": 84.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 13154,
+      "pr_title": "Fix dict use-after-free problem in kvs->rehashing"
+    },
+    {
+      "commit": "b669af0eabe602850fc02f0cdc452ce071f9adda",
+      "date": "2024-04-10",
+      "commit_index": 390,
+      "results": {
+        "memory": {
+          "rps": 84.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 268,
+      "pr_title": "Rename 'redis_tls_ctx' and 'redis_tls_client_ctx' global variables"
+    },
+    {
+      "commit": "c41dd77a3e93e02be3c4bc75d8c76b7b4169a4ce",
+      "date": "2024-05-22",
+      "commit_index": 504,
+      "results": {
+        "memory": {
+          "rps": 84.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 323,
+      "pr_title": "Add clang-format configs"
+    },
+    {
+      "commit": "b33f932c5670749bea67933c10578336c67f16e6",
+      "date": "2024-06-17",
+      "commit_index": 561,
+      "results": {
+        "memory": {
+          "rps": 84.14748320000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 662,
+      "pr_title": "Add missing commas from debug command"
+    },
+    {
+      "commit": "752b6ee8ff75a72c364feca8b667f9e723df0c4c",
+      "date": "2024-07-01",
+      "commit_index": 589,
+      "results": {
+        "memory": {
+          "rps": 84.14748320000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 721,
+      "pr_title": "Avoid compilation error oin valkey-cli"
+    },
+    {
+      "commit": "3323e422ad0c0dc81859017798cb04a9621d6522",
+      "date": "2024-07-02",
+      "commit_index": 593,
+      "results": {
+        "memory": {
+          "rps": 84.14748320000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 674,
+      "pr_title": "Introduce thread-local storage variable to update thread's own used_memory and sum when reading to reduce atomic contention."
+    },
+    {
+      "commit": "1ea49e5845a11250a13273c725720822c26860f1",
+      "date": "2024-07-02",
+      "commit_index": 595,
+      "results": {
+        "memory": {
+          "rps": 84.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 731,
+      "pr_title": "Make valkey compatible with redis-sentinel to start sentinel"
+    },
+    {
+      "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
+      "date": "2024-07-02",
+      "commit_index": 596,
+      "results": {
+        "memory": {
+          "rps": 76.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 541,
+      "pr_title": "Embed key into dict entry"
+    },
+    {
+      "commit": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483",
+      "date": "2024-07-09",
+      "commit_index": 603,
+      "results": {
+        "memory": {
+          "rps": 76.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 758,
+      "pr_title": "Async IO threads"
+    },
+    {
+      "commit": "66d0f7d9a116ee6c58da4c18532825130dcae773",
+      "date": "2024-07-16",
+      "commit_index": 617,
+      "results": {
+        "memory": {
+          "rps": 76.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 754,
+      "pr_title": "Ensure only primary sender drives slot ownership updates"
+    },
+    {
+      "commit": "4b8de6b1be24b2c64f6e3e188b6dd6d9bca575b1",
+      "date": "2024-07-31",
+      "commit_index": 645,
+      "results": {
+        "memory": {
+          "rps": 76.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 851,
+      "pr_title": "Update replica version comparison to handle version 8 RC candidates"
+    },
+    {
+      "commit": "76a59788e6b99deb33f3df7fa9946c063eb981f6",
+      "date": "2024-09-11",
+      "commit_index": 745,
+      "results": {
+        "memory": {
+          "rps": 76.14749280000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1024,
+      "pr_title": "Re-enable empty-shard slot migration tests"
+    },
+    {
+      "commit": "ab98f375db51c83f3c56beac9440097f81af2048",
+      "date": "2024-10-30",
+      "commit_index": 844,
+      "results": {
+        "memory": {
+          "rps": 76.14749280000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1237,
+      "pr_title": "RDMA: Delete keepalive timer on closing"
+    },
+    {
+      "commit": "2d48a39c2781e72200b2e360ef250009c6701711",
+      "date": "2024-11-25",
+      "commit_index": 901,
+      "results": {
+        "memory": {
+          "rps": 76.14749280000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1347,
+      "pr_title": "Save open's errno when opening temp rdb fails to prevent it from being modified"
+    },
+    {
+      "commit": "924729eb1695a8a5913fe32531a8d520560fe70b",
+      "date": "2024-12-09",
+      "commit_index": 929,
+      "results": {
+        "memory": {
+          "rps": 76.14749280000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1339,
+      "pr_title": "Fix the election was reset wrongly before failover epoch was obtained"
+    },
+    {
+      "commit": "7e564887b93ea3d1008cd2ea2d2bb82c4a4b0a04",
+      "date": "2024-12-11",
+      "commit_index": 936,
+      "results": {
+        "memory": {
+          "rps": 76.14749280000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1408,
+      "pr_title": "Set HIDDEN_CONFIG flag on events-per-io-thread"
+    },
+    {
+      "commit": "c8ee5c2c46c52bcb2b48e190a8f5131fdbcf355e",
+      "date": "2024-11-18",
+      "commit_index": 938,
+      "results": {
+        "memory": {
+          "rps": 76.14749280000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr_title": "Hashtable implementation including unit tests"
+    },
+    {
+      "commit": "4efff42f041733d786a73f1cdfa65f6e04c3c4b8",
+      "date": "2024-11-18",
+      "commit_index": 939,
+      "results": {
+        "memory": {
+          "rps": 76.14749280000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1065,
+      "pr_title": "Replace dict with hashtable in command tables"
+    },
+    {
+      "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
+      "date": "2024-09-11",
+      "commit_index": 940,
+      "results": {
+        "memory": {
+          "rps": 54.92341440000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
+    },
+    {
+      "commit": "5f7fe9ef21f1feae42257ac93ab33d8f8c06e97f",
+      "date": "2024-12-11",
+      "commit_index": 943,
+      "results": {
+        "memory": {
+          "rps": 54.92219840000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1307,
+      "pr_title": "Send MEET packet to node if there is no inbound link to fix inconsistency when handshake timedout"
+    },
+    {
+      "commit": "7892bf808b6f748684af7defa0c0a8611cc4be50",
+      "date": "2024-12-17",
+      "commit_index": 957,
+      "results": {
+        "memory": {
+          "rps": 54.9194976,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1379,
+      "pr_title": "Fix test_reclaimFilePageCache to avoid tmpfs"
+    },
+    {
+      "commit": "e8ae5b1852474ff89cfe23d4485a88dc59b5c0a3",
+      "date": "2025-02-09",
+      "commit_index": 1070,
+      "results": {
+        "memory": {
+          "rps": 54.918243200000006,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1691,
+      "pr_title": "Fix log message \"DB 9: 100 keys (0 volatile) in 16 slots HT\""
+    },
+    {
+      "commit": "c5ae37f223cc00ce9f1ea0633693eba64566dfa1",
+      "date": "2025-02-13",
+      "commit_index": 1093,
+      "results": {
+        "memory": {
+          "rps": 54.925718399999994,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1730,
+      "pr_title": "Add spellchecker ignore section"
+    },
+    {
+      "commit": "2399f107729171f9e8e35c9997b19d3e8c9c58ef",
+      "date": "2025-04-15",
+      "commit_index": 1176,
+      "results": {
+        "memory": {
+          "rps": 54.93009599999999,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1955,
+      "pr_title": "Fix crash during TLS handshake with I/O threads"
+    },
+    {
+      "commit": "d00fb8e713d651f7c42a36f052a4fd12a9637e0e",
+      "date": "2025-05-25",
+      "commit_index": 1259,
+      "results": {
+        "memory": {
+          "rps": 54.92591039999999,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 2109,
+      "pr_title": "Only mark the client reprocessing flag when unblocked on keys"
+    },
+    {
+      "commit": "9c45cf33423e2f7c70ccf6adbdb428a1890cb4a5",
+      "date": "2025-07-03",
+      "commit_index": 1342,
+      "results": {
+        "memory": {
+          "rps": 54.92472000000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 2304,
+      "pr_title": "Make unit test report each memory leak only once"
+    },
+    {
+      "commit": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
+      "date": "2025-08-12",
+      "commit_index": 1425,
+      "results": {
+        "memory": {
+          "rps": 54.926896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 2473,
+      "pr_title": "Deflake hashexpire tests"
+    },
+    {
+      "commit": "155b0bb82196c8fc70245823856a8e966525d55a",
+      "date": "2025-10-08",
+      "commit_index": 1523,
+      "results": {
+        "memory": {
+          "rps": 54.921289599999994,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 2362,
+      "pr_title": "Fix memory leak with CLIENT LIST/KILL duplicate filters"
+    },
+    {
+      "commit": "0a9cb985c8c37c54c5007bc0af2dcd0b6752a529",
+      "date": "2025-12-19",
+      "commit_index": 1637,
+      "results": {
+        "memory": {
+          "rps": 54.92028160000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 2955,
+      "pr_title": "Fix lua module build failure when using CLANG"
+    },
+    {
+      "commit": "0f5db6a5d17d8273d2535aeac2d9eaca23635861",
+      "date": "2026-02-10",
+      "commit_index": 1750,
+      "results": {
+        "memory": {
+          "rps": 54.914611199999996,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3168,
+      "pr_title": "Steps to run daily workflow in forked repo"
+    },
+    {
+      "commit": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
+      "date": "2026-03-13",
+      "commit_index": 1837,
+      "results": {
+        "memory": {
+          "rps": 54.91635199999999,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3340,
+      "pr_title": "Weekly tests branches are not honored on scheduled workflow"
+    },
+    {
+      "commit": "f3b647050269003cd0ae40c5ec359c62163aff2a",
+      "date": "2026-04-02",
+      "commit_index": 1863,
+      "results": {
+        "memory": {
+          "rps": 54.9218688,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3430,
+      "pr_title": "Fix some flaky tests"
+    },
+    {
+      "commit": "0c81b53d6af3bcffecbcbadf50639e5969178333",
+      "date": "2026-04-06",
+      "commit_index": 1867,
+      "results": {
+        "memory": {
+          "rps": 54.91969280000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3420,
+      "pr_title": "Avoid having server.h being included by cli and benchmark"
+    },
+    {
+      "commit": "3ed6e5f8441be4e33ccb4b8310d8a22f6cdf492f",
+      "date": "2026-04-06",
+      "commit_index": 1869,
+      "results": {
+        "memory": {
+          "rps": 54.917708800000014,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3449,
+      "pr_title": "Update maintainer affiliation"
+    },
+    {
+      "commit": "034d16ac44e8f722b26d30ea7be9422427092d05",
+      "date": "2026-04-07",
+      "commit_index": 1870,
+      "results": {
+        "memory": {
+          "rps": 30.911347199999994,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3397,
+      "pr_title": "Increase embedded string threshold from 64 to 128 bytes"
+    },
+    {
+      "commit": "2585f60ebc93c7b44a23e4df9fb02f2012e185fd",
+      "date": "2026-04-07",
+      "commit_index": 1871,
+      "results": {
+        "memory": {
+          "rps": 30.9140352,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3422,
+      "pr_title": "Fix RDB expiry write length and leak when loading zipmap"
+    },
+    {
+      "commit": "b020b03c69874bfb0b24dfdb6eb20765f4e2cfba",
+      "date": "2026-04-09",
+      "commit_index": 1878,
+      "results": {
+        "memory": {
+          "rps": 30.921587200000005,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3463,
+      "pr_title": "Increase timeouts in faster-failover test for slow CI runners"
+    },
+    {
+      "commit": "269b1c5eda9347fb7d4d485ac9d375d11d467edd",
+      "date": "2026-04-20",
+      "commit_index": 1892,
+      "results": {
+        "memory": {
+          "rps": 30.919936000000007,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3306,
+      "pr_title": "Improve COB memory tracking with copy avoidance"
+    },
+    {
+      "commit": "39036c7c06f4ac1942aa7a36058cc79e555c9fde",
+      "date": "2026-04-29",
+      "commit_index": 1920,
+      "results": {
+        "memory": {
+          "rps": 30.915801599999995,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 2823,
+      "pr_title": "Add structured datasets loading capability in valkey benchmark"
+    },
+    {
+      "commit": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55",
+      "date": "2026-05-24",
+      "commit_index": 1976,
+      "results": {
+        "memory": {
+          "rps": 30.9115264,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3791,
+      "pr_title": "Restrict zmadvise_dontneed_range() to jemalloc builds"
+    }
+  ],
+  "landmarks": [
+    {
+      "commit": "2b8cde71bb553713cf93794a0fb30a1618c0c955",
+      "date": "2023-08-16",
+      "label": "Valkey created",
+      "type": "release",
+      "commit_index": 0
+    },
+    {
+      "commit": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
+      "date": "2024-01-09",
+      "label": "7.2.4",
+      "type": "release",
+      "commit_index": 163
+    },
+    {
+      "commit": "4b8de6b1be24b2c64f6e3e188b6dd6d9bca575b1",
+      "date": "2024-07-31",
+      "label": "8.0",
+      "type": "release",
+      "commit_index": 645
+    },
+    {
+      "commit": "c5ae37f223cc00ce9f1ea0633693eba64566dfa1",
+      "date": "2025-02-13",
+      "label": "8.1",
+      "type": "release",
+      "commit_index": 1093
+    },
+    {
+      "commit": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
+      "date": "2025-08-12",
+      "label": "9.0",
+      "type": "release",
+      "commit_index": 1425
+    },
+    {
+      "commit": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
+      "date": "2026-03-13",
+      "label": "9.1",
+      "type": "release",
+      "commit_index": 1837
+    }
+  ],
+  "annotations": [
+    {
+      "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
+      "delta": -0.0951,
+      "workload": "memory",
+      "type": "improvement",
+      "pr": 541,
+      "pr_title": "Embed key into dict entry"
+    },
+    {
+      "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
+      "delta": -0.2787,
+      "workload": "memory",
+      "type": "improvement",
+      "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
+    },
+    {
+      "commit": "034d16ac44e8f722b26d30ea7be9422427092d05",
+      "delta": -0.4371,
+      "workload": "memory",
+      "type": "improvement",
+      "pr": 3397,
+      "pr_title": "Increase embedded string threshold from 64 to 128 bytes"
+    }
+  ]
+}
