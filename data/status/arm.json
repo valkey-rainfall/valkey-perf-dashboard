@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T11:17:12.248357Z",
+  "timestamp": "2026-05-24T11:20:23.666638Z",
   "host": "arm",
   "runner": {
     "pid": 1259781,
@@ -7,33 +7,53 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_11.13.59.637462",
+    "id": "2026.05.24_11.19.23.298023",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 59.2,
-    "elapsed_sec": 193,
-    "steps": "145/245"
+    "progress_pct": 10.2,
+    "elapsed_sec": 60,
+    "steps": "25/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_11.13.59.637462",
+        "id": "2026.05.24_11.19.23.298023",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 7.1% improvement between f3b64705 and cce8f49b",
+        "note": "[sweep] Bisecting 4.9% regression between e8ae5b18 and c41ffc34",
         "source": "valkey",
-        "specifier": "39036c7c06f4ac1942aa7a36058cc79e555c9fde"
+        "specifier": "c8bfd23d910708f40919c62d443839e080db9fc9"
       },
       {
-        "id": "2026.05.24_11.13.59.644816",
+        "id": "2026.05.24_11.19.23.305237",
         "type": "MemTaskData",
-        "note": "[memory-sweep] Bisecting 9.5% regression between 752b6ee8 and 66d0f7d9",
+        "note": "[memory-sweep] Bisecting 9.5% regression between 752b6ee8 and bbfd0418",
         "source": "valkey",
-        "specifier": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483"
+        "specifier": "8faf2788a207373b2cb356188f939accaaf6ce37"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_11.13.59.644816",
+      "method": "mem-set",
+      "score": 76.1474896,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "bbfd041895ee7d7d8dd59b1c75aa44f5b473e483",
+      "note": "[memory-sweep] Bisecting 9.5% regression between 752b6ee8 and 66d0f7d9",
+      "completed": "2026.05.24_11.19.22.926554"
+    },
+    {
+      "task_id": "2026.05.24_11.13.59.637462",
+      "method": "perf-get",
+      "score": 2275659.107674144,
+      "commit": "39036c7c",
+      "source": "valkey",
+      "specifier": "39036c7c06f4ac1942aa7a36058cc79e555c9fde",
+      "note": "[sweep] Bisecting 7.1% improvement between f3b64705 and cce8f49b",
+      "completed": "2026.05.24_11.19.10.404120"
+    },
     {
       "task_id": "2026.05.24_11.08.11.622961",
       "method": "mem-set",
@@ -63,27 +83,7 @@
       "specifier": "b33f932c5670749bea67933c10578336c67f16e6",
       "note": "[memory-sweep] Bisecting 9.5% regression between c41dd77a and 66d0f7d9",
       "completed": "2026.05.24_11.08.11.230733"
-    },
-    {
-      "task_id": "2026.05.24_11.05.24.015164",
-      "method": "perf-get",
-      "score": 915004.2611570247,
-      "commit": "1ea49e58",
-      "source": "valkey",
-      "specifier": "1ea49e5845a11250a13273c725720822c26860f1",
-      "note": "[sweep] Bisecting 11.7% improvement between 3323e422 and 8faf2788",
-      "completed": "2026.05.24_11.07.58.834775"
-    },
-    {
-      "task_id": "2026.05.24_11.02.36.852421",
-      "method": "mem-set",
-      "score": 84.1474896,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "c41dd77a3e93e02be3c4bc75d8c76b7b4169a4ce",
-      "note": "[memory-sweep] Bisecting 9.5% regression between b669af0e and 66d0f7d9",
-      "completed": "2026.05.24_11.05.23.656816"
     }
   ],
-  "eta_minutes": 7.2
+  "eta_minutes": 13.8
 }

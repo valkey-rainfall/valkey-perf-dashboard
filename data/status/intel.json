@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T11:16:59.601335Z",
+  "timestamp": "2026-05-24T11:20:10.762549Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 911022,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.5
   },
   "current_task": {
-    "id": "2026.05.24_11.16.05.773454",
+    "id": "2026.05.24_11.19.36.361552",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 4.1,
-    "elapsed_sec": 54,
-    "steps": "10/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 34,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.24_11.16.05.773454",
+        "id": "2026.05.24_11.19.36.361552",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 40.2% improvement between 1fbf5fb1 and 3086e61d",
+        "note": "[sweep] Bisecting 41.4% improvement between 6c2e4f95 and 3086e61d",
         "source": "valkey",
-        "specifier": "6c2e4f955310f956b25696fd9d008ea0e13d980e"
+        "specifier": "a97d584cc20013c6797843a30633f0f268874d28"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_11.16.05.773454",
+      "method": "perf-get",
+      "score": 814115.3337121212,
+      "commit": "6c2e4f95",
+      "source": "valkey",
+      "specifier": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
+      "note": "[sweep] Bisecting 40.2% improvement between 1fbf5fb1 and 3086e61d",
+      "completed": "2026.05.24_11.19.36.177439"
+    },
     {
       "task_id": "2026.05.24_11.10.21.050390",
       "method": "perf-get",
@@ -66,16 +76,6 @@
       "specifier": "c41ffc3401acd3f9b7c2bfc50314626805718dd0",
       "note": "[sweep] Bisecting 17.5% improvement between 66d0f7d9 and cce8f49b",
       "completed": "2026.05.24_10.58.56.586705"
-    },
-    {
-      "task_id": "2026.05.24_10.49.59.114537",
-      "method": "perf-get",
-      "score": 986403.069366391,
-      "commit": "66d0f7d9",
-      "source": "valkey",
-      "specifier": "66d0f7d9a116ee6c58da4c18532825130dcae773",
-      "note": "[sweep] Skeleton pass",
-      "completed": "2026.05.24_10.53.10.486065"
     }
   ],
   "eta_minutes": 5.0
