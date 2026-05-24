@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-24T14:37:32.359228Z",
+  "timestamp": "2026-05-24T14:40:41.466369Z",
   "host": "arm",
   "runner": {
     "pid": 1259781,
@@ -7,33 +7,43 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.24_14.33.46.004755",
+    "id": "2026.05.24_14.40.29.186725",
     "type": "perf-get",
-    "state": "running",
-    "progress_pct": 61.2,
-    "elapsed_sec": 226,
-    "steps": "150/245"
+    "state": "starting",
+    "progress_pct": 0.0,
+    "elapsed_sec": 12,
+    "steps": "0/245"
   },
   "queue": {
     "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.24_14.33.46.004755",
+        "id": "2026.05.24_14.40.29.186725",
         "type": "PerfTaskData",
-        "note": "[sweep] Bisecting 3.3% regression between 4a42c958 and d2db0c26",
+        "note": "[sweep] Bisecting 4.2% regression between 4a42c958 and 04896c1e",
         "source": "valkey",
-        "specifier": "04896c1e6dab95f6da6c0cf6c2fa2d3d23330bb8"
+        "specifier": "fc00f7be030784ac115e088ddf31bc94266cb01d"
       },
       {
-        "id": "2026.05.24_14.33.46.013624",
+        "id": "2026.05.24_14.40.29.196155",
         "type": "MemTaskData",
         "note": "[memory-sweep] Backfill: 163 commits in gap",
         "source": "valkey",
-        "specifier": "ef1ca6c8822201307b279420777333f153565f90"
+        "specifier": "a888503b4f247c27d131ed9727e255c0dc110eb1"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.24_14.33.46.004755",
+      "method": "perf-get",
+      "score": 2319072.680519481,
+      "commit": "04896c1e",
+      "source": "valkey",
+      "specifier": "04896c1e6dab95f6da6c0cf6c2fa2d3d23330bb8",
+      "note": "[sweep] Bisecting 3.3% regression between 4a42c958 and d2db0c26",
+      "completed": "2026.05.24_14.39.26.699911"
+    },
     {
       "task_id": "2026.05.24_14.27.04.519133",
       "method": "perf-get",
@@ -73,17 +83,7 @@
       "specifier": "a3a839972ff10a68b1a7069d70d8ce1fffb8f02a",
       "note": "[sweep] Bisecting 8.6% improvement between 0ec17335 and c4db208e",
       "completed": "2026.05.24_14.12.09.266239"
-    },
-    {
-      "task_id": "2026.05.24_13.59.48.322383",
-      "method": "perf-get",
-      "score": 2475720.5003541913,
-      "commit": "c4db208e",
-      "source": "valkey",
-      "specifier": "c4db208e9b2c1d41b3a8c6db8a8b982df2dc11c0",
-      "note": "[sweep] Bisecting 8.4% improvement between 0ec17335 and baa5a48b",
-      "completed": "2026.05.24_14.05.27.837080"
     }
   ],
-  "eta_minutes": 7.4
+  "eta_minutes": 7.5
 }
