@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-25T08:37:54.555341Z",
+  "timestamp": "2026-05-25T08:41:01.450064Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 2897973,
@@ -7,22 +7,22 @@
     "uptime_hours": 494230.7
   },
   "current_task": {
-    "id": "2026.05.25_08.37.40.520034",
+    "id": "2026.05.25_08.40.14.708635",
     "type": "perf-get",
-    "state": "starting",
-    "progress_pct": 0.0,
-    "elapsed_sec": 14,
-    "steps": "0/245"
+    "state": "running",
+    "progress_pct": 2.0,
+    "elapsed_sec": 47,
+    "steps": "5/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.25_08.37.40.520034",
+        "id": "2026.05.25_08.40.14.708635",
         "type": "PerfTaskData",
         "note": "[sweep] Bisecting 4.5% improvement between 1e2ca5ec and 6c329dfe",
         "source": "valkey",
-        "specifier": "7403b423c40e4bf2112a69fcef06b5f280a2d34c"
+        "specifier": "2a12449105988c6c3a89c6c01e504c9d3c7ce105"
       }
     ]
   },
