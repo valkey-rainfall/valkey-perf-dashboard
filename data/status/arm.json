@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-25T08:19:36.462779Z",
+  "timestamp": "2026-05-25T08:21:45.220472Z",
   "host": "arm",
   "runner": {
     "pid": 767926,
@@ -7,26 +7,36 @@
     "uptime_hours": 494229.2
   },
   "current_task": {
-    "id": "2026.05.25_08.16.00.702203",
+    "id": "2026.05.25_08.19.52.047672",
     "type": "mem-set",
     "state": "running",
     "progress_pct": 33.3,
-    "elapsed_sec": 216,
+    "elapsed_sec": 113,
     "steps": "1/3"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.25_08.16.00.702203",
+        "id": "2026.05.25_08.19.52.047672",
         "type": "MemTaskData",
-        "note": "[memory-sweep] Bisecting 43.7% regression between e8ae5b18 and 42765b2f",
+        "note": "[memory-sweep] Bisecting 43.7% regression between f7c95277 and 42765b2f",
         "source": "valkey",
-        "specifier": "f7c95277dac5433af7a9c1c3106b23002e82648f"
+        "specifier": "c2aca7255dad84b267f227c7b53f95335ebfd389"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_08.16.00.702203",
+      "method": "mem-set",
+      "score": 54.9228512,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "f7c95277dac5433af7a9c1c3106b23002e82648f",
+      "note": "[memory-sweep] Bisecting 43.7% regression between e8ae5b18 and 42765b2f",
+      "completed": "2026.05.25_08.19.51.562570"
+    },
     {
       "task_id": "2026.05.25_08.10.58.299469",
       "method": "mem-set",
@@ -66,17 +76,7 @@
       "specifier": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
       "note": "[memory-sweep] Release 7.2.4",
       "completed": "2026.05.25_07.57.11.902468"
-    },
-    {
-      "task_id": "2026.05.25_07.50.41.402060",
-      "method": "mem-set",
-      "score": 30.920819199999997,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168",
-      "note": "[memory-sweep] New HEAD on unstable",
-      "completed": "2026.05.25_07.51.12.880890"
     }
   ],
-  "eta_minutes": 9.7
+  "eta_minutes": 6.3
 }
