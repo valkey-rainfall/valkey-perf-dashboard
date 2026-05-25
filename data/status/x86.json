@@ -1,0 +1,67 @@
+{
+  "timestamp": "2026-05-25T07:47:33.747237Z",
+  "host": "ip-172-31-46-236",
+  "runner": {
+    "pid": 1503003,
+    "state": "running",
+    "uptime_hours": 494219.1
+  },
+  "current_task": null,
+  "queue": {
+    "depth": 0,
+    "tasks": []
+  },
+  "recent_results": [
+    {
+      "task_id": "2026.05.25_06.43.10.581416",
+      "method": "mem-set",
+      "score": 30.9184384,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168",
+      "note": "[memory-sweep] New HEAD on unstable",
+      "completed": "2026.05.25_06.49.21.959952"
+    },
+    {
+      "task_id": "2026.05.25_06.43.10.466054",
+      "method": "perf-get",
+      "score": 1948689.2146428572,
+      "commit": "42765b2f",
+      "source": "valkey",
+      "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168",
+      "note": "[sweep] New HEAD on unstable",
+      "completed": "2026.05.25_06.49.07.690843"
+    },
+    {
+      "task_id": "2026.05.24_17.11.45.929501",
+      "method": "perf-get",
+      "score": 1289515.7931523023,
+      "commit": "ad592f73",
+      "source": "valkey",
+      "specifier": "ad592f73d7c245f530f428af786ee39042208784",
+      "note": "[sweep] Backfill: 105 commits in gap",
+      "completed": "2026.05.24_17.17.43.821681"
+    },
+    {
+      "task_id": "2026.05.24_17.05.43.611534",
+      "method": "perf-get",
+      "score": 1111567.854309327,
+      "commit": "ef971a34",
+      "source": "valkey",
+      "specifier": "ef971a34eb10ec20c006819997b9186a0ed0e9e0",
+      "note": "[sweep] Backfill: 105 commits in gap",
+      "completed": "2026.05.24_17.11.39.674713"
+    },
+    {
+      "task_id": "2026.05.24_16.59.41.493926",
+      "method": "perf-get",
+      "score": 1119940.2753246753,
+      "commit": "1ff2a3b6",
+      "source": "valkey",
+      "specifier": "1ff2a3b6aeca0645d3dd38aa8ae3b5087adc8d4a",
+      "note": "[sweep] Backfill: 105 commits in gap",
+      "completed": "2026.05.24_17.05.37.375118"
+    }
+  ],
+  "eta_minutes": 0.0
+}
