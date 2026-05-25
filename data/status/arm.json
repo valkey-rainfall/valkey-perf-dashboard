@@ -1,32 +1,27 @@
 {
-  "timestamp": "2026-05-25T06:35:42.451225Z",
+  "timestamp": "2026-05-25T06:37:51.418003Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
     "state": "running",
     "uptime_hours": 494229.0
   },
-  "current_task": {
-    "id": "2026.05.25_06.32.49.805448",
-    "type": "mem-set",
-    "state": "running",
-    "progress_pct": 33.3,
-    "elapsed_sec": 9,
-    "steps": "1/3"
-  },
+  "current_task": null,
   "queue": {
-    "depth": 1,
-    "tasks": [
-      {
-        "id": "2026.05.25_06.32.49.805448",
-        "type": "MemTaskData",
-        "note": "[memory-sweep] New HEAD on unstable",
-        "source": "valkey",
-        "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168"
-      }
-    ]
+    "depth": 0,
+    "tasks": []
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_06.32.49.805448",
+      "method": "mem-set",
+      "score": 30.917119999999997,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168",
+      "note": "[memory-sweep] New HEAD on unstable",
+      "completed": "2026.05.25_06.35.46.317793"
+    },
     {
       "task_id": "2026.05.25_06.32.49.712463",
       "method": "perf-get",
@@ -66,17 +61,7 @@
       "specifier": "25122b140e8fb6a6b93e1f49f22e8fd522b754bc",
       "note": "[sweep] Backfill: 110 commits in gap",
       "completed": "2026.05.25_00.00.21.082941"
-    },
-    {
-      "task_id": "2026.05.24_23.55.41.702028",
-      "method": "perf-get",
-      "score": 922223.0837465564,
-      "commit": "1e8dc1da",
-      "source": "valkey",
-      "specifier": "1e8dc1da0de0add40d56fcbab9b64a3c5e61b6dd",
-      "note": "[sweep] Backfill: 110 commits in gap",
-      "completed": "2026.05.24_23.58.01.242834"
     }
   ],
-  "eta_minutes": 2.8
+  "eta_minutes": 0.0
 }
