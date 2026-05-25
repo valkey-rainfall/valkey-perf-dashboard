@@ -88,9 +88,9 @@
     <div id="perfInfo" class="info-row" style="margin-top:0.5rem;"></div>
   </div>
 
-  <!-- Memory -->
+  <!-- Memory (2x2 grid for multiple workloads) -->
   <h2>Memory Overhead (per-struct breakdown)</h2>
-  <div class="chart-panel chart-panel--memory"><canvas id="memoryChart"></canvas></div>
+  <div id="memoryChartsGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;"></div>
   <div id="memoryInfo" class="info-row"></div>
 
   <!-- Annotations & Table -->
@@ -284,49 +284,62 @@
     // Memory chart
     // =========================================================================
 
+    let memoryChartInstances = [];
+    const MEMORY_WORKLOADS = ['memory-set-64b', 'memory-zadd-64b', 'memory-sadd-64b', 'memory-set-64b-expire'];
+
     async function renderMemory(platform, mainData) {
-      try {
-        const r = await fetch(`${DATA_URL}/series-${platform}-${getWorkloadId()}-memory.json`);
-        if (!r.ok) return;
-        const memData = await r.json();
-        const wk = memData.workloads[0];
-        const pts = memData.points.filter(p => p.results[wk]).sort((a, b) => a.commit_index - b.commit_index);
-        if (!pts.length) return;
+      memoryChartInstances.forEach(c => c.destroy()); memoryChartInstances = [];
+      const container = document.getElementById('memoryChartsGrid'); container.innerHTML = '';
 
-        if (window.memoryChart instanceof Chart) window.memoryChart.destroy();
-        const hasBreakdown = memData.metadata.categories && pts.some(p => p.breakdown);
-        let datasets;
-        if (hasBreakdown) {
-          datasets = memData.metadata.categories.map((cat, i) => ({
-            label: cat, data: pts.map(p => ({x: p.commit_index, y: p.breakdown?.[cat] || 0})),
-            borderColor: CATEGORY_COLORS[cat] || '#6b7280', backgroundColor: (CATEGORY_COLORS[cat] || '#6b7280') + '99',
-            fill: i === 0 ? 'origin' : '-1', pointRadius: 0, borderWidth: 1, tension: 0,
-          }));
-        } else {
-          datasets = [{ label: 'bytes/key', data: pts.map(p => ({x: p.commit_index, y: p.results[wk].rps})), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: 'origin', pointRadius: 3, tension: 0 }];
-        }
+      for (const workloadId of MEMORY_WORKLOADS) {
+        try {
+          const r = await fetch(`${DATA_URL}/series-${platform}-${workloadId}.json`);
+          if (!r.ok) continue;
+          const memData = await r.json();
+          const wk = memData.workloads[0];
+          const pts = memData.points.filter(p => p.results[wk]).sort((a, b) => a.commit_index - b.commit_index);
+          if (!pts.length) continue;
 
-        const opts = baseChartOpts(memData.metadata.total_commits, memData.landmarks);
-        opts.plugins.legend = { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } };
-        opts.scales.y = { stacked: hasBreakdown, title: { display: true, text: 'bytes/key', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'var(--border)' } };
+          const hasBreakdown = memData.metadata.categories && pts.some(p => p.breakdown);
+          let datasets;
+          if (hasBreakdown) {
+            datasets = memData.metadata.categories.map((cat, i) => ({
+              label: cat, data: pts.map(p => ({x: p.commit_index, y: p.breakdown?.[cat] || 0})),
+              borderColor: CATEGORY_COLORS[cat] || '#6b7280', backgroundColor: (CATEGORY_COLORS[cat] || '#6b7280') + '99',
+              fill: i === 0 ? 'origin' : '-1', pointRadius: 0, borderWidth: 1, tension: 0,
+            }));
+          } else {
+            datasets = [{ label: 'bytes/key', data: pts.map(p => ({x: p.commit_index, y: p.results[wk].rps})), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: 'origin', pointRadius: 3, tension: 0 }];
+          }
 
-        window.memoryChart = new Chart(document.getElementById('memoryChart').getContext('2d'), {
-          type: 'line', data: { datasets },
-          plugins: [makeInfoPlugin('memoryInfo', (_, idx) => {
-            const p = pts[idx];
-            let items = [infoItem('', p.date), p.commit.slice(0,8) + (p.pr ? ' #'+p.pr : '')];
-            if (p.breakdown) {
-              const total = Object.values(p.breakdown).reduce((s,v)=>s+v,0);
-              items.push(infoItem('total', total.toFixed(1)+' B/key'));
-              Object.entries(p.breakdown).filter(([,v])=>v>0.1).forEach(([k,v]) => items.push(infoItem(k, v.toFixed(1))));
-            } else { items.push(infoItem('overhead', p.results[wk].rps.toFixed(1)+' B/key')); }
-            if (p.pr_title) items.push(p.pr_title);
-            return items.filter(Boolean).join('<span class="info-sep"> · </span>');
-          })],
-          options: opts,
-        });
-        allCharts.push(window.memoryChart);
-      } catch(e) { console.error('Memory chart:', e); }
+          // Create chart container
+          const div = document.createElement('div'); div.className = 'chart-panel chart-panel--memory';
+          const label = workloadId.replace('memory-', '').replace('-', ' ');
+          div.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem">${label}</div><canvas></canvas>`;
+          container.appendChild(div);
+
+          const opts = baseChartOpts(memData.metadata.total_commits, memData.landmarks);
+          opts.plugins.legend = { display: false };
+          opts.scales.y = { stacked: hasBreakdown, title: { display: true, text: 'B/key', color: '#64748b' }, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'var(--border)' } };
+
+          const ci = new Chart(div.querySelector('canvas').getContext('2d'), {
+            type: 'line', data: { datasets },
+            plugins: [makeInfoPlugin('memoryInfo', (_, idx) => {
+              const p = pts[idx];
+              let items = [infoItem('', label), infoItem('', p.date), p.commit.slice(0,8) + (p.pr ? ' #'+p.pr : '')];
+              if (p.breakdown) {
+                const total = Object.values(p.breakdown).reduce((s,v)=>s+v,0);
+                items.push(infoItem('total', total.toFixed(1)+' B/key'));
+                Object.entries(p.breakdown).filter(([,v])=>v>0.1).forEach(([k,v]) => items.push(infoItem(k, v.toFixed(1))));
+              } else { items.push(infoItem('overhead', p.results[wk].rps.toFixed(1)+' B/key')); }
+              if (p.pr_title) items.push(p.pr_title);
+              return items.filter(Boolean).join('<span class="info-sep"> · </span>');
+            })],
+            options: opts,
+          });
+          memoryChartInstances.push(ci); allCharts.push(ci);
+        } catch(e) { console.error('Memory chart ' + workloadId + ':', e); }
+      }
     }
 
     // =========================================================================
