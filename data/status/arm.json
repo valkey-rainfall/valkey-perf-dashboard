@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-05-25T08:02:37.427718Z",
+  "timestamp": "2026-05-25T08:04:46.486084Z",
   "host": "arm",
   "runner": {
-    "pid": 738704,
+    "pid": 747419,
     "state": "running",
     "uptime_hours": 494229.2
   },
@@ -11,7 +11,7 @@
     "type": "mem-set",
     "state": "running",
     "progress_pct": 33.3,
-    "elapsed_sec": 73,
+    "elapsed_sec": 17,
     "steps": "1/3"
   },
   "queue": {
@@ -78,5 +78,5 @@
       "completed": "2026.05.25_06.35.33.326488"
     }
   ],
-  "eta_minutes": 4.9
+  "eta_minutes": 3.1
 }
