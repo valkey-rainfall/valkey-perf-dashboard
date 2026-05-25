@@ -1,39 +1,37 @@
 {
-  "timestamp": "2026-05-25T06:47:09.951445Z",
+  "timestamp": "2026-05-25T06:50:23.737411Z",
   "host": "ip-172-31-46-236",
   "runner": {
     "pid": 1291783,
     "state": "running",
     "uptime_hours": 494218.9
   },
-  "current_task": {
-    "id": "2026.05.25_06.43.10.466054",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 59.2,
-    "elapsed_sec": 239,
-    "steps": "145/245"
-  },
+  "current_task": null,
   "queue": {
-    "depth": 2,
-    "tasks": [
-      {
-        "id": "2026.05.25_06.43.10.466054",
-        "type": "PerfTaskData",
-        "note": "[sweep] New HEAD on unstable",
-        "source": "valkey",
-        "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168"
-      },
-      {
-        "id": "2026.05.25_06.43.10.581416",
-        "type": "MemTaskData",
-        "note": "[memory-sweep] New HEAD on unstable",
-        "source": "valkey",
-        "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168"
-      }
-    ]
+    "depth": 0,
+    "tasks": []
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_06.43.10.581416",
+      "method": "mem-set",
+      "score": 30.9184384,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168",
+      "note": "[memory-sweep] New HEAD on unstable",
+      "completed": "2026.05.25_06.49.21.959952"
+    },
+    {
+      "task_id": "2026.05.25_06.43.10.466054",
+      "method": "perf-get",
+      "score": 1948689.2146428572,
+      "commit": "42765b2f",
+      "source": "valkey",
+      "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168",
+      "note": "[sweep] New HEAD on unstable",
+      "completed": "2026.05.25_06.49.07.690843"
+    },
     {
       "task_id": "2026.05.24_17.11.45.929501",
       "method": "perf-get",
@@ -63,27 +61,7 @@
       "specifier": "1ff2a3b6aeca0645d3dd38aa8ae3b5087adc8d4a",
       "note": "[sweep] Backfill: 105 commits in gap",
       "completed": "2026.05.24_17.05.37.375118"
-    },
-    {
-      "task_id": "2026.05.24_16.53.38.280804",
-      "method": "perf-get",
-      "score": 1902429.2440377804,
-      "commit": "3c092caa",
-      "source": "valkey",
-      "specifier": "3c092caa08fd7e202e52791bc7c523d80c8247ea",
-      "note": "[sweep] Backfill: 112 commits in gap",
-      "completed": "2026.05.24_16.59.35.185937"
-    },
-    {
-      "task_id": "2026.05.24_16.47.58.595522",
-      "method": "perf-get",
-      "score": 757180.8037780402,
-      "commit": "f4e10eee",
-      "source": "valkey",
-      "specifier": "f4e10eee06cd978452a17e69d684e8afc8eeae3f",
-      "note": "[sweep] Backfill: 112 commits in gap",
-      "completed": "2026.05.24_16.53.32.042738"
     }
   ],
-  "eta_minutes": 7.7
+  "eta_minutes": 0.0
 }
