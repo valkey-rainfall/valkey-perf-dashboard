@@ -19,21 +19,22 @@
     h2 { font-size: 1rem; margin: 1.5rem 0 0.5rem; }
 
     /* Layout reservation: fixed heights prevent CLS */
-    .chart-panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .chart-panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
     .chart-panel canvas { width: 100%; }
     .chart-panel--throughput { height: 320px; }
     .chart-panel--memory { height: 290px; }
     .chart-panel--perf { height: 200px; margin-bottom: 0.75rem; }
-    #perfChartsSection { min-height: 420px; }
 
     /* Info row: always visible below its chart */
     .info-row {
       font-size: 0.78rem; color: var(--muted); padding: 0.35rem 1rem 0.5rem;
       display: flex; gap: 1rem; align-items: baseline; flex-wrap: wrap;
-      min-height: 1.6em; border-top: 1px solid var(--border);
+      min-height: 1.8em; line-height: 1.4;
+      border-top: 1px solid var(--border);
       background: var(--card); border-radius: 0 0 8px 8px;
-      margin-top: -1px; /* seamless with chart panel */
+      margin-top: -1px; margin-bottom: 1.5rem; /* space before next section */
     }
+    .info-row:empty::after { content: '\00a0'; } /* prevent collapse when empty */
     .info-row .info-val { color: var(--text); font-weight: 500; }
     .info-row .info-sep { color: var(--border); }
 
@@ -76,9 +77,14 @@
   <div class="chart-panel chart-panel--throughput"><canvas id="chart"></canvas></div>
   <div id="chartInfo" class="info-row"></div>
 
-  <!-- Perf Counters -->
+  <!-- Perf Counters (skeleton: 4 placeholder slots) -->
   <div id="perfChartsSection">
-    <div id="perfCharts" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;"></div>
+    <div id="perfCharts" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="chart-panel chart-panel--perf"></div>
+      <div class="chart-panel chart-panel--perf"></div>
+      <div class="chart-panel chart-panel--perf"></div>
+      <div class="chart-panel chart-panel--perf"></div>
+    </div>
     <div id="perfInfo" class="info-row" style="margin-top:0.5rem;"></div>
   </div>
 
@@ -382,7 +388,7 @@
         });
         perfChartInstances.push(ci); allCharts.push(ci);
       }
-      document.getElementById('perfChartsSection').style.display = hasAny ? 'block' : 'none';
+      document.getElementById('perfChartsSection').style.opacity = hasAny ? '1' : '0.3';
     }
 
     // =========================================================================
