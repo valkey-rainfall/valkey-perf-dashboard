@@ -4,7 +4,7 @@
     "branch": "unstable",
     "platform": "intel/sapphire-rapids/8488c",
     "workload": "get16b-t7-p10",
-    "generated": "2026-05-25T07:42:03.826986+00:00",
+    "generated": "2026-05-25T07:48:29.930098+00:00",
     "total_commits": 1978
   },
   "workloads": [
@@ -1144,6 +1144,34 @@
       "label": "7.2.4",
       "type": "release",
       "commit_index": 163
+    },
+    {
+      "commit": "4b8de6b1be24b2c64f6e3e188b6dd6d9bca575b1",
+      "date": "2024-07-31",
+      "label": "8.0",
+      "type": "release",
+      "commit_index": 645
+    },
+    {
+      "commit": "c5ae37f223cc00ce9f1ea0633693eba64566dfa1",
+      "date": "2025-02-13",
+      "label": "8.1",
+      "type": "release",
+      "commit_index": 1093
+    },
+    {
+      "commit": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
+      "date": "2025-08-12",
+      "label": "9.0",
+      "type": "release",
+      "commit_index": 1425
+    },
+    {
+      "commit": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
+      "date": "2026-03-13",
+      "label": "9.1",
+      "type": "release",
+      "commit_index": 1837
     }
   ],
   "annotations": [
