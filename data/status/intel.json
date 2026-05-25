@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-25T08:07:06.781791Z",
+  "timestamp": "2026-05-25T08:09:09.804882Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 2841436,
@@ -11,7 +11,7 @@
     "type": "mem-set",
     "state": "running",
     "progress_pct": 33.3,
-    "elapsed_sec": 5,
+    "elapsed_sec": 128,
     "steps": "1/3"
   },
   "queue": {
@@ -78,5 +78,5 @@
       "completed": "2026.05.24_17.57.11.667286"
     }
   ],
-  "eta_minutes": 2.7
+  "eta_minutes": 6.8
 }
