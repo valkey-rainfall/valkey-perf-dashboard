@@ -426,9 +426,10 @@
                   annotation: { annotations: memLandmarks },
                   zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
                   tooltip: { callbacks: {
-                    title: (items) => { const p = memPoints[items[0].dataIndex]; let t = `${p.date} — ${p.commit.slice(0,8)}`; if (p.pr) t += ` (PR #${p.pr})`; return t; },
-                    afterTitle: (items) => { const p = memPoints[items[0].dataIndex]; const total = p.breakdown ? Object.values(p.breakdown).reduce((s,v)=>s+v,0) : p.results[memWorkload].rps; let s = `Total: ${total.toFixed(1)} B/key`; if (p.pr_title) s += '\n'+p.pr_title; return s; },
-                    label: (item) => hasBreakdown ? `${item.dataset.label}: ${item.raw.y.toFixed(1)} B/key` : `${item.raw.y.toFixed(1)} bytes/item`,
+                    title: (items) => { const p = memPoints[items[0].dataIndex]; let t = `${p.date} — ${p.commit.slice(0,8)}`; if (p.pr) t += ` (#${p.pr})`; return t; },
+                    afterTitle: (items) => { const p = memPoints[items[0].dataIndex]; const total = p.breakdown ? Object.values(p.breakdown).reduce((s,v)=>s+v,0) : p.results[memWorkload].rps; let s = `${total.toFixed(1)} B/key total`; if (p.pr_title) s += ' — '+p.pr_title; return s; },
+                    label: (item) => hasBreakdown ? (item.raw.y > 0.1 ? `${item.dataset.label}: ${item.raw.y.toFixed(1)}` : null) : `${item.raw.y.toFixed(1)} bytes/item`,
+                    filter: (item) => !hasBreakdown || item.raw.y > 0.1,
                   }}
                 },
                 scales: {
