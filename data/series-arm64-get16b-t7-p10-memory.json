@@ -3,20 +3,34 @@
     "repo": "valkey-io/valkey",
     "branch": "unstable",
     "platform": "arm64/c7g.metal/graviton3",
-    "workload": "memory",
-    "generated": "2026-05-24T17:12:19.720003+00:00",
+    "workload": "get16b-t7-p10",
+    "generated": "2026-05-25T07:41:56.372501+00:00",
     "total_commits": 1977
   },
   "workloads": [
-    "memory"
+    "get16b-t7-p10"
   ],
   "points": [
+    {
+      "commit": "3431b1f156b05866e4f9a368304216974f047c43",
+      "date": "2023-11-29",
+      "commit_index": 105,
+      "results": {
+        "get16b-t7-p10": {
+          "rps": 84.147472,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 7351,
+      "pr_title": "format cpu config as redis style"
+    },
     {
       "commit": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
       "date": "2024-01-09",
       "commit_index": 163,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474704,
           "cv": 0.0,
           "reps": 1
@@ -26,11 +40,25 @@
       "pr_title": "Fix possible corruption in sdsResize (CVE-2023-41056)"
     },
     {
+      "commit": "1e8dc1da0de0add40d56fcbab9b64a3c5e61b6dd",
+      "date": "2024-02-08",
+      "commit_index": 219,
+      "results": {
+        "get16b-t7-p10": {
+          "rps": 84.14748320000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 13040,
+      "pr_title": "Fix crash due to merge of quicklist node introduced by #12955"
+    },
+    {
       "commit": "e64d91c37105bc2e23816b6f81b9ffc5e5d99801",
       "date": "2024-03-21",
       "commit_index": 274,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474896,
           "cv": 0.0,
           "reps": 1
@@ -40,11 +68,25 @@
       "pr_title": "Fix dict use-after-free problem in kvs->rehashing"
     },
     {
+      "commit": "25122b140e8fb6a6b93e1f49f22e8fd522b754bc",
+      "date": "2024-04-04",
+      "commit_index": 335,
+      "results": {
+        "get16b-t7-p10": {
+          "rps": 84.1474896,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 175,
+      "pr_title": "Rename redisObject to serverObject"
+    },
+    {
       "commit": "b669af0eabe602850fc02f0cdc452ce071f9adda",
       "date": "2024-04-10",
       "commit_index": 390,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474896,
           "cv": 0.0,
           "reps": 1
@@ -54,11 +96,25 @@
       "pr_title": "Rename 'redis_tls_ctx' and 'redis_tls_client_ctx' global variables"
     },
     {
+      "commit": "f4e10eee06cd978452a17e69d684e8afc8eeae3f",
+      "date": "2024-04-30",
+      "commit_index": 447,
+      "results": {
+        "get16b-t7-p10": {
+          "rps": 84.14748320000001,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 350,
+      "pr_title": "CRC64 perf improvements from Redis patches"
+    },
+    {
       "commit": "c41dd77a3e93e02be3c4bc75d8c76b7b4169a4ce",
       "date": "2024-05-22",
       "commit_index": 504,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474896,
           "cv": 0.0,
           "reps": 1
@@ -72,7 +128,7 @@
       "date": "2024-06-17",
       "commit_index": 561,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.14748320000001,
           "cv": 0.0,
           "reps": 1
@@ -86,7 +142,7 @@
       "date": "2024-07-01",
       "commit_index": 589,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.14748320000001,
           "cv": 0.0,
           "reps": 1
@@ -100,7 +156,7 @@
       "date": "2024-07-02",
       "commit_index": 593,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.14748320000001,
           "cv": 0.0,
           "reps": 1
@@ -114,7 +170,7 @@
       "date": "2024-07-02",
       "commit_index": 595,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474896,
           "cv": 0.0,
           "reps": 1
@@ -128,7 +184,7 @@
       "date": "2024-07-02",
       "commit_index": 596,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.1474896,
           "cv": 0.0,
           "reps": 1
@@ -142,7 +198,7 @@
       "date": "2024-07-09",
       "commit_index": 603,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.1474896,
           "cv": 0.0,
           "reps": 1
@@ -156,7 +212,7 @@
       "date": "2024-07-16",
       "commit_index": 617,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.1474896,
           "cv": 0.0,
           "reps": 1
@@ -170,7 +226,7 @@
       "date": "2024-07-31",
       "commit_index": 645,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.1474896,
           "cv": 0.0,
           "reps": 1
@@ -184,7 +240,7 @@
       "date": "2024-09-11",
       "commit_index": 745,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -198,7 +254,7 @@
       "date": "2024-10-30",
       "commit_index": 844,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -212,7 +268,7 @@
       "date": "2024-11-25",
       "commit_index": 901,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -226,7 +282,7 @@
       "date": "2024-12-09",
       "commit_index": 929,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -240,7 +296,7 @@
       "date": "2024-12-11",
       "commit_index": 936,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -254,7 +310,7 @@
       "date": "2024-11-18",
       "commit_index": 938,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -267,7 +323,7 @@
       "date": "2024-11-18",
       "commit_index": 939,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -281,7 +337,7 @@
       "date": "2024-09-11",
       "commit_index": 940,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.92341440000001,
           "cv": 0.0,
           "reps": 1
@@ -294,7 +350,7 @@
       "date": "2024-12-11",
       "commit_index": 943,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.92219840000001,
           "cv": 0.0,
           "reps": 1
@@ -308,7 +364,7 @@
       "date": "2024-12-17",
       "commit_index": 957,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.9194976,
           "cv": 0.0,
           "reps": 1
@@ -318,11 +374,25 @@
       "pr_title": "Fix test_reclaimFilePageCache to avoid tmpfs"
     },
     {
+      "commit": "10357ceda5dce8baf42a4a585b913d490f11e56f",
+      "date": "2025-01-11",
+      "commit_index": 1014,
+      "results": {
+        "get16b-t7-p10": {
+          "rps": 54.92323519999999,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 1191,
+      "pr_title": "Mark the node as FAIL when the node is marked as NOADDR and broadcast the FAIL"
+    },
+    {
       "commit": "e8ae5b1852474ff89cfe23d4485a88dc59b5c0a3",
       "date": "2025-02-09",
       "commit_index": 1070,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.918243200000006,
           "cv": 0.0,
           "reps": 1
@@ -336,7 +406,7 @@
       "date": "2025-02-13",
       "commit_index": 1093,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.925718399999994,
           "cv": 0.0,
           "reps": 1
@@ -350,7 +420,7 @@
       "date": "2025-04-15",
       "commit_index": 1176,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.93009599999999,
           "cv": 0.0,
           "reps": 1
@@ -364,7 +434,7 @@
       "date": "2025-05-25",
       "commit_index": 1259,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.92591039999999,
           "cv": 0.0,
           "reps": 1
@@ -378,7 +448,7 @@
       "date": "2025-07-03",
       "commit_index": 1342,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.92472000000001,
           "cv": 0.0,
           "reps": 1
@@ -392,7 +462,7 @@
       "date": "2025-08-12",
       "commit_index": 1425,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.926896,
           "cv": 0.0,
           "reps": 1
@@ -406,7 +476,7 @@
       "date": "2025-10-08",
       "commit_index": 1523,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.921289599999994,
           "cv": 0.0,
           "reps": 1
@@ -416,11 +486,25 @@
       "pr_title": "Fix memory leak with CLIENT LIST/KILL duplicate filters"
     },
     {
+      "commit": "047080a62259efb5ade83a1781c7f647c8807787",
+      "date": "2025-11-11",
+      "commit_index": 1580,
+      "results": {
+        "get16b-t7-p10": {
+          "rps": 54.923632,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 2828,
+      "pr_title": "shared zadd for geoadd"
+    },
+    {
       "commit": "0a9cb985c8c37c54c5007bc0af2dcd0b6752a529",
       "date": "2025-12-19",
       "commit_index": 1637,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.92028160000001,
           "cv": 0.0,
           "reps": 1
@@ -430,11 +514,25 @@
       "pr_title": "Fix lua module build failure when using CLANG"
     },
     {
+      "commit": "3c092caa08fd7e202e52791bc7c523d80c8247ea",
+      "date": "2026-01-20",
+      "commit_index": 1693,
+      "results": {
+        "get16b-t7-p10": {
+          "rps": 54.920806400000004,
+          "cv": 0.0,
+          "reps": 1
+        }
+      },
+      "pr": 3020,
+      "pr_title": "Automatic TLS reload"
+    },
+    {
       "commit": "0f5db6a5d17d8273d2535aeac2d9eaca23635861",
       "date": "2026-02-10",
       "commit_index": 1750,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.914611199999996,
           "cv": 0.0,
           "reps": 1
@@ -448,7 +546,7 @@
       "date": "2026-03-13",
       "commit_index": 1837,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.91635199999999,
           "cv": 0.0,
           "reps": 1
@@ -462,7 +560,7 @@
       "date": "2026-04-02",
       "commit_index": 1863,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.9218688,
           "cv": 0.0,
           "reps": 1
@@ -476,7 +574,7 @@
       "date": "2026-04-06",
       "commit_index": 1867,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.91969280000001,
           "cv": 0.0,
           "reps": 1
@@ -490,7 +588,7 @@
       "date": "2026-04-06",
       "commit_index": 1869,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.917708800000014,
           "cv": 0.0,
           "reps": 1
@@ -504,7 +602,7 @@
       "date": "2026-04-07",
       "commit_index": 1870,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.911347199999994,
           "cv": 0.0,
           "reps": 1
@@ -518,7 +616,7 @@
       "date": "2026-04-07",
       "commit_index": 1871,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.9140352,
           "cv": 0.0,
           "reps": 1
@@ -532,7 +630,7 @@
       "date": "2026-04-09",
       "commit_index": 1878,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.921587200000005,
           "cv": 0.0,
           "reps": 1
@@ -546,7 +644,7 @@
       "date": "2026-04-20",
       "commit_index": 1892,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.919936000000007,
           "cv": 0.0,
           "reps": 1
@@ -560,7 +658,7 @@
       "date": "2026-04-29",
       "commit_index": 1920,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.915801599999995,
           "cv": 0.0,
           "reps": 1
@@ -574,7 +672,7 @@
       "date": "2026-05-24",
       "commit_index": 1976,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.9115264,
           "cv": 0.0,
           "reps": 1
@@ -632,7 +730,7 @@
     {
       "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
       "delta": -0.0951,
-      "workload": "memory",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr": 541,
       "pr_title": "Embed key into dict entry"
@@ -640,14 +738,14 @@
     {
       "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
       "delta": -0.2787,
-      "workload": "memory",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
     },
     {
       "commit": "034d16ac44e8f722b26d30ea7be9422427092d05",
       "delta": -0.4371,
-      "workload": "memory",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr": 3397,
       "pr_title": "Increase embedded string threshold from 64 to 128 bytes"

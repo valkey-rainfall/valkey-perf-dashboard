@@ -3,12 +3,12 @@
     "repo": "valkey-io/valkey",
     "branch": "unstable",
     "platform": "amd64/epyc-9r14/zen4",
-    "workload": "memory",
-    "generated": "2026-05-24T17:12:03.180518+00:00",
+    "workload": "get16b-t7-p10",
+    "generated": "2026-05-25T07:41:48.957128+00:00",
     "total_commits": 1977
   },
   "workloads": [
-    "memory"
+    "get16b-t7-p10"
   ],
   "points": [
     {
@@ -16,7 +16,7 @@
       "date": "2023-11-29",
       "commit_index": 105,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474656,
           "cv": 0.0,
           "reps": 1
@@ -30,7 +30,7 @@
       "date": "2024-01-09",
       "commit_index": 163,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474704,
           "cv": 0.0,
           "reps": 1
@@ -44,7 +44,7 @@
       "date": "2024-02-08",
       "commit_index": 220,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474896,
           "cv": 0.0,
           "reps": 1
@@ -58,7 +58,7 @@
       "date": "2024-03-21",
       "commit_index": 276,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.14748320000001,
           "cv": 0.0,
           "reps": 1
@@ -71,7 +71,7 @@
       "date": "2024-04-03",
       "commit_index": 334,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474896,
           "cv": 0.0,
           "reps": 1
@@ -85,7 +85,7 @@
       "date": "2024-04-10",
       "commit_index": 390,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474896,
           "cv": 0.0,
           "reps": 1
@@ -99,7 +99,7 @@
       "date": "2024-04-30",
       "commit_index": 447,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474896,
           "cv": 0.0,
           "reps": 1
@@ -113,7 +113,7 @@
       "date": "2024-05-22",
       "commit_index": 504,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474896,
           "cv": 0.0,
           "reps": 1
@@ -127,7 +127,7 @@
       "date": "2024-06-17",
       "commit_index": 561,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.1474896,
           "cv": 0.0,
           "reps": 1
@@ -141,7 +141,7 @@
       "date": "2024-07-01",
       "commit_index": 589,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.14748320000001,
           "cv": 0.0,
           "reps": 1
@@ -155,7 +155,7 @@
       "date": "2024-07-02",
       "commit_index": 593,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.14748320000001,
           "cv": 0.0,
           "reps": 1
@@ -169,7 +169,7 @@
       "date": "2024-07-02",
       "commit_index": 595,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 84.14748320000001,
           "cv": 0.0,
           "reps": 1
@@ -183,7 +183,7 @@
       "date": "2024-07-02",
       "commit_index": 596,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.1474896,
           "cv": 0.0,
           "reps": 1
@@ -197,7 +197,7 @@
       "date": "2024-07-09",
       "commit_index": 603,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14748320000001,
           "cv": 0.0,
           "reps": 1
@@ -211,7 +211,7 @@
       "date": "2024-07-16",
       "commit_index": 617,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14748320000001,
           "cv": 0.0,
           "reps": 1
@@ -225,7 +225,7 @@
       "date": "2024-07-31",
       "commit_index": 645,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.1474896,
           "cv": 0.0,
           "reps": 1
@@ -239,7 +239,7 @@
       "date": "2024-09-11",
       "commit_index": 745,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -253,7 +253,7 @@
       "date": "2024-10-30",
       "commit_index": 844,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -267,7 +267,7 @@
       "date": "2024-11-25",
       "commit_index": 901,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -281,7 +281,7 @@
       "date": "2024-12-09",
       "commit_index": 929,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -295,7 +295,7 @@
       "date": "2024-12-11",
       "commit_index": 936,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -309,7 +309,7 @@
       "date": "2024-11-18",
       "commit_index": 938,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -322,7 +322,7 @@
       "date": "2024-11-18",
       "commit_index": 939,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 76.14749280000001,
           "cv": 0.0,
           "reps": 1
@@ -336,7 +336,7 @@
       "date": "2024-09-11",
       "commit_index": 940,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.92180160000001,
           "cv": 0.0,
           "reps": 1
@@ -349,7 +349,7 @@
       "date": "2024-12-11",
       "commit_index": 943,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.92345280000001,
           "cv": 0.0,
           "reps": 1
@@ -363,7 +363,7 @@
       "date": "2024-12-17",
       "commit_index": 957,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.9284064,
           "cv": 0.0,
           "reps": 1
@@ -377,7 +377,7 @@
       "date": "2025-01-11",
       "commit_index": 1014,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.927894400000014,
           "cv": 0.0,
           "reps": 1
@@ -391,7 +391,7 @@
       "date": "2025-02-09",
       "commit_index": 1070,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.92439999999999,
           "cv": 0.0,
           "reps": 1
@@ -405,7 +405,7 @@
       "date": "2025-02-13",
       "commit_index": 1093,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.92204480000001,
           "cv": 0.0,
           "reps": 1
@@ -419,7 +419,7 @@
       "date": "2025-04-15",
       "commit_index": 1176,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.91654080000001,
           "cv": 0.0,
           "reps": 1
@@ -433,7 +433,7 @@
       "date": "2025-05-25",
       "commit_index": 1259,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.9225184,
           "cv": 0.0,
           "reps": 1
@@ -447,7 +447,7 @@
       "date": "2025-07-03",
       "commit_index": 1342,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.9239776,
           "cv": 0.0,
           "reps": 1
@@ -461,7 +461,7 @@
       "date": "2025-08-12",
       "commit_index": 1425,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.922377600000004,
           "cv": 0.0,
           "reps": 1
@@ -475,7 +475,7 @@
       "date": "2025-10-08",
       "commit_index": 1523,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.92313279999999,
           "cv": 0.0,
           "reps": 1
@@ -489,7 +489,7 @@
       "date": "2025-11-11",
       "commit_index": 1580,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.924912000000006,
           "cv": 0.0,
           "reps": 1
@@ -503,7 +503,7 @@
       "date": "2025-12-19",
       "commit_index": 1637,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.91694079999999,
           "cv": 0.0,
           "reps": 1
@@ -517,7 +517,7 @@
       "date": "2026-01-20",
       "commit_index": 1694,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.916915200000005,
           "cv": 0.0,
           "reps": 1
@@ -531,7 +531,7 @@
       "date": "2026-02-10",
       "commit_index": 1750,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.9216256,
           "cv": 0.0,
           "reps": 1
@@ -545,7 +545,7 @@
       "date": "2026-03-13",
       "commit_index": 1837,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.917823999999996,
           "cv": 0.0,
           "reps": 1
@@ -559,7 +559,7 @@
       "date": "2026-04-02",
       "commit_index": 1863,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.91944960000001,
           "cv": 0.0,
           "reps": 1
@@ -573,7 +573,7 @@
       "date": "2026-04-06",
       "commit_index": 1867,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.91586559999999,
           "cv": 0.0,
           "reps": 1
@@ -587,7 +587,7 @@
       "date": "2026-04-06",
       "commit_index": 1869,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 54.91726080000001,
           "cv": 0.0,
           "reps": 1
@@ -601,7 +601,7 @@
       "date": "2026-04-07",
       "commit_index": 1870,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.914099199999995,
           "cv": 0.0,
           "reps": 1
@@ -615,7 +615,7 @@
       "date": "2026-04-07",
       "commit_index": 1871,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.916723200000007,
           "cv": 0.0,
           "reps": 1
@@ -629,7 +629,7 @@
       "date": "2026-04-09",
       "commit_index": 1878,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.919488,
           "cv": 0.0,
           "reps": 1
@@ -643,7 +643,7 @@
       "date": "2026-04-20",
       "commit_index": 1892,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.920998400000002,
           "cv": 0.0,
           "reps": 1
@@ -657,7 +657,7 @@
       "date": "2026-04-29",
       "commit_index": 1920,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.911948800000005,
           "cv": 0.0,
           "reps": 1
@@ -671,7 +671,7 @@
       "date": "2026-05-24",
       "commit_index": 1976,
       "results": {
-        "memory": {
+        "get16b-t7-p10": {
           "rps": 30.918451200000007,
           "cv": 0.0,
           "reps": 1
@@ -729,7 +729,7 @@
     {
       "commit": "8faf2788a207373b2cb356188f939accaaf6ce37",
       "delta": -0.0951,
-      "workload": "memory",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr": 541,
       "pr_title": "Embed key into dict entry"
@@ -737,14 +737,14 @@
     {
       "commit": "3eb8314be6af0777e69f852b65f933dd9186d30b",
       "delta": -0.2787,
-      "workload": "memory",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr_title": "Replace dict with hashtable for keys, expires and pubsub channels"
     },
     {
       "commit": "034d16ac44e8f722b26d30ea7be9422427092d05",
       "delta": -0.4371,
-      "workload": "memory",
+      "workload": "get16b-t7-p10",
       "type": "improvement",
       "pr": 3397,
       "pr_title": "Increase embedded string threshold from 64 to 128 bytes"

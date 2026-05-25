@@ -6,8 +6,8 @@
     "workload": "get16b-t7-p10",
     "metric": "instructions-per-req",
     "unit": "instructions/request",
-    "generated": "2026-05-24T17:59:09.356486+00:00",
-    "total_commits": 1976
+    "generated": "2026-05-25T07:42:37.726351+00:00",
+    "total_commits": 1978
   },
   "points": [
     {
@@ -639,9 +639,67 @@
       "value": 8957.47278,
       "pr": 3808,
       "pr_title": "Document database-level ACL rules in valkey.conf and acl.c"
+    },
+    {
+      "commit": "cce8f49b6f10d3d43e4e322c73be9e65fc683a55",
+      "commit_index": 1976,
+      "date": "",
+      "value": 8030.187229,
+      "pr": 3791,
+      "pr_title": "Restrict zmadvise_dontneed_range() to jemalloc builds"
+    },
+    {
+      "commit": "42765b2ff63ddc556ce43f41d255b38b77c8f168",
+      "commit_index": 1977,
+      "date": "2026-05-25",
+      "value": 8284.435754,
+      "pr": 3407,
+      "pr_title": "Fix integer overflow in WAIT and WAITAOF numreplicas parameter"
     }
   ],
   "landmarks": [
+    {
+      "commit": "2b8cde71bb553713cf93794a0fb30a1618c0c955",
+      "date": "2023-08-16",
+      "label": "Valkey created",
+      "type": "release",
+      "commit_index": 0
+    },
+    {
+      "commit": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
+      "date": "2024-01-09",
+      "label": "7.2.4",
+      "type": "release",
+      "commit_index": 163
+    },
+    {
+      "commit": "4b8de6b1be24b2c64f6e3e188b6dd6d9bca575b1",
+      "date": "2024-07-31",
+      "label": "8.0",
+      "type": "release",
+      "commit_index": 645
+    },
+    {
+      "commit": "c5ae37f223cc00ce9f1ea0633693eba64566dfa1",
+      "date": "2025-02-13",
+      "label": "8.1",
+      "type": "release",
+      "commit_index": 1093
+    },
+    {
+      "commit": "6c2e4f955310f956b25696fd9d008ea0e13d980e",
+      "date": "2025-08-12",
+      "label": "9.0",
+      "type": "release",
+      "commit_index": 1425
+    },
+    {
+      "commit": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
+      "date": "2026-03-13",
+      "label": "9.1",
+      "type": "release",
+      "commit_index": 1837
+    },
     {
       "commit": "2b8cde71bb553713cf93794a0fb30a1618c0c955",
       "date": "2023-08-16",

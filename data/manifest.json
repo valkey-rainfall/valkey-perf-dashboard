@@ -1,7 +1,9 @@
 {
   "version": 1,
   "platforms": [
-    "amd64"
+    "amd64",
+    "arm64",
+    "intel"
   ],
   "workloads": [
     {
@@ -114,6 +116,28 @@
           "label": "misses per 1K instructions",
           "series": [
             "branch-mpki"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tma",
+      "title": "Pipeline Breakdown (TMA)",
+      "series": [
+        "tma-retiring-pct",
+        "tma-fe-bound-pct",
+        "tma-be-bound-pct",
+        "tma-bad-spec-pct"
+      ],
+      "y_axes": [
+        {
+          "id": "left",
+          "label": "% of pipeline slots",
+          "series": [
+            "tma-retiring-pct",
+            "tma-fe-bound-pct",
+            "tma-be-bound-pct",
+            "tma-bad-spec-pct"
           ]
         }
       ]
