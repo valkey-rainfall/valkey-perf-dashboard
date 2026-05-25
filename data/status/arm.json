@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-25T06:02:36.006088Z",
+  "timestamp": "2026-05-25T06:04:40.477776Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
@@ -7,23 +7,16 @@
     "uptime_hours": 494229.0
   },
   "current_task": {
-    "id": "2026.05.25_06.00.29.238469",
+    "id": "2026.05.25_06.00.29.629808",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 51.4,
-    "elapsed_sec": 125,
-    "steps": "90/175"
+    "progress_pct": 5.7,
+    "elapsed_sec": 21,
+    "steps": "10/175"
   },
   "queue": {
-    "depth": 2,
+    "depth": 1,
     "tasks": [
-      {
-        "id": "2026.05.25_06.00.29.238469",
-        "type": "PerfTaskData",
-        "note": "canary-exp2-day20260525",
-        "source": "valkey-rainfall",
-        "specifier": "0321a69e62f5148096d03358e26a1b884af3b969"
-      },
       {
         "id": "2026.05.25_06.00.29.629808",
         "type": "PerfTaskData",
@@ -34,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_06.00.29.238469",
+      "method": "perf-get",
+      "score": 2343623.2206611573,
+      "commit": "0321a69e",
+      "source": "valkey-rainfall",
+      "specifier": "0321a69e62f5148096d03358e26a1b884af3b969",
+      "note": "canary-exp2-day20260525",
+      "completed": "2026.05.25_06.04.18.535490"
+    },
     {
       "task_id": "2026.05.24_23.58.01.812002",
       "method": "perf-get",
@@ -73,17 +76,7 @@
       "specifier": "0422fc66cfcced854f4fe30515467fb258dd9e61",
       "note": "[sweep] Bisecting 2.2% improvement between 8d509a5d and eb3f465e",
       "completed": "2026.05.24_23.49.52.352773"
-    },
-    {
-      "task_id": "2026.05.24_23.38.20.785481",
-      "method": "perf-get",
-      "score": 1932438.6760330577,
-      "commit": "8d509a5d",
-      "source": "valkey",
-      "specifier": "8d509a5d33a9eed7a47d116ff4273e61afb5189c",
-      "note": "[sweep] Bisecting 2.3% improvement between 4ad7628d and eb3f465e",
-      "completed": "2026.05.24_23.44.06.581185"
     }
   ],
-  "eta_minutes": 7.0
+  "eta_minutes": 8.3
 }
