@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-25T07:55:34.584594Z",
+  "timestamp": "2026-05-25T07:57:41.835401Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 2797196,
@@ -7,26 +7,43 @@
     "uptime_hours": 494230.7
   },
   "current_task": {
-    "id": "2026.05.25_07.50.50.004619",
+    "id": "2026.05.25_07.56.45.156017",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 73.5,
-    "elapsed_sec": 239,
-    "steps": "180/245"
+    "progress_pct": 6.1,
+    "elapsed_sec": 57,
+    "steps": "15/245"
   },
   "queue": {
-    "depth": 1,
+    "depth": 2,
     "tasks": [
       {
-        "id": "2026.05.25_07.50.50.004619",
+        "id": "2026.05.25_07.56.45.156017",
         "type": "PerfTaskData",
-        "note": "[sweep] Release 9.1",
+        "note": "[sweep] Bisecting 4.0% improvement between dcfb9269 and 6c329dfe",
         "source": "valkey",
-        "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1"
+        "specifier": "1e2ca5ec5dd6f97215e7acbcee14e89ea56a9e02"
+      },
+      {
+        "id": "2026.05.25_07.56.45.162103",
+        "type": "MemTaskData",
+        "note": "[memory-sweep] New HEAD on unstable",
+        "source": "valkey",
+        "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_07.50.50.004619",
+      "method": "perf-get",
+      "score": 1178460.1339285714,
+      "commit": "6c329dfe",
+      "source": "valkey",
+      "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
+      "note": "[sweep] Release 9.1",
+      "completed": "2026.05.25_07.56.44.876362"
+    },
     {
       "task_id": "2026.05.25_06.43.03.816139",
       "method": "mem-set",
@@ -66,17 +83,7 @@
       "specifier": "05d16579e612c7670787ce3f2c3f5c91e0914afe",
       "note": "[sweep] Backfill: 153 commits in gap",
       "completed": "2026.05.24_16.43.00.878158"
-    },
-    {
-      "task_id": "2026.05.24_16.36.58.317117",
-      "method": "perf-get",
-      "score": 760636.4865771349,
-      "commit": "9103ccc3",
-      "source": "valkey",
-      "specifier": "9103ccc39843e16c456e459f2e64008e1cc33c1f",
-      "note": "[sweep] Backfill: 153 commits in gap",
-      "completed": "2026.05.24_16.40.21.326423"
     }
   ],
-  "eta_minutes": 3.9
+  "eta_minutes": 19.6
 }

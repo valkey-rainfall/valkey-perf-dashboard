@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-05-25T07:55:21.442884Z",
+  "timestamp": "2026-05-25T07:57:26.554256Z",
   "host": "arm",
   "runner": {
-    "pid": 714384,
+    "pid": 733378,
     "state": "running",
     "uptime_hours": 494229.2
   },
@@ -11,7 +11,7 @@
     "type": "mem-set",
     "state": "running",
     "progress_pct": 33.3,
-    "elapsed_sec": 185,
+    "elapsed_sec": 8,
     "steps": "1/3"
   },
   "queue": {
@@ -27,6 +27,16 @@
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_07.52.16.654342",
+      "method": "mem-set",
+      "score": 84.14747679999999,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
+      "note": "[memory-sweep] Release 7.2.4",
+      "completed": "2026.05.25_07.57.11.902468"
+    },
     {
       "task_id": "2026.05.25_07.50.41.402060",
       "method": "mem-set",
@@ -66,17 +76,7 @@
       "specifier": "0321a69e62f5148096d03358e26a1b884af3b969",
       "note": "canary-exp2-day20260525",
       "completed": "2026.05.25_06.08.06.654649"
-    },
-    {
-      "task_id": "2026.05.25_06.00.29.238469",
-      "method": "perf-get",
-      "score": 2343623.2206611573,
-      "commit": "0321a69e",
-      "source": "valkey-rainfall",
-      "specifier": "0321a69e62f5148096d03358e26a1b884af3b969",
-      "note": "canary-exp2-day20260525",
-      "completed": "2026.05.25_06.04.18.535490"
     }
   ],
-  "eta_minutes": 8.7
+  "eta_minutes": 2.8
 }
