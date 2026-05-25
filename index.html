@@ -45,6 +45,8 @@
     .stat { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 1rem; }
     .stat .label { color: var(--muted); font-size: 0.7rem; text-transform: uppercase; }
     .stat .value { font-size: 1.1rem; font-weight: 600; }
+    .info-row { font-size: 0.8rem; color: var(--muted); padding: 0.4rem 1rem; min-height: 1.4em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .info-row span { color: var(--text); }
   </style>
 </head>
 <body>
@@ -69,15 +71,18 @@
   <div class="chart-container" style="height:280px">
     <canvas id="chart"></canvas>
   </div>
+  <div id="chartInfo" class="info-row"></div>
 
   <div id="perfChartsSection" style="display:none">
     <div id="perfCharts" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"></div>
+    <div id="perfInfo" class="info-row"></div>
   </div>
 
   <h2 style="font-size:1rem; margin:1.5rem 0 0.5rem;">Memory Overhead (per-struct breakdown)</h2>
   <div class="chart-container" style="height:250px">
     <canvas id="memoryChart"></canvas>
   </div>
+  <div id="memoryInfo" class="info-row"></div>
 
   <h2 style="font-size:1rem; margin-bottom:0.75rem;">Notable Changes</h2>
   <div class="annotations" id="annotations"></div>
@@ -131,6 +136,23 @@
 
     function syncZoom(sourceChart, min, max) {
       allCharts.forEach(c => { if (c !== sourceChart) c.zoomScale('x', {min, max}, 'none'); });
+    }
+
+    // Info row: updates a fixed div below the chart on hover (replaces tooltip overlay)
+    function makeInfoPlugin(elementId, formatter) {
+      return {
+        id: 'infoRow_' + elementId,
+        afterEvent(chart, args) {
+          const el = document.getElementById(elementId);
+          if (!el) return;
+          if (args.event.type === 'mouseout') { el.innerHTML = ''; return; }
+          if (args.event.type !== 'mousemove') return;
+          const points = chart.getElementsAtEventForMode(args.event, 'index', { intersect: false }, false);
+          if (points.length > 0) {
+            el.innerHTML = formatter(chart, points[0].index);
+          }
+        }
+      };
     }
 
     function zoomAll(mode) {
@@ -259,6 +281,16 @@
       const ctx = document.getElementById('chart').getContext('2d');
       chart = new Chart(ctx, {
         type: 'line',
+        plugins: [makeInfoPlugin('chartInfo', (chart, idx) => {
+          const p = points[idx];
+          const rps = p.results[workload].rps;
+          const cv = p.results[workload].cv;
+          let s = `<span>${p.date}</span> — ${p.commit.slice(0,8)}`;
+          if (p.pr) s += ` (#${p.pr})`;
+          s += ` | <span>${(rps/1000000).toFixed(3)}M ops/sec</span> (CV ${cv.toFixed(2)}%)`;
+          if (p.pr_title) s += ` — ${p.pr_title}`;
+          return s;
+        })],
         data: {
           datasets: [
             {
@@ -320,30 +352,7 @@
             title: { display: true, text: 'Throughput', color: '#e2e8f0', font: { size: 13 }, padding: { bottom: 4 } },
             legend: { display: false },
             annotation: { annotations: chartAnnotations },
-            tooltip: {
-              filter: (item) => item.datasetIndex === 2, // only show tooltip for main line
-              callbacks: {
-                title: (items) => {
-                  const p = points[items[0].dataIndex];
-                  let t = `${p.date} — ${p.commit.slice(0,8)}`;
-                  if (p.pr) t += ` (PR #${p.pr})`;
-                  return t;
-                },
-                label: (item) => {
-                  const rps = item.raw.y;
-                  const p = points[item.dataIndex];
-                  const cv = p.results[workload].cv;
-                  return `${(rps/1000).toFixed(1)}K ops/sec (CV ${cv.toFixed(2)}%)`;
-                },
-                afterLabel: (item) => {
-                  const p = points[item.dataIndex];
-                  const a = annotationMap[p.commit];
-                  if (a) return `${a.type}: ${(a.delta*100).toFixed(1)}%${a.pr_title ? ' — ' + a.pr_title : ''}`;
-                  if (p.pr_title) return p.pr_title;
-                  return '';
-                }
-              }
-            }
+            tooltip: { enabled: false },
           },
           scales: {
             y: {
@@ -418,6 +427,20 @@
             }
             window.memoryChart = new Chart(memCtx, {
               type: 'line', data: { datasets },
+              plugins: [makeInfoPlugin('memoryInfo', (chart, idx) => {
+                const p = memPoints[idx];
+                let s = `<span>${p.date}</span> — ${p.commit.slice(0,8)}`;
+                if (p.pr) s += ` (#${p.pr})`;
+                if (p.breakdown) {
+                  const total = Object.values(p.breakdown).reduce((a,v)=>a+v,0);
+                  s += ` | <span>${total.toFixed(1)} B/key</span>`;
+                  Object.entries(p.breakdown).filter(([,v])=>v>0.1).forEach(([k,v])=>{ s += ` | ${k}: ${v.toFixed(1)}`; });
+                } else {
+                  s += ` | <span>${p.results[memWorkload].rps.toFixed(1)} B/key</span>`;
+                }
+                if (p.pr_title) s += ` — ${p.pr_title}`;
+                return s;
+              })],
               options: {
                 responsive: true, maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
@@ -425,12 +448,7 @@
                   legend: { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
                   annotation: { annotations: memLandmarks },
                   zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
-                  tooltip: { callbacks: {
-                    title: (items) => { const p = memPoints[items[0].dataIndex]; let t = `${p.date} — ${p.commit.slice(0,8)}`; if (p.pr) t += ` (#${p.pr})`; return t; },
-                    afterTitle: (items) => { const p = memPoints[items[0].dataIndex]; const total = p.breakdown ? Object.values(p.breakdown).reduce((s,v)=>s+v,0) : p.results[memWorkload].rps; let s = `${total.toFixed(1)} B/key total`; if (p.pr_title) s += ' — '+p.pr_title; return s; },
-                    label: (item) => hasBreakdown ? (item.raw.y > 0.1 ? `${item.dataset.label}: ${item.raw.y.toFixed(1)}` : null) : `${item.raw.y.toFixed(1)} bytes/item`,
-                    filter: (item) => !hasBreakdown || item.raw.y > 0.1,
-                  }}
+                  tooltip: { enabled: false },
                 },
                 scales: {
                   y: { stacked: hasBreakdown, title: { display: true, text: 'bytes/key', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: '#2d3148' } },
@@ -575,18 +593,21 @@
         const chartInstance = new Chart(ctx, {
           type: 'line',
           data: { datasets },
+          plugins: [makeInfoPlugin('perfInfo', (chart, idx) => {
+            let s = '';
+            datasets.forEach(ds => {
+              const pt = ds.data[idx];
+              if (pt) s += `${ds.label}: <span>${pt.y.toFixed(3)}</span> | `;
+            });
+            return s.slice(0, -3);
+          })],
           options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
               legend: { display: datasets.length > 1, labels: { color: '#e2e8f0', font: { size: 11 } } },
               zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
-              tooltip: {
-                callbacks: {
-                  title: (items) => `Commit index: ${items[0].raw.x}`,
-                  label: (item) => `${item.dataset.label}: ${item.raw.y.toFixed(4)}`
-                }
-              }
+              tooltip: { enabled: false },
             },
             scales
           }
