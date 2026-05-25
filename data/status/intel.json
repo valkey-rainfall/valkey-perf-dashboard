@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-25T08:21:54.625234Z",
+  "timestamp": "2026-05-25T08:24:04.616277Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 2857887,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.7
   },
   "current_task": {
-    "id": "2026.05.25_08.19.44.098403",
+    "id": "2026.05.25_08.23.12.999131",
     "type": "mem-set",
     "state": "running",
     "progress_pct": 33.3,
-    "elapsed_sec": 131,
+    "elapsed_sec": 52,
     "steps": "1/3"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.25_08.19.44.098403",
+        "id": "2026.05.25_08.23.12.999131",
         "type": "MemTaskData",
-        "note": "[memory-sweep] Bisecting 43.7% regression between e8ae5b18 and 42765b2f",
+        "note": "[memory-sweep] Bisecting 43.7% regression between f7c95277 and 42765b2f",
         "source": "valkey",
-        "specifier": "f7c95277dac5433af7a9c1c3106b23002e82648f"
+        "specifier": "c2aca7255dad84b267f227c7b53f95335ebfd389"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_08.19.44.098403",
+      "method": "mem-set",
+      "score": 54.92029120000001,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "f7c95277dac5433af7a9c1c3106b23002e82648f",
+      "note": "[memory-sweep] Bisecting 43.7% regression between e8ae5b18 and 42765b2f",
+      "completed": "2026.05.25_08.23.12.547562"
+    },
     {
       "task_id": "2026.05.25_08.16.19.853502",
       "method": "mem-set",
@@ -66,17 +76,7 @@
       "specifier": "1e2ca5ec5dd6f97215e7acbcee14e89ea56a9e02",
       "note": "[sweep] Bisecting 4.0% improvement between dcfb9269 and 6c329dfe",
       "completed": "2026.05.25_08.02.24.717161"
-    },
-    {
-      "task_id": "2026.05.25_07.50.50.004619",
-      "method": "perf-get",
-      "score": 1178460.1339285714,
-      "commit": "6c329dfe",
-      "source": "valkey",
-      "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
-      "note": "[sweep] Release 9.1",
-      "completed": "2026.05.25_07.56.44.876362"
     }
   ],
-  "eta_minutes": 6.9
+  "eta_minutes": 4.2
 }
