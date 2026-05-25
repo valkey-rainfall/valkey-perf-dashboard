@@ -1,32 +1,27 @@
 {
-  "timestamp": "2026-05-25T06:06:47.260846Z",
+  "timestamp": "2026-05-25T06:09:59.769737Z",
   "host": "arm",
   "runner": {
     "pid": 3245455,
     "state": "running",
     "uptime_hours": 494229.0
   },
-  "current_task": {
-    "id": "2026.05.25_06.00.29.629808",
-    "type": "perf-get",
-    "state": "running",
-    "progress_pct": 60.0,
-    "elapsed_sec": 148,
-    "steps": "105/175"
-  },
+  "current_task": null,
   "queue": {
-    "depth": 1,
-    "tasks": [
-      {
-        "id": "2026.05.25_06.00.29.629808",
-        "type": "PerfTaskData",
-        "note": "canary-exp2-day20260525",
-        "source": "valkey-rainfall",
-        "specifier": "0321a69e62f5148096d03358e26a1b884af3b969"
-      }
-    ]
+    "depth": 0,
+    "tasks": []
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_06.00.29.629808",
+      "method": "perf-get",
+      "score": 2374203.3178512393,
+      "commit": "0321a69e",
+      "source": "valkey-rainfall",
+      "specifier": "0321a69e62f5148096d03358e26a1b884af3b969",
+      "note": "canary-exp2-day20260525",
+      "completed": "2026.05.25_06.08.06.654649"
+    },
     {
       "task_id": "2026.05.25_06.00.29.238469",
       "method": "perf-get",
@@ -66,17 +61,7 @@
       "specifier": "7385586fdf9f47462b52b2bd4c8ffba9de069a93",
       "note": "[sweep] Bisecting 2.0% regression between e9014fd0 and 7cef1e8e",
       "completed": "2026.05.24_23.55.41.132355"
-    },
-    {
-      "task_id": "2026.05.24_23.44.07.148699",
-      "method": "perf-get",
-      "score": 1998408.9982290438,
-      "commit": "0422fc66",
-      "source": "valkey",
-      "specifier": "0422fc66cfcced854f4fe30515467fb258dd9e61",
-      "note": "[sweep] Bisecting 2.2% improvement between 8d509a5d and eb3f465e",
-      "completed": "2026.05.24_23.49.52.352773"
     }
   ],
-  "eta_minutes": 4.1
+  "eta_minutes": 0.0
 }
