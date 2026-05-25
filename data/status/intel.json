@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-25T08:16:34.578434Z",
+  "timestamp": "2026-05-25T08:19:44.769178Z",
   "host": "ip-172-31-75-87",
   "runner": {
     "pid": 2857887,
@@ -7,26 +7,36 @@
     "uptime_hours": 494230.7
   },
   "current_task": {
-    "id": "2026.05.25_08.16.19.853502",
+    "id": "2026.05.25_08.19.44.098403",
     "type": "mem-set",
     "state": "starting",
     "progress_pct": 0.0,
-    "elapsed_sec": 15,
+    "elapsed_sec": 1,
     "steps": "0/3"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.25_08.16.19.853502",
+        "id": "2026.05.25_08.19.44.098403",
         "type": "MemTaskData",
-        "note": "[memory-sweep] Bisecting 63.3% regression between f7b1d028 and 42765b2f",
+        "note": "[memory-sweep] Bisecting 43.7% regression between e8ae5b18 and 42765b2f",
         "source": "valkey",
-        "specifier": "e8ae5b1852474ff89cfe23d4485a88dc59b5c0a3"
+        "specifier": "f7c95277dac5433af7a9c1c3106b23002e82648f"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_08.16.19.853502",
+      "method": "mem-set",
+      "score": 54.92537279999999,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "e8ae5b1852474ff89cfe23d4485a88dc59b5c0a3",
+      "note": "[memory-sweep] Bisecting 63.3% regression between f7b1d028 and 42765b2f",
+      "completed": "2026.05.25_08.19.43.683056"
+    },
     {
       "task_id": "2026.05.25_08.10.39.884967",
       "method": "mem-set",
@@ -66,16 +76,6 @@
       "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1",
       "note": "[sweep] Release 9.1",
       "completed": "2026.05.25_07.56.44.876362"
-    },
-    {
-      "task_id": "2026.05.25_06.43.03.816139",
-      "method": "mem-set",
-      "score": 30.920985599999995,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168",
-      "note": "[memory-sweep] New HEAD on unstable",
-      "completed": "2026.05.25_06.48.55.966322"
     }
   ],
   "eta_minutes": 5.0
