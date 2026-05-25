@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-25T08:23:51.543397Z",
+  "timestamp": "2026-05-25T08:26:01.522114Z",
   "host": "arm",
   "runner": {
     "pid": 767926,
@@ -9,10 +9,10 @@
   "current_task": {
     "id": "2026.05.25_08.23.44.207937",
     "type": "mem-set",
-    "state": "starting",
-    "progress_pct": 0.0,
-    "elapsed_sec": 7,
-    "steps": "0/3"
+    "state": "running",
+    "progress_pct": 33.3,
+    "elapsed_sec": 137,
+    "steps": "1/3"
   },
   "queue": {
     "depth": 1,
@@ -78,5 +78,5 @@
       "completed": "2026.05.25_08.01.18.121917"
     }
   ],
-  "eta_minutes": 5.0
+  "eta_minutes": 7.1
 }
