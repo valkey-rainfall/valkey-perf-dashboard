@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-25T08:50:26.405407Z",
+  "timestamp": "2026-05-25T08:52:36.455665Z",
   "host": "arm",
   "runner": {
     "pid": 813062,
@@ -7,26 +7,36 @@
     "uptime_hours": 494229.2
   },
   "current_task": {
-    "id": "2026.05.25_08.46.52.628225",
+    "id": "2026.05.25_08.50.46.727625",
     "type": "mem-set",
     "state": "running",
     "progress_pct": 33.3,
-    "elapsed_sec": 214,
+    "elapsed_sec": 110,
     "steps": "1/3"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.25_08.46.52.628225",
+        "id": "2026.05.25_08.50.46.727625",
         "type": "MemTaskData",
-        "note": "[memory-sweep] Bisecting 43.7% regression between c9aea6d2 and 0327c271",
+        "note": "[memory-sweep] Bisecting 43.7% regression between a6804078 and 0327c271",
         "source": "valkey",
-        "specifier": "a68040789e7566ab2aabad28459fa07dad43db60"
+        "specifier": "69bde6a827df77af6c09862f5360eecaf26397ec"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_08.46.52.628225",
+      "method": "mem-set",
+      "score": 54.9222752,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "a68040789e7566ab2aabad28459fa07dad43db60",
+      "note": "[memory-sweep] Bisecting 43.7% regression between c9aea6d2 and 0327c271",
+      "completed": "2026.05.25_08.50.46.360173"
+    },
     {
       "task_id": "2026.05.25_08.42.59.859659",
       "method": "mem-set",
@@ -66,17 +76,7 @@
       "specifier": "0327c271316daa952e6c9a41cc922ea8a9548827",
       "note": "[memory-sweep] Bisecting 43.7% regression between fb655dbf and ad404cd2",
       "completed": "2026.05.25_08.35.37.543992"
-    },
-    {
-      "task_id": "2026.05.25_08.27.33.576990",
-      "method": "mem-set",
-      "score": 30.923519999999996,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "ad404cd266e15add51007e38e75c0648a021198d",
-      "note": "[memory-sweep] Bisecting 43.7% regression between fb655dbf and 42765b2f",
-      "completed": "2026.05.25_08.30.49.156825"
     }
   ],
-  "eta_minutes": 9.6
+  "eta_minutes": 6.2
 }
