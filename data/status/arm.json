@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-25T09:02:16.432765Z",
+  "timestamp": "2026-05-25T09:04:26.431189Z",
   "host": "arm",
   "runner": {
     "pid": 813062,
@@ -7,26 +7,36 @@
     "uptime_hours": 494229.2
   },
   "current_task": {
-    "id": "2026.05.25_08.58.37.458460",
+    "id": "2026.05.25_09.02.32.150045",
     "type": "mem-set",
     "state": "running",
     "progress_pct": 33.3,
-    "elapsed_sec": 219,
+    "elapsed_sec": 114,
     "steps": "1/3"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.25_08.58.37.458460",
+        "id": "2026.05.25_09.02.32.150045",
         "type": "MemTaskData",
-        "note": "[memory-sweep] Bisecting 43.7% regression between 39332bda and 0327c271",
+        "note": "[memory-sweep] Bisecting 43.7% regression between ed9016a2 and 0327c271",
         "source": "valkey",
-        "specifier": "ed9016a2f79941ffee86e4b52214aacba7dffb29"
+        "specifier": "e8ca6c07b22ceb89692c17b7f51c4a8f03a268ba"
       }
     ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_08.58.37.458460",
+      "method": "mem-set",
+      "score": 54.92081920000001,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "ed9016a2f79941ffee86e4b52214aacba7dffb29",
+      "note": "[memory-sweep] Bisecting 43.7% regression between 39332bda and 0327c271",
+      "completed": "2026.05.25_09.02.31.775150"
+    },
     {
       "task_id": "2026.05.25_08.54.42.729575",
       "method": "mem-set",
@@ -66,17 +76,7 @@
       "specifier": "c9aea6d2d31538d99d35ee8a88b26695fbaef611",
       "note": "[memory-sweep] Bisecting 63.3% regression between f7b1d028 and 0327c271",
       "completed": "2026.05.25_08.46.52.242430"
-    },
-    {
-      "task_id": "2026.05.25_08.39.00.254967",
-      "method": "mem-set",
-      "score": 84.14747679999999,
-      "commit": "",
-      "source": "valkey",
-      "specifier": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b",
-      "note": "[memory-sweep] Release 7.2.4",
-      "completed": "2026.05.25_08.42.59.458470"
     }
   ],
-  "eta_minutes": 9.8
+  "eta_minutes": 6.3
 }
