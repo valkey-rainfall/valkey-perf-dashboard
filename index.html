@@ -293,7 +293,7 @@
 
       for (const workloadId of MEMORY_WORKLOADS) {
         try {
-          const r = await fetch(`${DATA_URL}/series-${platform}-${workloadId}.json`);
+          const r = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-memory.json`);
           if (!r.ok) continue;
           const memData = await r.json();
           const wk = memData.workloads[0];
