@@ -1,28 +1,28 @@
 {
-  "timestamp": "2026-05-25T07:50:21.000676Z",
+  "timestamp": "2026-05-25T07:52:24.958982Z",
   "host": "ip-172-31-75-87",
   "runner": {
-    "pid": 2774760,
+    "pid": 2797196,
     "state": "running",
     "uptime_hours": 494230.7
   },
   "current_task": {
-    "id": "2026.05.25_07.49.33.567123",
+    "id": "2026.05.25_07.50.50.004619",
     "type": "perf-get",
     "state": "running",
-    "progress_pct": 2.0,
-    "elapsed_sec": 47,
-    "steps": "5/245"
+    "progress_pct": 12.2,
+    "elapsed_sec": 49,
+    "steps": "30/245"
   },
   "queue": {
     "depth": 1,
     "tasks": [
       {
-        "id": "2026.05.25_07.49.33.567123",
+        "id": "2026.05.25_07.50.50.004619",
         "type": "PerfTaskData",
-        "note": "[sweep] Release 8.1",
+        "note": "[sweep] Release 9.1",
         "source": "valkey",
-        "specifier": "c5ae37f223cc00ce9f1ea0633693eba64566dfa1"
+        "specifier": "6c329dfe2c02d09b276fd5617acdb31e6169ebc1"
       }
     ]
   },
@@ -78,5 +78,5 @@
       "completed": "2026.05.24_16.40.21.326423"
     }
   ],
-  "eta_minutes": 5.0
+  "eta_minutes": 8.4
 }

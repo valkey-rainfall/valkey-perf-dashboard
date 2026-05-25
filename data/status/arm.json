@@ -1,17 +1,42 @@
 {
-  "timestamp": "2026-05-25T07:50:11.402747Z",
+  "timestamp": "2026-05-25T07:53:17.906587Z",
   "host": "arm",
   "runner": {
-    "pid": 709315,
+    "pid": 714384,
     "state": "running",
     "uptime_hours": 494229.2
   },
-  "current_task": null,
+  "current_task": {
+    "id": "2026.05.25_07.52.16.654342",
+    "type": "mem-set",
+    "state": "running",
+    "progress_pct": 33.3,
+    "elapsed_sec": 61,
+    "steps": "1/3"
+  },
   "queue": {
-    "depth": 0,
-    "tasks": []
+    "depth": 1,
+    "tasks": [
+      {
+        "id": "2026.05.25_07.52.16.654342",
+        "type": "MemTaskData",
+        "note": "[memory-sweep] Release 7.2.4",
+        "source": "valkey",
+        "specifier": "f7b1d0287d62ec9fac72bf14cf789e350d14e52b"
+      }
+    ]
   },
   "recent_results": [
+    {
+      "task_id": "2026.05.25_07.50.41.402060",
+      "method": "mem-set",
+      "score": 30.920819199999997,
+      "commit": "",
+      "source": "valkey",
+      "specifier": "42765b2ff63ddc556ce43f41d255b38b77c8f168",
+      "note": "[memory-sweep] New HEAD on unstable",
+      "completed": "2026.05.25_07.51.12.880890"
+    },
     {
       "task_id": "2026.05.25_06.32.49.805448",
       "method": "mem-set",
@@ -51,17 +76,7 @@
       "specifier": "0321a69e62f5148096d03358e26a1b884af3b969",
       "note": "canary-exp2-day20260525",
       "completed": "2026.05.25_06.04.18.535490"
-    },
-    {
-      "task_id": "2026.05.24_23.58.01.812002",
-      "method": "perf-get",
-      "score": 922467.5509641872,
-      "commit": "25122b14",
-      "source": "valkey",
-      "specifier": "25122b140e8fb6a6b93e1f49f22e8fd522b754bc",
-      "note": "[sweep] Backfill: 110 commits in gap",
-      "completed": "2026.05.25_00.00.21.082941"
     }
   ],
-  "eta_minutes": 0.0
+  "eta_minutes": 4.5
 }
