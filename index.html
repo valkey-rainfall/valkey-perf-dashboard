@@ -107,7 +107,7 @@
       embedded_obj: '#6366f1', sds: '#10b981', hashtable: '#f59e0b', skiplist: '#ef4444',
       robj: '#ec4899', listpack: '#06b6d4', dict: '#8b5cf6', server_infra: '#84cc16', other: '#6b7280',
       // TMA colors
-      'topdown-retiring': '#22c55e', 'topdown-fe-bound': '#f59e0b', 'topdown-be-bound': '#ef4444', 'topdown-bad-spec': '#8b5cf6',
+      'tma-retiring-pct': '#22c55e', 'tma-fe-bound-pct': '#f59e0b', 'tma-be-bound-pct': '#ef4444', 'tma-bad-spec-pct': '#8b5cf6',
     };
     const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -319,7 +319,7 @@
           container.appendChild(div);
 
           const opts = baseChartOpts(memData.metadata.total_commits, memData.landmarks);
-          opts.plugins.legend = { display: false };
+          opts.plugins.legend = { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 10, font: { size: 9 }, color: '#94a3b8', padding: 8 } };
           opts.scales.y = { stacked: hasBreakdown, title: { display: true, text: 'B/key', color: '#64748b' }, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'var(--border)' } };
 
           const ci = new Chart(div.querySelector('canvas').getContext('2d'), {
@@ -330,7 +330,10 @@
               if (p.breakdown) {
                 const total = Object.values(p.breakdown).reduce((s,v)=>s+v,0);
                 items.push(infoItem('total', total.toFixed(1)+' B/key'));
-                Object.entries(p.breakdown).filter(([,v])=>v>0.1).forEach(([k,v]) => items.push(infoItem(k, v.toFixed(1))));
+                Object.entries(p.breakdown).filter(([,v])=>v>0.1).forEach(([k,v]) => {
+                  const c = CATEGORY_COLORS[k] || '#6b7280';
+                  items.push(`<span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${c};margin-right:3px;vertical-align:middle;"></span><span class="info-val">${v.toFixed(1)}</span> ${k}</span>`);
+                });
               } else { items.push(infoItem('overhead', p.results[wk].rps.toFixed(1)+' B/key')); }
               if (p.pr_title) items.push(p.pr_title);
               return items.filter(Boolean).join('<span class="info-sep"> · </span>');
@@ -370,7 +373,7 @@
             datasets.push({
               label: metricId.replace('topdown-', ''), data: pts.map(p => ({x: p.commit_index, y: p.value})),
               borderColor: color, backgroundColor: isTMA ? color + '99' : 'transparent',
-              fill: isTMA ? (colorIdx === 0 ? 'origin' : '-1') : false,
+              fill: isTMA ? true : false,
               pointRadius: isTMA ? 0 : 3, pointBackgroundColor: color, borderWidth: 1, tension: 0,
               yAxisID: group.y_axes?.find(a => a.series.includes(metricId))?.id || 'left',
             });
