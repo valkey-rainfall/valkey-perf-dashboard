@@ -361,6 +361,37 @@
         const datasets = []; let maxIdx = 0; let colorIdx = 0;
         const isTMA = group.id === 'tma';
 
+        if (isTMA) {
+          // Fetch all TMA series, then build cumulative stacked area (like memory breakdown)
+          const rawSeries = [];
+          for (const metricId of group.series) {
+            try {
+              const r = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-${metricId}.json`);
+              if (!r.ok) continue;
+              const sd = await r.json();
+              const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
+              if (!pts.length) continue;
+              maxIdx = Math.max(maxIdx, pts.at(-1).commit_index);
+              rawSeries.push({ metricId, pts });
+            } catch { continue; }
+          }
+          // Build cumulative datasets: each dataset y = sum of this + all previous
+          for (let i = 0; i < rawSeries.length; i++) {
+            const { metricId, pts } = rawSeries[i];
+            const color = CATEGORY_COLORS[metricId] || CHART_COLORS[i % CHART_COLORS.length];
+            const cumData = pts.map((p, pi) => {
+              let cumY = 0;
+              for (let j = 0; j <= i; j++) cumY += rawSeries[j].pts[pi]?.value || 0;
+              return { x: p.commit_index, y: cumY };
+            });
+            datasets.push({
+              label: metricId.replace('tma-', '').replace('-pct', ''), data: cumData,
+              borderColor: color, backgroundColor: color + '99',
+              fill: i === 0 ? 'origin' : '-1',
+              pointRadius: 0, borderWidth: 1, tension: 0,
+            });
+          }
+        } else {
         for (const metricId of group.series) {
           try {
             const r = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-${metricId}.json`);
@@ -371,14 +402,15 @@
             maxIdx = Math.max(maxIdx, pts.at(-1).commit_index);
             const color = CATEGORY_COLORS[metricId] || CHART_COLORS[colorIdx % CHART_COLORS.length];
             datasets.push({
-              label: metricId.replace('topdown-', ''), data: pts.map(p => ({x: p.commit_index, y: p.value})),
-              borderColor: color, backgroundColor: isTMA ? color + '99' : 'transparent',
-              fill: isTMA ? 'origin' : false, stack: isTMA ? 'tma' : undefined,
-              pointRadius: isTMA ? 0 : 3, pointBackgroundColor: color, borderWidth: 1, tension: 0,
+              label: metricId, data: pts.map(p => ({x: p.commit_index, y: p.value})),
+              borderColor: color, backgroundColor: 'transparent',
+              fill: false,
+              pointRadius: 3, pointBackgroundColor: color, borderWidth: 1, tension: 0,
               yAxisID: group.y_axes?.find(a => a.series.includes(metricId))?.id || 'left',
             });
             colorIdx++;
           } catch { continue; }
+        }
         }
         if (!datasets.length) continue; hasAny = true;
 
@@ -386,9 +418,9 @@
         div.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem">${group.title}</div><canvas></canvas>`;
         container.appendChild(div);
 
-        const scales = { x: { type: 'linear', min: 0, max: maxIdx, stacked: isTMA, ticks: { color: '#64748b', maxTicksLimit: 6 }, grid: { color: 'var(--border)' } } };
+        const scales = { x: { type: 'linear', min: 0, max: maxIdx, ticks: { color: '#64748b', maxTicksLimit: 6 }, grid: { color: 'var(--border)' } } };
         if (isTMA) {
-          scales.y = { stacked: true, max: 100, title: { display: true, text: '%', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'var(--border)' } };
+          scales.y = { title: { display: true, text: '%', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'var(--border)' } };
         } else {
           for (const axis of (group.y_axes || [{id:'left',label:'',series:[]}])) {
             scales[axis.id] = { position: axis.id === 'right' ? 'right' : 'left', title: { display: true, text: axis.label, color: '#64748b' }, ticks: { color: '#64748b', callback: v => v >= 1000 ? (v/1000).toPrecision(3)+'k' : v >= 10 ? Math.round(v) : v.toPrecision(3) }, grid: { color: axis.id === 'left' ? 'var(--border)' : 'transparent' } };
@@ -398,7 +430,10 @@
         const ci = new Chart(div.querySelector('canvas').getContext('2d'), {
           type: 'line', data: { datasets },
           plugins: [makeInfoPlugin('perfInfo', (_, idx) => {
-            return datasets.map(ds => { const pt = ds.data[idx]; return pt ? infoItem(ds.label, pt.y.toFixed(2) + (isTMA ? '%' : '')) : ''; }).filter(Boolean).join('<span class="info-sep"> · </span>');
+            if (isTMA) {
+              return datasets.map((ds, i) => { const pt = ds.data[idx]; if (!pt) return ''; const prev = i > 0 ? datasets[i-1].data[idx]?.y || 0 : 0; return infoItem(ds.label, (pt.y - prev).toFixed(1) + '%'); }).filter(Boolean).join('<span class="info-sep"> · </span>');
+            }
+            return datasets.map(ds => { const pt = ds.data[idx]; return pt ? infoItem(ds.label, pt.y.toFixed(2)) : ''; }).filter(Boolean).join('<span class="info-sep"> · </span>');
           })],
           options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: datasets.length > 1, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { enabled: false }, zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart:c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } } }, scales },
         });
