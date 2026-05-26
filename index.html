@@ -373,7 +373,7 @@
             datasets.push({
               label: metricId.replace('topdown-', ''), data: pts.map(p => ({x: p.commit_index, y: p.value})),
               borderColor: color, backgroundColor: isTMA ? color + '99' : 'transparent',
-              fill: isTMA ? true : false,
+              fill: isTMA ? 'origin' : false, stack: isTMA ? 'tma' : undefined,
               pointRadius: isTMA ? 0 : 3, pointBackgroundColor: color, borderWidth: 1, tension: 0,
               yAxisID: group.y_axes?.find(a => a.series.includes(metricId))?.id || 'left',
             });
@@ -386,7 +386,7 @@
         div.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem">${group.title}</div><canvas></canvas>`;
         container.appendChild(div);
 
-        const scales = { x: { type: 'linear', min: 0, max: maxIdx, ticks: { color: '#64748b', maxTicksLimit: 6 }, grid: { color: 'var(--border)' } } };
+        const scales = { x: { type: 'linear', min: 0, max: maxIdx, stacked: isTMA, ticks: { color: '#64748b', maxTicksLimit: 6 }, grid: { color: 'var(--border)' } } };
         if (isTMA) {
           scales.y = { stacked: true, max: 100, title: { display: true, text: '%', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'var(--border)' } };
         } else {
