@@ -246,7 +246,7 @@
 
       // Annotation map
       const annMap = {}; data.annotations.forEach(a => { annMap[a.commit] = a; });
-      const ptColors = points.map(p => { const a = annMap[p.commit]; return a?.type === 'regression' ? 'var(--danger)' : a?.type === 'improvement' ? 'var(--ok)' : 'var(--accent)'; });
+      const ptColors = points.map(p => { const a = annMap[p.commit]; return a?.type === 'regression' ? '#ef4444' : a?.type === 'improvement' ? '#22c55e' : '#6366f1'; });
       const ptRadii = points.map(p => annMap[p.commit] ? 6 : 3);
 
       // Throughput chart
