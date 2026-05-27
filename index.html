@@ -47,8 +47,8 @@
     /* Annotations */
     .annotations { display: grid; gap: 0.5rem; }
     .annotation { background: var(--card); border-radius: 6px; padding: 0.7rem 1rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-    .annotation.regression { border-left: 3px solid var(--danger); }
-    .annotation.improvement { border-left: 3px solid var(--ok); }
+    .annotation.bad { border-left: 3px solid var(--danger); }
+    .annotation.good { border-left: 3px solid var(--ok); }
     .annotation .delta { font-weight: 600; white-space: nowrap; }
     .annotation .delta.neg { color: var(--danger); }
     .annotation .delta.pos { color: var(--ok); }
@@ -246,7 +246,7 @@
 
       // Annotation map
       const annMap = {}; data.annotations.forEach(a => { annMap[a.commit] = a; });
-      const ptColors = points.map(p => { const a = annMap[p.commit]; return a?.type === 'regression' ? '#ef4444' : a?.type === 'improvement' ? '#22c55e' : '#6366f1'; });
+      const ptColors = points.map(p => { const a = annMap[p.commit]; return a ? (a.good ? '#22c55e' : '#ef4444') : '#6366f1'; });
       const ptRadii = points.map(p => annMap[p.commit] ? 6 : 3);
 
       // Throughput chart
@@ -460,7 +460,7 @@
       const el = document.getElementById('annotations');
       const sorted = [...data.annotations].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
       el.innerHTML = sorted.map(a => `
-        <div class="annotation ${a.type}">
+        <div class="annotation ${a.good ? 'good' : 'bad'}">
           <div>
             <div><strong>${a.pr_title || a.commit.slice(0,8)}</strong></div>
             <div class="meta"><a href="https://github.com/valkey-io/valkey/commit/${a.commit}" target="_blank">${a.commit.slice(0,8)}</a>${a.pr ? ` · <a href="https://github.com/valkey-io/valkey/pull/${a.pr}" target="_blank">PR #${a.pr}</a>` : ''}</div>
