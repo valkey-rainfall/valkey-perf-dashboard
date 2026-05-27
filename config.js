@@ -59,6 +59,20 @@ const HELP_TEXT = {
       <p><strong>Only available on Intel</strong> (Sapphire Rapids). ARM and AMD use different stall metrics.</p>
     `
   },
+  latency: {
+    title: 'Request Latency',
+    content: `
+      <p><strong>What it measures:</strong> Per-request latency at 70% of max throughput for each commit. Measured with memtier_benchmark (streaming pipeline, per-request timing).</p>
+      <p><strong>How to read it:</strong> The shaded band spans p50 (bottom) to p99.9 (top). The bold line is p99 — the primary SLA metric.</p>
+      <ul>
+        <li><strong>p50</strong> — typical request latency (dashed green)</li>
+        <li><strong>p99</strong> — 99th percentile, regression-sensitive (bold accent)</li>
+        <li><strong>p99.9</strong> — tail latency from jemalloc, rehash, THP (dashed red)</li>
+      </ul>
+      <p><strong>Tooltip sparkline:</strong> Shows the probability density function (PDF) of the latency distribution. Tall narrow peak = healthy; short wide spread = long tail.</p>
+      <p><strong>Methodology:</strong> Rate-limited to 70% of throughput (same commit). 3 reps, median of each percentile. t=4 c=50 P=10 (200 connections). Server restarted between reps.</p>
+    `
+  },
   memory: {
     title: 'Memory Overhead',
     content: `
