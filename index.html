@@ -61,19 +61,6 @@
 
     /* Help modal */
     #helpModal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
-
-    /* Latency tooltip */
-    #latencyTooltip {
-      position: absolute; pointer-events: none; z-index: 50;
-      background: var(--card); border: 1px solid var(--border); border-radius: 6px;
-      padding: 0.6rem 0.8rem; font-size: 0.78rem; color: var(--text);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4); white-space: nowrap;
-      opacity: 0; transition: opacity 0.15s;
-    }
-    #latencyTooltip.visible { opacity: 1; }
-    #latencyTooltip .tt-row { display: flex; gap: 0.8rem; align-items: center; margin-bottom: 0.2rem; }
-    #latencyTooltip .tt-label { color: var(--muted); }
-    #latencyTooltip .tt-val { font-weight: 500; }
     .help-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.6); }
     .help-content { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 10px; max-width: 560px; width: 90%; max-height: 80vh; overflow-y: auto; padding: 1.5rem; }
     .help-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -111,7 +98,7 @@
 
   <!-- Latency Band Chart -->
   <div id="latencySection" style="opacity:0.3">
-    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Request Latency (p50–p99.9 band @ 70% load)</h2><button class="help-btn" onclick="showHelp('latency')">?</button></div>
+    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Request Latency (distribution contour @ 70% load)</h2><button class="help-btn" onclick="showHelp('latency')">?</button></div>
     <div class="chart-panel chart-panel--throughput" style="position:relative"><canvas id="latencyChart"></canvas></div>
     <div id="latencyInfo" class="info-row"></div>
   </div>
@@ -491,163 +478,52 @@
       section.style.opacity = '1';
 
       const totalCommits = data.metadata.total_commits;
-
-      // Compute global X range for sparkline (log scale: min p1 to max p99.9)
-      const globalMinLat = Math.max(1, Math.min(...pts.map(p => p.histogram?.[0]?.[1] || p.p50_us)));
-      const globalMaxLat = Math.max(...pts.map(p => p.p99_9_us));
-
-      // Datasets: shaded band (p50 to p99.9), p99 bold line, p50 dashed, p99.9 dashed
-      const p50Data = pts.map(p => ({ x: p.commit_index, y: p.p50_us }));
-      const p99Data = pts.map(p => ({ x: p.commit_index, y: p.p99_us }));
-      const p999Data = pts.map(p => ({ x: p.commit_index, y: p.p99_9_us }));
-
-      const datasets = [
-        { label: 'p99.9', data: p999Data, borderColor: 'rgba(239,68,68,0.6)', borderWidth: 1, borderDash: [4,3], pointRadius: 0, fill: false, tension: 0, order: 2 },
-        { label: 'band', data: p999Data, borderColor: 'transparent', backgroundColor: 'rgba(99,102,241,0.08)', fill: { target: 2, above: 'rgba(99,102,241,0.08)', below: 'rgba(99,102,241,0.08)' }, pointRadius: 0, tension: 0, order: 3 },
-        { label: 'p50', data: p50Data, borderColor: 'rgba(34,197,94,0.6)', borderWidth: 1, borderDash: [4,3], pointRadius: 0, fill: false, tension: 0, order: 2 },
-        { label: 'p99', data: p99Data, borderColor: '#6366f1', borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: '#6366f1', fill: false, tension: 0, order: 1 },
+      // Histogram indices: 0=p1, 1=p10, 2=p25, 3=p50, 4=p75, 5=p90, 6=p95, 7=p99, 8=p99.5, 9=p99.9, 10=p100
+      // We use indices 1-9 (p10 through p99.9), skip p1 and p100
+      const subtle = 'rgba(148,163,184,0.45)';
+      const lineCfg = [
+        { hi: 1, color: subtle, w: 1, dash: [] },         // p10
+        { hi: 2, color: subtle, w: 1, dash: [] },         // p25
+        { hi: 3, color: '#22c55e', w: 2, dash: [] },      // p50 — green
+        { hi: 4, color: subtle, w: 1, dash: [] },         // p75
+        { hi: 5, color: subtle, w: 1, dash: [] },         // p90
+        { hi: 6, color: subtle, w: 1, dash: [] },         // p95
+        { hi: 7, color: '#6366f1', w: 2.5, dash: [] },    // p99 — indigo
+        { hi: 8, color: subtle, w: 1, dash: [] },         // p99.5
+        { hi: 9, color: '#ef4444', w: 2, dash: [4,3] },   // p99.9 — red dashed
       ];
+      const pctLabels = ['p10','p25','p50','p75','p90','p95','p99','p99.5','p99.9'];
 
-      const latestP99 = pts.at(-1).p99_us;
+      const datasets = lineCfg.map((cfg, i) => ({
+        label: pctLabels[i],
+        data: pts.map(p => ({ x: p.commit_index, y: p.histogram?.[cfg.hi]?.[1] || 0 })),
+        borderColor: cfg.color, borderWidth: cfg.w, borderDash: cfg.dash,
+        pointRadius: 0, fill: false, tension: 0.3,
+      }));
+
+      const latestH = pts.at(-1).histogram || [];
       const defaultInfo = [
         infoItem('points', pts.length),
-        infoItem('p50', formatUs(pts.at(-1).p50_us)),
-        infoItem('p99', formatUs(latestP99)),
-        infoItem('p99.9', formatUs(pts.at(-1).p99_9_us)),
+        infoItem('p50', formatUs(latestH[3]?.[1] || pts.at(-1).p50_us)),
+        infoItem('p99', formatUs(latestH[7]?.[1] || pts.at(-1).p99_us)),
+        infoItem('p99.9', formatUs(latestH[9]?.[1] || pts.at(-1).p99_9_us)),
         infoItem('load', (pts.at(-1).target_rps/1e6).toFixed(2)+'M (70%)'),
       ].join('');
       document.getElementById('latencyInfo').innerHTML = defaultInfo;
 
       const opts = baseChartOpts(totalCommits, data.landmarks);
-      opts.plugins.legend = { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 10 }, color: '#94a3b8', filter: item => item.text !== 'band' } };
-      opts.scales.y = { title: { display: true, text: 'µs', color: '#64748b' }, ticks: { color: '#64748b', callback: v => formatUs(v) }, grid: { color: 'var(--border)' } };
-
-      // Custom external tooltip with PDF sparkline
-      opts.plugins.tooltip = {
-        enabled: false,
-        external: function(context) {
-          let el = document.getElementById('latencyTooltip');
-          if (!el) { el = document.createElement('div'); el.id = 'latencyTooltip'; context.chart.canvas.parentNode.appendChild(el); }
-          if (context.tooltip.opacity === 0) { el.classList.remove('visible'); return; }
-
-          const idx = context.tooltip.dataPoints?.[0]?.dataIndex;
-          if (idx == null) return;
-          const p = pts[idx];
-          if (!p) return;
-
-          // Build tooltip HTML
-          let html = `<div class="tt-row"><span class="tt-val">${p.commit.slice(0,8)}</span>${p.pr ? ` <span class="tt-label">#${p.pr}</span>` : ''}</div>`;
-          if (p.pr_title) html += `<div class="tt-row"><span class="tt-label">${p.pr_title.slice(0,40)}</span></div>`;
-          html += `<div class="tt-row"><span class="tt-label">p50</span><span class="tt-val">${formatUs(p.p50_us)}</span> <span class="tt-label">p99</span><span class="tt-val">${formatUs(p.p99_us)}</span> <span class="tt-label">p99.9</span><span class="tt-val">${formatUs(p.p99_9_us)}</span></div>`;
-          html += `<div class="tt-row"><span class="tt-label">p99/p50</span><span class="tt-val">${(p.p99_us/p.p50_us).toFixed(2)}×</span> <span class="tt-label">load</span><span class="tt-val">${(p.actual_rps/1e6).toFixed(2)}M / ${(p.target_rps/1e6).toFixed(2)}M</span></div>`;
-
-          // PDF sparkline canvas
-          if (p.histogram && p.histogram.length > 1) {
-            html += `<canvas id="sparkPdf" width="200" height="60" style="margin-top:4px;"></canvas>`;
-          }
-
-          el.innerHTML = html;
-          el.classList.add('visible');
-
-          // Position tooltip
-          const pos = context.chart.canvas.getBoundingClientRect();
-          const ttX = context.tooltip.caretX;
-          const ttY = context.tooltip.caretY;
-          el.style.left = (ttX + 12) + 'px';
-          el.style.top = (ttY - 20) + 'px';
-          // Flip if overflowing right
-          if (ttX + el.offsetWidth + 20 > pos.width) el.style.left = (ttX - el.offsetWidth - 12) + 'px';
-
-          // Draw PDF sparkline
-          if (p.histogram && p.histogram.length > 1) {
-            requestAnimationFrame(() => {
-              const canvas = document.getElementById('sparkPdf');
-              if (!canvas) return;
-              const ctx = canvas.getContext('2d');
-              const w = canvas.width, h = canvas.height;
-              const plotH = h - 12; // reserve 12px for axis labels
-              ctx.clearRect(0, 0, w, h);
-
-              // Differentiate CDF to get density
-              const hist = p.histogram;
-              const densities = [];
-              for (let i = 1; i < hist.length; i++) {
-                const dp = hist[i][0] - hist[i-1][0];
-                const dl = hist[i][1] - hist[i-1][1];
-                if (dl > 0) densities.push({ x: (hist[i-1][1] + hist[i][1]) / 2, y: dp / dl });
-                else densities.push({ x: (hist[i-1][1] + hist[i][1]) / 2, y: 0 });
-              }
-
-              const logMin = Math.log10(globalMinLat);
-              const logMax = Math.log10(globalMaxLat);
-              const maxD = Math.max(...densities.map(d => d.y));
-              if (maxD === 0) return;
-
-              const toX = (us) => ((Math.log10(Math.max(1, us)) - logMin) / (logMax - logMin)) * w;
-
-              // Draw filled area
-              ctx.beginPath();
-              ctx.moveTo(0, plotH);
-              for (const d of densities) {
-                ctx.lineTo(toX(d.x), plotH - (d.y / maxD) * (plotH - 4));
-              }
-              ctx.lineTo(w, plotH);
-              ctx.closePath();
-              ctx.fillStyle = 'rgba(99,102,241,0.3)';
-              ctx.fill();
-              ctx.strokeStyle = '#6366f1';
-              ctx.lineWidth = 1.5;
-              ctx.beginPath();
-              for (let i = 0; i < densities.length; i++) {
-                const d = densities[i];
-                const py = plotH - (d.y / maxD) * (plotH - 4);
-                i === 0 ? ctx.moveTo(toX(d.x), py) : ctx.lineTo(toX(d.x), py);
-              }
-              ctx.stroke();
-
-              // p50 reference line (green)
-              const p50px = toX(p.p50_us);
-              ctx.setLineDash([2, 2]);
-              ctx.strokeStyle = 'rgba(34,197,94,0.7)';
-              ctx.lineWidth = 1;
-              ctx.beginPath(); ctx.moveTo(p50px, 0); ctx.lineTo(p50px, plotH); ctx.stroke();
-
-              // p99 reference line (accent)
-              const p99px = toX(p.p99_us);
-              ctx.strokeStyle = 'rgba(99,102,241,0.7)';
-              ctx.beginPath(); ctx.moveTo(p99px, 0); ctx.lineTo(p99px, plotH); ctx.stroke();
-
-              // p99.9 reference line (red)
-              const p999px = toX(p.p99_9_us);
-              ctx.strokeStyle = 'rgba(239,68,68,0.7)';
-              ctx.beginPath(); ctx.moveTo(p999px, 0); ctx.lineTo(p999px, plotH); ctx.stroke();
-              ctx.setLineDash([]);
-
-              // Axis labels below plot area
-              ctx.font = '8px system-ui';
-              ctx.textAlign = 'center';
-              ctx.fillStyle = 'rgba(34,197,94,0.9)';
-              ctx.fillText(formatUs(p.p50_us), p50px, h - 1);
-              ctx.fillStyle = 'rgba(99,102,241,0.9)';
-              ctx.fillText(formatUs(p.p99_us), p99px, h - 1);
-              ctx.fillStyle = 'rgba(239,68,68,0.9)';
-              ctx.fillText(formatUs(p.p99_9_us), p999px, h - 1);
-            });
-          }
-        }
-      };
+      opts.plugins.legend = { display: true, position: 'bottom', labels: { boxWidth: 14, font: { size: 10 }, color: '#94a3b8', filter: item => ['p50','p99','p99.9'].includes(item.text) } };
+      opts.scales.y = { type: 'linear', title: { display: true, text: 'µs', color: '#64748b' }, ticks: { color: '#64748b', callback: v => formatUs(v) }, grid: { color: 'var(--border)' } };
+      opts.plugins.tooltip = { enabled: false };
 
       latencyChartInstance = new Chart(document.getElementById('latencyChart').getContext('2d'), {
         type: 'line', data: { datasets },
         plugins: [makeInfoPlugin('latencyInfo', (_, idx) => {
           const p = pts[idx];
+          const h = p.histogram || [];
           return [
             infoItem('', p.date), p.commit.slice(0,8) + (p.pr ? ' #'+p.pr : ''),
-            infoItem('p50', formatUs(p.p50_us)),
-            infoItem('p99', formatUs(p.p99_us)),
-            infoItem('p99.9', formatUs(p.p99_9_us)),
-            infoItem('p100', formatUs(p.p100_us)),
-            infoItem('ratio', (p.p99_us/p.p50_us).toFixed(2)+'×'),
+            ...pctLabels.map((lbl, i) => infoItem(lbl, formatUs(h[lineCfg[i].hi]?.[1] || 0))),
             infoItem('load', (p.actual_rps/1e6).toFixed(2)+'M'),
             p.pr_title || '',
           ].filter(Boolean).join('<span class="info-sep"> · </span>');
