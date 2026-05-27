@@ -605,12 +605,22 @@
               }
               ctx.stroke();
 
-              // p50 reference line
+              // p50 reference line (green)
               const p50px = ((Math.log10(p.p50_us) - logMin) / (logMax - logMin)) * w;
               ctx.setLineDash([2, 2]);
               ctx.strokeStyle = 'rgba(34,197,94,0.7)';
               ctx.lineWidth = 1;
               ctx.beginPath(); ctx.moveTo(p50px, 0); ctx.lineTo(p50px, h); ctx.stroke();
+
+              // p99 reference line (accent)
+              const p99px = ((Math.log10(p.p99_us) - logMin) / (logMax - logMin)) * w;
+              ctx.strokeStyle = 'rgba(99,102,241,0.7)';
+              ctx.beginPath(); ctx.moveTo(p99px, 0); ctx.lineTo(p99px, h); ctx.stroke();
+
+              // p99.9 reference line (red)
+              const p999px = ((Math.log10(p.p99_9_us) - logMin) / (logMax - logMin)) * w;
+              ctx.strokeStyle = 'rgba(239,68,68,0.7)';
+              ctx.beginPath(); ctx.moveTo(p999px, 0); ctx.lineTo(p999px, h); ctx.stroke();
               ctx.setLineDash([]);
             });
           }
