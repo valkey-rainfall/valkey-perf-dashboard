@@ -45,8 +45,9 @@ const HOSTS = [
 ];
 const STATUS_BASE = 'https://data.conductress.rainsupreme.net/status';
 
-function formatScore(score) {
+function formatScore(score, method) {
     if (!score) return '—';
+    if (method === 'latency') return score.toFixed(0) + 'µs';
     if (score > 1e6) return (score / 1e6).toFixed(2) + 'M';
     if (score > 1e3) return (score / 1e3).toFixed(1) + 'K';
     return score.toFixed(1);
@@ -94,7 +95,7 @@ function renderHost(data, label, subtitle) {
     let resultsHtml = '';
     if (data.recent_results?.length) {
         const rows = data.recent_results.slice(0, 5).map(r =>
-            `<tr><td>${r.commit || '—'}</td><td>${r.method || ''}</td><td class="score">${formatScore(r.score)}</td><td style="color:#8b949e">${timeAgo(r.completed)}</td></tr>`
+            `<tr><td>${r.commit || '—'}</td><td>${r.method || ''}</td><td class="score">${formatScore(r.score, r.method)}</td><td style="color:#8b949e">${timeAgo(r.completed)}</td></tr>`
         ).join('');
         resultsHtml = `<table class="results-table">${rows}</table>`;
     }
