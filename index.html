@@ -513,7 +513,7 @@
 
       const opts = baseChartOpts(totalCommits, data.landmarks);
       opts.plugins.legend = { display: true, position: 'bottom', labels: { boxWidth: 14, font: { size: 10 }, color: '#94a3b8', filter: item => ['p50','p99','p99.9'].includes(item.text) } };
-      opts.scales.y = { type: 'linear', title: { display: true, text: 'µs', color: '#64748b' }, ticks: { color: '#64748b', callback: v => formatUs(v) }, grid: { color: 'var(--border)' } };
+      opts.scales.y = { type: 'linear', ticks: { color: '#64748b', callback: v => formatUs(v) }, grid: { color: 'var(--border)' } };
       opts.plugins.tooltip = { enabled: false };
 
       latencyChartInstance = new Chart(document.getElementById('latencyChart').getContext('2d'), {
