@@ -339,6 +339,16 @@
           opts.plugins.legend = { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 10, font: { size: 9 }, color: '#94a3b8', padding: 8 } };
           opts.scales.y = { stacked: hasBreakdown, title: { display: true, text: 'B/key', color: '#64748b' }, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'var(--border)' } };
 
+          // User data baseline line
+          const userDataBytes = MEMORY_USER_DATA[workloadId];
+          if (userDataBytes) {
+            opts.plugins.annotation.annotations.userDataLine = {
+              type: 'line', yMin: userDataBytes, yMax: userDataBytes,
+              borderColor: 'var(--muted)', borderWidth: 1, borderDash: [5, 3],
+              label: { display: true, content: `user data: ${userDataBytes}B`, position: 'start', font: { size: 9 }, color: 'var(--muted)', backgroundColor: 'transparent' },
+            };
+          }
+
           const ci = new Chart(div.querySelector('canvas').getContext('2d'), {
             type: 'line', data: { datasets },
             plugins: [makeInfoPlugin('memoryInfo', (_, idx) => {
