@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valkey Performance Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --text: #e2e8f0;
+      --card: #1a1d2e;
+      --border: #2d3148;
+      --accent: #6366f1;
+      --muted: #64748b;
+      --ok: #22c55e;
+      --warn: #eab308;
+      --danger: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 1.5rem; }
+    h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .controls { display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
+    .controls select, .controls button { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; cursor: pointer; }
+    .controls button.active { background: var(--accent); border-color: var(--accent); }
+    .chart-container { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+    .zoom-btn { font-size:0.8rem;padding:3px 10px;cursor:pointer;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:4px; }
+    .zoom-btn:hover { background:var(--border); }
+    .annotations { display: grid; gap: 0.5rem; }
+    .annotation { background: var(--card); border-radius: 6px; padding: 0.7rem 1rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .annotation.regression { border-left: 3px solid var(--danger); }
+    .annotation.improvement { border-left: 3px solid var(--ok); }
+    .annotation .delta { font-weight: 600; white-space: nowrap; }
+    .annotation .delta.neg { color: var(--danger); }
+    .annotation .delta.pos { color: var(--ok); }
+    .annotation .meta { color: var(--muted); font-size: 0.75rem; margin-top: 0.2rem; }
+    .annotation .note { color: var(--muted); font-size: 0.75rem; font-style: italic; margin-top: 0.2rem; }
+    .annotation a { color: var(--accent); text-decoration: none; }
+    .stats { display: flex; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 1rem; }
+    .stat .label { color: var(--muted); font-size: 0.7rem; text-transform: uppercase; }
+    .stat .value { font-size: 1.1rem; font-weight: 600; }
+    .info-row { font-size: 0.8rem; color: var(--muted); padding: 0.4rem 1rem; min-height: 1.4em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .info-row span { color: var(--text); }
+  </style>
+</head>
+<body>
+  <header style="position:sticky;top:0;z-index:100;background:var(--bg);padding:0.75rem 1.5rem;margin:-1.5rem -1.5rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+    <div>
+      <h1 style="font-size:1.1rem;margin:0;">Valkey Unstable — Performance History</h1>
+      <span class="subtitle" id="workload-label" style="margin:0;"></span>
+    </div>
+    <div class="controls" style="margin:0;">
+      <select id="platformSelect"></select>
+      <select id="workloadSelect" style="display:none"></select>
+    </div>
+    <div style="display:flex;gap:0.4rem;">
+      <button onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
+      <button onclick="zoomAll('last100')" class="zoom-btn">Last 100 Commits</button>
+      <button onclick="zoomAll('reset')" class="zoom-btn">Reset Zoom</button>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="chart-container" style="height:280px">
+    <canvas id="chart"></canvas>
+  </div>
+  <div id="chartInfo" class="info-row"></div>
+
+  <div id="perfChartsSection" style="display:none">
+    <div id="perfCharts" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"></div>
+    <div id="perfInfo" class="info-row"></div>
+  </div>
+
+  <h2 style="font-size:1rem; margin:1.5rem 0 0.5rem;">Memory Overhead (per-struct breakdown)</h2>
+  <div class="chart-container" style="height:250px">
+    <canvas id="memoryChart"></canvas>
+  </div>
+  <div id="memoryInfo" class="info-row"></div>
+
+  <h2 style="font-size:1rem; margin-bottom:0.75rem;">Notable Changes</h2>
+  <div class="annotations" id="annotations"></div>
+
+  <h2 style="font-size:1rem; margin:1.5rem 0 0.75rem;">Recent Data Points</h2>
+  <div id="datapoints" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;max-height:400px;overflow-y:auto;"></div>
+
+  <script>
+    const DATA_URL = 'https://data.conductress.rainsupreme.net';
+    const PLATFORMS = ['amd64', 'arm64', 'intel'];
+    Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
+
+    // Synced vertical crosshair across all charts
+    let crosshairX = null;
+    const crosshairPlugin = {
+      id: 'syncedCrosshair',
+      afterEvent(chart, args) {
+        const evt = args.event;
+        if (evt.type === 'mousemove' && chart.scales.x) {
+          const xVal = chart.scales.x.getValueForPixel(evt.x);
+          if (xVal != null && xVal !== crosshairX) {
+            crosshairX = xVal;
+            allCharts.forEach(c => { if (c !== chart) c.draw(); });
+            chart.draw();
+          }
+        } else if (evt.type === 'mouseout') {
+          crosshairX = null;
+          allCharts.forEach(c => c.draw());
+        }
+      },
+      afterDraw(chart) {
+        if (crosshairX == null || !chart.scales.x) return;
+        const x = chart.scales.x.getPixelForValue(crosshairX);
+        if (x < chart.chartArea.left || x > chart.chartArea.right) return;
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x, chart.chartArea.top);
+        ctx.lineTo(x, chart.chartArea.bottom);
+        ctx.strokeStyle = 'rgba(99,102,241,0.4)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+      }
+    };
+    Chart.register(crosshairPlugin);
+    const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
+    let chart = null;
+    let currentData = null;
+    let allCharts = [];  // All charts for linked zoom
+
+    function syncZoom(sourceChart, min, max) {
+      allCharts.forEach(c => { if (c !== sourceChart) c.zoomScale('x', {min, max}, 'none'); });
+    }
+
+    // Info row: updates a fixed div below the chart on hover (replaces tooltip overlay)
+    function makeInfoPlugin(elementId, formatter) {
+      return {
+        id: 'infoRow_' + elementId,
+        afterEvent(chart, args) {
+          const el = document.getElementById(elementId);
+          if (!el) return;
+          if (args.event.type === 'mouseout') { el.innerHTML = ''; return; }
+          if (args.event.type !== 'mousemove') return;
+          const points = chart.getElementsAtEventForMode(args.event, 'index', { intersect: false }, false);
+          if (points.length > 0) {
+            el.innerHTML = formatter(chart, points[0].index);
+          }
+        }
+      };
+    }
+
+    function zoomAll(mode) {
+      if (!currentData) return;
+      let min, max;
+      if (mode === 'reset') {
+        allCharts.forEach(c => c.resetZoom('none'));
+        return;
+      } else if (mode === 'lastRelease') {
+        const landmarks = currentData.landmarks || [];
+        const last = landmarks[landmarks.length - 1];
+        min = last ? last.commit_index : 0;
+        max = currentData.metadata.total_commits;
+      } else if (mode === 'last100') {
+        max = currentData.metadata.total_commits;
+        min = max - 100;
+      }
+      allCharts.forEach(c => c.zoomScale('x', {min, max}, 'none'));
+    }
+
+    function getWorkloadId() {
+      return (manifest && manifest.workloads && manifest.workloads[0]) ? manifest.workloads[0].id : 'get16b-t7-p10';
+    }
+
+    async function loadPlatform(platform) {
+      try {
+        const workloadId = getWorkloadId();
+        const resp = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-throughput.json`);
+        if (!resp.ok) return null;
+        return await resp.json();
+      } catch { return null; }
+    }
+
+    async function init() {
+      await loadManifest();
+      const platformSelect = document.getElementById('platformSelect');
+      const workloadSelect = document.getElementById('workloadSelect');
+
+      // Populate workload selector from manifest
+      if (manifest && manifest.workloads && manifest.workloads.length > 1) {
+        workloadSelect.style.display = '';
+        manifest.workloads.forEach(w => {
+          const opt = document.createElement('option');
+          opt.value = w.id;
+          opt.textContent = w.label || w.id;
+          workloadSelect.appendChild(opt);
+        });
+        workloadSelect.addEventListener('change', () => render(platformSelect.value));
+      }
+      // Discover available platforms
+      for (const p of PLATFORMS) {
+        const data = await loadPlatform(p);
+        if (data) {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = PLATFORM_LABELS[p] || p;
+          platformSelect.appendChild(opt);
+        }
+      }
+      platformSelect.addEventListener('change', () => render(platformSelect.value));
+      if (platformSelect.options.length > 0) render(platformSelect.value);
+    }
+
+    async function render(platform) {
+      const data = await loadPlatform(platform);
+      if (!data) return;
+      currentData = data;
+
+      const workload = data.workloads[0];
+      document.getElementById('workload-label').textContent = 'Workload: ' + workload.replace(/_/g, ' ').replace(/\bt(\d+)\b/, 'io-threads=$1').replace(/\bp(\d+)\b/, 'P=$1');
+      const points = data.points.filter(p => p.results[workload]).sort((a, b) => a.commit_index - b.commit_index);
+      const labels = points.map(p => p.date);
+      const rpsValues = points.map(p => p.results[workload].rps);
+
+      // Stats
+      const statsEl = document.getElementById('stats');
+      const maxRps = Math.max(...rpsValues);
+      const minRps = Math.min(...rpsValues);
+      const latestRps = rpsValues[rpsValues.length - 1];
+      statsEl.innerHTML = `
+        <div class="stat"><div class="label">Points</div><div class="value">${points.length}</div></div>
+        <div class="stat"><div class="label">Latest</div><div class="value">${(latestRps/1000).toFixed(0)}K</div></div>
+        <div class="stat"><div class="label">Peak</div><div class="value">${(maxRps/1000).toFixed(0)}K</div></div>
+        <div class="stat"><div class="label">Range</div><div class="value">±${(((maxRps-minRps)/((maxRps+minRps)/2))*100/2).toFixed(1)}%</div></div>
+        <div class="stat"><div class="label">Annotations</div><div class="value">${data.annotations.length}</div></div>
+      `;
+
+      // Point colors
+      const annotationMap = {};
+      data.annotations.forEach(a => { annotationMap[a.commit] = a; });
+      const pointColors = points.map(p => {
+        const a = annotationMap[p.commit];
+        if (a && a.type === 'regression') return getComputedStyle(document.documentElement).getPropertyValue('--danger').trim();
+        if (a && a.type === 'improvement') return getComputedStyle(document.documentElement).getPropertyValue('--ok').trim();
+        return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      });
+      const pointRadii = points.map(p => annotationMap[p.commit] ? 6 : 3);
+
+      // Landmark annotations for chart
+      const chartAnnotations = {};
+      data.landmarks.forEach((lm, i) => {
+          const xVal = lm.commit_index;
+          if (xVal != null) {
+            chartAnnotations[`lm${i}`] = {
+              type: 'line', xMin: xVal, xMax: xVal,
+              borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
+              label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
+            };
+          }
+        });
+
+      // Build datasets: main line + CV band
+      const chartData = points.map(p => ({ x: p.commit_index, y: p.results[workload].rps }));
+      const cvUpper = points.map(p => {
+        const r = p.results[workload];
+        return { x: p.commit_index, y: r.rps * (1 + (r.cv || 0) / 100) };
+      });
+      const cvLower = points.map(p => {
+        const r = p.results[workload];
+        return { x: p.commit_index, y: r.rps * (1 - (r.cv || 0) / 100) };
+      });
+
+      // Chart
+      if (chart) chart.destroy();
+      allCharts = [];
+      const ctx = document.getElementById('chart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        plugins: [makeInfoPlugin('chartInfo', (chart, idx) => {
+          const p = points[idx];
+          const rps = p.results[workload].rps;
+          const cv = p.results[workload].cv;
+          let s = `<span>${p.date}</span> — ${p.commit.slice(0,8)}`;
+          if (p.pr) s += ` (#${p.pr})`;
+          s += ` | <span>${(rps/1000000).toFixed(3)}M ops/sec</span> (CV ${cv.toFixed(2)}%)`;
+          if (p.pr_title) s += ` — ${p.pr_title}`;
+          return s;
+        })],
+        data: {
+          datasets: [
+            {
+              label: 'CV upper',
+              data: cvUpper,
+              borderColor: 'transparent',
+              backgroundColor: 'rgba(99,102,241,0.18)',
+              fill: '+1',
+              pointRadius: 0,
+              tension: 0,
+              spanGaps: true,
+            },
+            {
+              label: 'CV lower',
+              data: cvLower,
+              borderColor: 'transparent',
+              backgroundColor: 'rgba(99,102,241,0.08)',
+              fill: false,
+              pointRadius: 0,
+              tension: 0,
+              spanGaps: true,
+            },
+            {
+              label: 'ops/sec',
+              data: chartData,
+              borderColor: '#6366f1',
+              backgroundColor: 'transparent',
+              fill: false,
+              pointBackgroundColor: pointColors,
+              pointRadius: pointRadii,
+              pointHoverRadius: 8,
+              tension: 0,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          onClick: (evt, elements) => {
+            if (elements.length && elements[0].datasetIndex === 2) {
+              const p = points[elements[0].index];
+              const row = document.getElementById('row-' + p.commit.slice(0,10));
+              if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                row.style.background = 'var(--accent)';
+                setTimeout(() => row.style.background = '', 2000);
+              }
+            }
+          },
+          plugins: {
+            zoom: {
+              zoom: {
+                drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' },
+                mode: 'x',
+                onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max),
+              },
+            },
+            title: { display: true, text: 'Throughput', color: '#e2e8f0', font: { size: 13 }, padding: { bottom: 4 } },
+            legend: { display: false },
+            annotation: { annotations: chartAnnotations },
+            tooltip: { enabled: false },
+          },
+          scales: {
+            y: {
+              title: { display: true, text: 'M ops/sec', color: '#64748b' },
+              ticks: { color: '#64748b', callback: v => (v/1000000).toFixed(1)+'M' },
+              grid: { color: '#2d3148' }
+            },
+            x: {
+              type: 'linear',
+              min: 0,
+              max: data.metadata.total_commits || points[points.length-1].commit_index,
+              ticks: {
+                color: '#64748b',
+                maxRotation: 0,
+                maxTicksLimit: 8,
+              },
+              grid: { color: '#2d3148' }
+            }
+          }
+        }
+      });
+
+      allCharts.push(chart);
+
+      // Memory chart (stacked area with per-struct breakdown)
+      try {
+        const memResp = await fetch(`${DATA_URL}/series-${platform}-${getWorkloadId()}-memory.json`);
+        if (memResp.ok) {
+          const memData = await memResp.json();
+          const memWorkload = memData.workloads[0];
+          const memPoints = memData.points.filter(p => p.results[memWorkload]).sort((a, b) => a.commit_index - b.commit_index);
+          if (memPoints.length > 0) {
+            const memCtx = document.getElementById('memoryChart').getContext('2d');
+            if (window.memoryChart instanceof Chart) window.memoryChart.destroy();
+
+            // Landmark lines
+            const memLandmarks = {};
+            (memData.landmarks || []).forEach((lm, i) => {
+              if (lm.commit_index != null) {
+                memLandmarks[`lm${i}`] = {
+                  type: 'line', xMin: lm.commit_index, xMax: lm.commit_index,
+                  borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
+                  label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
+                };
+              }
+            });
+
+            const categoryColors = {
+              embedded_obj: '#6366f1', sds: '#10b981', hashtable: '#f59e0b',
+              skiplist: '#ef4444', robj: '#ec4899', listpack: '#06b6d4',
+              dict: '#8b5cf6', server_infra: '#84cc16', other: '#6b7280'
+            };
+            const hasBreakdown = memData.metadata.categories && memPoints.some(p => p.breakdown);
+            let datasets;
+            if (hasBreakdown) {
+              const categories = memData.metadata.categories;
+              datasets = categories.map((cat, i) => ({
+                label: cat,
+                data: memPoints.map(p => ({ x: p.commit_index, y: p.breakdown ? (p.breakdown[cat] || 0) : (i === 0 ? p.results[memWorkload].rps : 0) })),
+                borderColor: categoryColors[cat] || '#6b7280',
+                backgroundColor: (categoryColors[cat] || '#6b7280') + '99',
+                fill: i === 0 ? 'origin' : '-1',
+                pointRadius: 0, borderWidth: 1, tension: 0,
+              }));
+            } else {
+              datasets = [{
+                label: 'bytes/item',
+                data: memPoints.map(p => ({ x: p.commit_index, y: p.results[memWorkload].rps })),
+                borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)',
+                fill: 'origin', pointRadius: 3, tension: 0,
+              }];
+            }
+            window.memoryChart = new Chart(memCtx, {
+              type: 'line', data: { datasets },
+              plugins: [makeInfoPlugin('memoryInfo', (chart, idx) => {
+                const p = memPoints[idx];
+                let s = `<span>${p.date}</span> — ${p.commit.slice(0,8)}`;
+                if (p.pr) s += ` (#${p.pr})`;
+                if (p.breakdown) {
+                  const total = Object.values(p.breakdown).reduce((a,v)=>a+v,0);
+                  s += ` | <span>${total.toFixed(1)} B/key</span>`;
+                  Object.entries(p.breakdown).filter(([,v])=>v>0.1).forEach(([k,v])=>{ s += ` | ${k}: ${v.toFixed(1)}`; });
+                } else {
+                  s += ` | <span>${p.results[memWorkload].rps.toFixed(1)} B/key</span>`;
+                }
+                if (p.pr_title) s += ` — ${p.pr_title}`;
+                return s;
+              })],
+              options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                  legend: { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+                  annotation: { annotations: memLandmarks },
+                  zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
+                  tooltip: { enabled: false },
+                },
+                scales: {
+                  y: { stacked: hasBreakdown, title: { display: true, text: 'bytes/key', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: '#2d3148' } },
+                  x: { type: 'linear', min: 0, max: memData.metadata.total_commits || memPoints[memPoints.length-1].commit_index, ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: '#2d3148' } }
+                }
+              }
+            });
+            allCharts.push(window.memoryChart);
+          }
+        }
+      } catch(e) { console.error('Memory chart error:', e); }
+
+      // Annotations list
+      const annEl = document.getElementById('annotations');
+      const sorted = [...data.annotations].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+      annEl.innerHTML = sorted.map(a => `
+        <div class="annotation ${a.type}">
+          <div>
+            <div><strong>${a.pr_title || a.commit.slice(0,8)}</strong></div>
+            ${a.note ? `<div class="note">📝 ${a.note}</div>` : ''}
+            <div class="meta"><a href="https://github.com/valkey-io/valkey/commit/${a.commit}" target="_blank">${a.commit.slice(0,8)}</a></div>
+          </div>
+          <div style="text-align:right">
+            <div class="delta ${a.delta < 0 ? 'neg' : 'pos'}">${a.delta > 0 ? '+' : ''}${(a.delta*100).toFixed(1)}%</div>
+            ${a.pr ? `<a href="https://github.com/valkey-io/valkey/pull/${a.pr}" target="_blank">PR #${a.pr}</a>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      // Data points table
+      const tableEl = document.getElementById('datapoints');
+      if (tableEl) {
+        const rows = points.slice().reverse().map(p => {
+          const r = p.results[workload];
+          const link = p.pr
+            ? `<a href="https://github.com/valkey-io/valkey/pull/${p.pr}" target="_blank">PR #${p.pr}</a>`
+            : `<a href="https://github.com/valkey-io/valkey/commit/${p.commit}" target="_blank">${p.commit.slice(0,10)}</a>`;
+          const title = p.pr_title ? `<span style="color:var(--text)">${p.pr_title.slice(0,50)}</span>` : '';
+          return `<tr id="row-${p.commit.slice(0,10)}"><td>${p.date}</td><td>${link}</td><td>${title}</td><td>${(r.rps/1000).toFixed(0)}K</td><td>${(r.cv||0).toFixed(2)}%</td></tr>`;
+        }).join('');
+        tableEl.innerHTML = `<table style="width:100%;font-size:0.8rem;border-collapse:collapse;">
+          <thead><tr style="color:var(--muted);text-align:left;"><th>Date</th><th>PR</th><th>Title</th><th>RPS</th><th>CV</th></tr></thead>
+          <tbody>${rows}</tbody></table>`;
+      }
+
+      // Render perf metric charts from manifest
+      await renderPerfCharts(platform);
+    }
+
+    let manifest = null;
+    let perfChartInstances = [];
+
+    async function loadManifest() {
+      try {
+        const resp = await fetch(`${DATA_URL}/manifest.json`);
+        if (resp.ok) manifest = await resp.json();
+      } catch { manifest = null; }
+    }
+
+    async function renderPerfCharts(platform) {
+      // Destroy existing perf charts
+      perfChartInstances.forEach(c => c.destroy());
+      perfChartInstances = [];
+
+      if (!manifest) return;
+
+      const section = document.getElementById('perfChartsSection');
+      const container = document.getElementById('perfCharts');
+      container.innerHTML = '';
+
+      // Determine workload ID from current data or manifest
+      const workloadId = manifest.workloads[0]?.id || 'get16b-t7-p10';
+
+      // Filter to perf groups (skip throughput/memory which are rendered above)
+      const perfGroups = manifest.groups.filter(g => !['throughput', 'memory'].includes(g.id));
+      let hasAnyData = false;
+
+      for (const group of perfGroups) {
+        // Load all series for this group
+        const datasets = [];
+        const colors = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
+        let colorIdx = 0;
+        let maxCommitIndex = 0;
+
+        for (const metricId of group.series) {
+          try {
+            const resp = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-${metricId}.json`);
+            if (!resp.ok) continue;
+            const seriesData = await resp.json();
+            const points = seriesData.points.sort((a, b) => a.commit_index - b.commit_index);
+            if (points.length === 0) continue;
+
+            const lastIdx = points[points.length - 1].commit_index;
+            if (lastIdx > maxCommitIndex) maxCommitIndex = lastIdx;
+
+            const color = colors[colorIdx % colors.length];
+            datasets.push({
+              label: `${metricId} (${seriesData.metadata.unit})`,
+              data: points.map(p => ({ x: p.commit_index, y: p.value })),
+              borderColor: color,
+              backgroundColor: 'transparent',
+              pointRadius: 3,
+              pointBackgroundColor: color,
+              tension: 0,
+              yAxisID: group.y_axes.find(a => a.series.includes(metricId))?.id || 'left',
+            });
+            colorIdx++;
+          } catch { continue; }
+        }
+
+        if (datasets.length === 0) continue;
+        hasAnyData = true;
+
+        // Create chart container
+        const chartDiv = document.createElement('div');
+        chartDiv.className = 'chart-container';
+        chartDiv.style.height = '180px';
+        chartDiv.style.marginBottom = '1rem';
+        chartDiv.innerHTML = `<div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem">${group.title}</div><canvas></canvas>`;
+        container.appendChild(chartDiv);
+
+        const canvas = chartDiv.querySelector('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Build Y axes from group definition
+        const scales = {
+          x: {
+            type: 'linear', min: 0, max: maxCommitIndex,
+            ticks: { color: '#64748b', maxTicksLimit: 8 },
+            grid: { color: '#2d3148' }
+          }
+        };
+        for (const axis of group.y_axes) {
+          scales[axis.id] = {
+            position: axis.id === 'right' ? 'right' : 'left',
+            title: { display: true, text: axis.label, color: '#64748b' },
+            ticks: { color: '#64748b', callback: v => v >= 1000 ? parseFloat((v/1000).toPrecision(3))+'k' : v >= 10 ? Math.round(v) : parseFloat(v.toPrecision(3)) },
+            grid: { color: axis.id === 'left' ? '#2d3148' : 'transparent' },
+          };
+        }
+
+        const chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: { datasets },
+          plugins: [makeInfoPlugin('perfInfo', (chart, idx) => {
+            let s = '';
+            datasets.forEach(ds => {
+              const pt = ds.data[idx];
+              if (pt) s += `${ds.label}: <span>${pt.y.toFixed(3)}</span> | `;
+            });
+            return s.slice(0, -3);
+          })],
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: datasets.length > 1, labels: { color: '#e2e8f0', font: { size: 11 } } },
+              zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
+              tooltip: { enabled: false },
+            },
+            scales
+          }
+        });
+        perfChartInstances.push(chartInstance);
+        allCharts.push(chartInstance);
+      }
+
+      section.style.display = hasAnyData ? 'block' : 'none';
+    }
+
+    init();
+  </script>
+</body>
+</html>

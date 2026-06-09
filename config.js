@@ -3,7 +3,7 @@
 const DATA_URL = 'https://data.conductress.rainsupreme.net';
 const PLATFORMS = ['amd64', 'arm64', 'intel'];
 const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
-const MEMORY_WORKLOADS = ['memory-set-64b', 'memory-zadd-64b', 'memory-sadd-64b', 'memory-set-64b-expire'];
+const MEMORY_WORKLOADS = ['memory-set-v64', 'memory-set-v64-expire', 'memory-zadd-m20', 'memory-sadd-m20'];
 
 const CATEGORY_COLORS = {
   embedded_obj: '#6366f1', sds: '#10b981', hashtable: '#f59e0b', skiplist: '#ef4444',
