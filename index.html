@@ -159,7 +159,7 @@
       }
     });
 
-    function syncZoom(src, min, max) { allCharts.forEach(c => { if (c !== src) c.zoomScale('x', {min, max}, 'none'); }); }
+    function syncZoom(src, min, max) { allCharts.forEach(c => { if (c !== src) { c.zoomScale('x', {min, max}, 'none'); c.update(); } }); }
 
     function zoomAll(mode) {
       if (!currentData) return;
@@ -174,7 +174,7 @@
         const lm = releases.at(-2);
         min = lm ? lm.commit_index : 0;
       } else { min = max - 100; }
-      allCharts.forEach(c => c.zoomScale('x', {min, max}, 'none'));
+      allCharts.forEach(c => { c.zoomScale('x', {min, max}, 'none'); c.update(); });
     }
 
     function getWorkloadId() { return manifest?.workloads?.[0]?.id || 'get16b-t7-p10'; }
@@ -215,7 +215,7 @@
           zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
         },
         scales: {
-          x: { type: 'linear', min: 0, max: totalCommits, ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: 'var(--border)' } },
+          x: { type: 'linear', min: 0, max: totalCommits + Math.ceil(totalCommits * 0.005), ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: 'var(--border)' } },
         }
       };
     }
@@ -349,7 +349,7 @@
 
           const opts = baseChartOpts(memData.metadata.total_commits, memData.landmarks);
           opts.plugins.legend = { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 10, font: { size: 9 }, color: '#94a3b8', padding: 8, filter: (item, data) => data.datasets[item.datasetIndex].data.some(d => d.y > 0) } };
-          opts.scales.y = { stacked: hasBreakdown, title: { display: true, text: 'B/key', color: '#64748b' }, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'var(--border)' } };
+          opts.scales.y = { stacked: hasBreakdown, beginAtZero: true, grace: '5%', title: { display: true, text: 'B/key', color: '#64748b' }, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'var(--border)' } };
 
           // User data baseline line
           const userDataBytes = MEMORY_USER_DATA[workloadId];
