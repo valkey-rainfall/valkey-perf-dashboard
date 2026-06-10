@@ -85,7 +85,8 @@
       <select id="workloadSelect" style="display:none"></select>
     </div>
     <div style="display:flex;gap:0.4rem;">
-      <button onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
+      <button id="btn-prev-release" onclick="zoomAll('prevRelease')" class="zoom-btn">Since Previous Release</button>
+      <button id="btn-last-release" onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
       <button onclick="zoomAll('last100')" class="zoom-btn">Last 100 Commits</button>
       <button onclick="zoomAll('reset')" class="zoom-btn">Reset Zoom</button>
     </div>
@@ -163,11 +164,16 @@
     function zoomAll(mode) {
       if (!currentData) return;
       if (mode === 'reset') { allCharts.forEach(c => c.resetZoom('none')); return; }
-      let min, max;
+      const landmarks = (currentData.landmarks || []).filter(l => l.commit_index != null);
+      const releases = [...new Map(landmarks.map(l => [l.label, l])).values()];
+      let min, max = currentData.metadata.total_commits;
       if (mode === 'lastRelease') {
-        const lm = (currentData.landmarks || []).at(-1);
-        min = lm ? lm.commit_index : 0; max = currentData.metadata.total_commits;
-      } else { max = currentData.metadata.total_commits; min = max - 100; }
+        const lm = releases.at(-1);
+        min = lm ? lm.commit_index : 0;
+      } else if (mode === 'prevRelease') {
+        const lm = releases.at(-2);
+        min = lm ? lm.commit_index : 0;
+      } else { min = max - 100; }
       allCharts.forEach(c => c.zoomScale('x', {min, max}, 'none'));
     }
 
@@ -237,6 +243,12 @@
       const data = await resp.json(); currentData = data;
       const workload = data.workloads[0];
       document.getElementById('workload-label').textContent = 'Workload: ' + workload;
+
+      // Update release button labels with version numbers
+      const releases = [...new Map((data.landmarks || []).filter(l => l.commit_index != null).map(l => [l.label, l])).values()];
+      const lastRel = releases.at(-1), prevRel = releases.at(-2);
+      document.getElementById('btn-last-release').textContent = lastRel ? `Since ${lastRel.label}` : 'Since Last Release';
+      document.getElementById('btn-prev-release').textContent = prevRel ? `Since ${prevRel.label}` : 'Since Previous Release';
 
       const points = data.points.filter(p => p.results[workload]).sort((a, b) => a.commit_index - b.commit_index);
       const rpsValues = points.map(p => p.results[workload].rps);
