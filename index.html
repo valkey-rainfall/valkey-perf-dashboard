@@ -336,7 +336,7 @@
           container.appendChild(div);
 
           const opts = baseChartOpts(memData.metadata.total_commits, memData.landmarks);
-          opts.plugins.legend = { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 10, font: { size: 9 }, color: '#94a3b8', padding: 8 } };
+          opts.plugins.legend = { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 10, font: { size: 9 }, color: '#94a3b8', padding: 8, filter: (item, data) => data.datasets[item.datasetIndex].data.some(d => d.y > 0) } };
           opts.scales.y = { stacked: hasBreakdown, title: { display: true, text: 'B/key', color: '#64748b' }, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'var(--border)' } };
 
           // User data baseline line

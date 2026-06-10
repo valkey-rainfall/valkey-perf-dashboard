@@ -11,8 +11,8 @@ const MEMORY_USER_DATA = {
 };
 
 const CATEGORY_COLORS = {
-  embedded_obj: '#6366f1', sds: '#10b981', hashtable: '#f59e0b', skiplist: '#ef4444',
-  robj: '#ec4899', listpack: '#06b6d4', dict: '#8b5cf6', server_infra: '#84cc16', other: '#6b7280',
+  embedded_val: '#6366f1', embedded_key: '#f472b6', sds: '#10b981', hashtable: '#f59e0b', skiplist: '#ef4444',
+  robj: '#06b6d4', listpack: '#a855f7', dict: '#78716c', server_infra: '#84cc16', other: '#9ca3af',
   'tma-retiring-pct': '#22c55e', 'tma-fe-bound-pct': '#f59e0b', 'tma-be-bound-pct': '#ef4444', 'tma-bad-spec-pct': '#8b5cf6',
 };
 const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -88,7 +88,8 @@ const HELP_TEXT = {
         <li><strong>hashtable</strong> — main keyspace hash table buckets</li>
         <li><strong>dict</strong> — dict metadata structures</li>
         <li><strong>robj</strong> — Redis object headers (type, encoding, refcount, LRU)</li>
-        <li><strong>embedded_obj</strong> — objects with embedded SDS (optimization)</li>
+        <li><strong>embedded_val</strong> — EMBSTR objects with value stored inline (saves pointer indirection)</li>
+        <li><strong>embedded_key</strong> — robj with key SDS embedded into the struct (saves one allocation)</li>
         <li><strong>skiplist</strong> — sorted set skip list nodes (zadd only)</li>
         <li><strong>listpack</strong> — compact encoding for small collections</li>
         <li><strong>server_infra</strong> — fixed server overhead amortized per key (buffers, event loop, replication state)</li>
