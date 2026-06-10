@@ -164,18 +164,16 @@
     function zoomAll(mode) {
       if (!currentData) return;
       const tc = currentData.metadata.total_commits;
-      const padded = tc + Math.ceil(tc * 0.005);
-      if (mode === 'reset') { allCharts.forEach(c => { c.resetZoom('none'); }); return; }
       const landmarks = (currentData.landmarks || []).filter(l => l.commit_index != null);
       const releases = [...new Map(landmarks.map(l => [l.label, l])).values()];
-      let min, max = padded;
+      let min = 0, max = tc + 1;
       if (mode === 'lastRelease') {
         const lm = releases.at(-1);
-        min = lm ? lm.commit_index : 0;
+        if (lm) min = lm.commit_index;
       } else if (mode === 'prevRelease') {
         const lm = releases.at(-2);
-        min = lm ? lm.commit_index : 0;
-      } else { min = max - 100; }
+        if (lm) min = lm.commit_index;
+      } else if (mode === 'last100') { min = tc - 100; }
       allCharts.forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
     }
 
@@ -214,10 +212,10 @@
         plugins: {
           tooltip: { enabled: false },
           annotation: { annotations },
-          zoom: { limits: { x: { min: 0, max: totalCommits + Math.ceil(totalCommits * 0.005) } }, zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
+          zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
         },
         scales: {
-          x: { type: 'linear', min: 0, max: totalCommits + Math.ceil(totalCommits * 0.005), ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: 'var(--border)' } },
+          x: { type: 'linear', min: 0, max: totalCommits + 1, ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: 'var(--border)' } },
         }
       };
     }
