@@ -132,7 +132,7 @@
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
 
-    let chart = null, currentData = null, allCharts = [], manifest = null, perfChartInstances = [];
+    let chart = null, currentData = null, allCharts = [], manifest = null, perfChartInstances = [], globalMaxCommits = 0;
 
     // =========================================================================
     // Shared utilities
@@ -163,7 +163,7 @@
 
     function zoomAll(mode) {
       if (!currentData) return;
-      const tc = currentData.metadata.total_commits;
+      const tc = globalMaxCommits;
       const landmarks = (currentData.landmarks || []).filter(l => l.commit_index != null);
       const releases = [...new Map(landmarks.map(l => [l.label, l])).values()];
       let min = 0, max = tc + 1;
@@ -271,6 +271,7 @@
 
       // Throughput chart
       if (chart) chart.destroy(); allCharts = [];
+      globalMaxCommits = Math.max(globalMaxCommits, data.metadata.total_commits);
       const opts = baseChartOpts(data.metadata.total_commits, data.landmarks);
       opts.plugins.legend = { display: false };
       opts.scales.y = { title: { display: true, text: 'M ops/sec', color: '#64748b' }, ticks: { color: '#64748b', callback: v => (v/1e6).toFixed(1)+'M' }, grid: { color: 'var(--border)' } };
@@ -347,6 +348,7 @@
           div.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem">${label}</div><canvas></canvas>`;
           container.appendChild(div);
 
+          globalMaxCommits = Math.max(globalMaxCommits, memData.metadata.total_commits);
           const opts = baseChartOpts(memData.metadata.total_commits, memData.landmarks);
           opts.plugins.legend = { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 10, font: { size: 9 }, color: '#94a3b8', padding: 8, filter: (item, data) => data.datasets[item.datasetIndex].data.some(d => d.y > 0) } };
           const yMax = hasBreakdown ? Math.max(...pts.map(p => Object.values(p.breakdown || {}).reduce((s,v)=>s+v,0))) : Math.max(...pts.map(p => p.results[wk].rps));
@@ -502,6 +504,7 @@
       section.style.opacity = '1';
 
       const totalCommits = data.metadata.total_commits;
+      globalMaxCommits = Math.max(globalMaxCommits, totalCommits);
       // Histogram indices: 0=p1, 1=p10, 2=p25, 3=p50, 4=p75, 5=p90, 6=p95, 7=p99, 8=p99.5, 9=p99.9, 10=p100
       // We use indices 1-9 (p10 through p99.9), skip p1 and p100
       const subtle = 'rgba(148,163,184,0.45)';
