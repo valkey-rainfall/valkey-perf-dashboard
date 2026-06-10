@@ -165,7 +165,7 @@
       if (!currentData) return;
       const tc = currentData.metadata.total_commits;
       const padded = tc + Math.ceil(tc * 0.005);
-      if (mode === 'reset') { allCharts.forEach(c => c.resetZoom('none')); return; }
+      if (mode === 'reset') { allCharts.forEach(c => { c.options.scales.x.min = 0; c.options.scales.x.max = padded; c.update('none'); }); return; }
       const landmarks = (currentData.landmarks || []).filter(l => l.commit_index != null);
       const releases = [...new Map(landmarks.map(l => [l.label, l])).values()];
       let min, max = padded;
