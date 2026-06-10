@@ -159,7 +159,7 @@
       }
     });
 
-    function syncZoom(src, min, max) { allCharts.forEach(c => { if (c !== src) { c.zoomScale('x', {min, max}, 'none'); c.update(); } }); }
+    function syncZoom(src, min, max) { allCharts.forEach(c => { if (c !== src) c.zoomScale('x', {min, max}, 'none'); }); }
 
     function zoomAll(mode) {
       if (!currentData) return;
@@ -174,7 +174,7 @@
         const lm = releases.at(-2);
         min = lm ? lm.commit_index : 0;
       } else { min = max - 100; }
-      allCharts.forEach(c => { c.zoomScale('x', {min, max}, 'none'); c.update(); });
+      allCharts.forEach(c => c.zoomScale('x', {min, max}, 'none'));
     }
 
     function getWorkloadId() { return manifest?.workloads?.[0]?.id || 'get16b-t7-p10'; }
