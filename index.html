@@ -349,7 +349,8 @@
 
           const opts = baseChartOpts(memData.metadata.total_commits, memData.landmarks);
           opts.plugins.legend = { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 10, font: { size: 9 }, color: '#94a3b8', padding: 8, filter: (item, data) => data.datasets[item.datasetIndex].data.some(d => d.y > 0) } };
-          opts.scales.y = { stacked: hasBreakdown, beginAtZero: true, grace: '5%', title: { display: true, text: 'B/key', color: '#64748b' }, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'var(--border)' } };
+          const yMax = hasBreakdown ? Math.max(...pts.map(p => Object.values(p.breakdown || {}).reduce((s,v)=>s+v,0))) : Math.max(...pts.map(p => p.results[wk].rps));
+          opts.scales.y = { stacked: hasBreakdown, beginAtZero: true, suggestedMax: yMax * 1.05, title: { display: true, text: 'B/key', color: '#64748b' }, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'var(--border)' } };
 
           // User data baseline line
           const userDataBytes = MEMORY_USER_DATA[workloadId];
