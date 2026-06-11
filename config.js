@@ -10,7 +10,7 @@ const MEMORY_USER_DATA = {
 };
 
 const CATEGORY_COLORS = {
-  robj_embval: '#6366f1', robj_embkey: '#f472b6', sds: '#10b981', hashtable: '#f59e0b', skiplist: '#ef4444',
+  robj_embval: '#6366f1', robj_embkey: '#f472b6', sds: '#10b981', hashtable: '#f59e0b', hash_entry: '#fb923c', skiplist: '#ef4444',
   robj: '#06b6d4', listpack: '#a855f7', dict: '#78716c', server_infra: '#84cc16', other: '#9ca3af',
   'tma-retiring-pct': '#22c55e', 'tma-fe-bound-pct': '#f59e0b', 'tma-be-bound-pct': '#ef4444', 'tma-bad-spec-pct': '#8b5cf6',
 };
@@ -85,6 +85,7 @@ const HELP_TEXT = {
       <ul>
         <li><strong>sds</strong> — Simple Dynamic Strings (key names + string values)</li>
         <li><strong>hashtable</strong> — main keyspace hash table buckets</li>
+        <li><strong>hash_entry</strong> — per-field entry struct for HSET (field + value + optional expiry)</li>
         <li><strong>dict</strong> — dict metadata structures</li>
         <li><strong>robj</strong> — Redis object headers (type, encoding, refcount, LRU)</li>
         <li><strong>robj_embval</strong> — EMBSTR objects with value stored inline (saves pointer indirection)</li>
