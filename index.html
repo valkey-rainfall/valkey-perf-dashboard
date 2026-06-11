@@ -18,6 +18,11 @@
     body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 1.5rem; }
     h2 { font-size: 1rem; margin: 1.5rem 0 0.5rem; }
 
+    /* Desktop: cap chart grids at 2 columns */
+    @media (min-width: 850px) {
+      #perfCharts, #memoryChartsGrid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+
     /* Layout reservation: fixed heights prevent CLS */
     .chart-panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
     .chart-panel canvas { width: 100%; }
