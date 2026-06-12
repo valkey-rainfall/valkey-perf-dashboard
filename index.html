@@ -104,7 +104,7 @@
   <div id="chartInfo" class="info-row"></div>
 
   <!-- Latency Band Chart -->
-  <div id="latencySection" style="opacity:0.3">
+  <div id="latencySection" style="display:none">
     <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Request Latency (distribution contour @ 70% load)</h2><button class="help-btn" onclick="showHelp('latency')">?</button></div>
     <div class="chart-panel chart-panel--throughput" style="position:relative"><canvas id="latencyChart"></canvas></div>
     <div id="latencyInfo" class="info-row"></div>
@@ -510,12 +510,12 @@
       const section = document.getElementById('latencySection');
       const workloadId = getWorkloadId();
       let resp;
-      try { resp = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-latency.json`); } catch { section.style.opacity = '0.3'; return; }
-      if (!resp.ok) { section.style.opacity = '0.3'; return; }
+      try { resp = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-latency.json`); } catch { section.style.display = 'none'; return; }
+      if (!resp.ok) { section.style.display = 'none'; return; }
+      section.style.display = '';
       const data = await resp.json();
       const pts = data.points.sort((a, b) => a.commit_index - b.commit_index);
-      if (!pts.length) { section.style.opacity = '0.3'; return; }
-      section.style.opacity = '1';
+      if (!pts.length) { section.style.display = 'none'; return; }
 
       const totalCommits = data.metadata.total_commits;
       globalMaxCommits = Math.max(globalMaxCommits, totalCommits);
