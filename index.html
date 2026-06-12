@@ -424,6 +424,16 @@
             };
           }
 
+          // Click to show commit popup with memory breakdown
+          opts.onClick = ((memPts, memWk, memLabel) => (evt, els) => {
+            if (mouseDownPos && (Math.abs(evt.native.clientX - mouseDownPos.x) > 5 || Math.abs(evt.native.clientY - mouseDownPos.y) > 5)) return;
+            if (!els.length) return;
+            const idx = els[0].index;
+            const point = memPts[idx];
+            const prev = idx > 0 ? memPts[idx - 1] : null;
+            showMemoryPopup(point, prev, memWk, memLabel, evt.native);
+          })(pts, wk, label);
+
           const ci = new Chart(div.querySelector('canvas').getContext('2d'), {
             type: 'line', data: { datasets },
             plugins: [makeInfoPlugin('memoryInfo', (_, idx) => {
@@ -605,6 +615,16 @@
       opts.scales.y = { type: 'linear', ticks: { color: '#64748b', callback: v => formatUs(v) }, grid: { color: 'var(--border)' } };
       opts.plugins.tooltip = { enabled: false };
 
+      // Click to show commit popup with latency percentiles
+      opts.onClick = (evt, els) => {
+        if (mouseDownPos && (Math.abs(evt.native.clientX - mouseDownPos.x) > 5 || Math.abs(evt.native.clientY - mouseDownPos.y) > 5)) return;
+        if (!els.length) return;
+        const idx = els[0].index;
+        const point = pts[idx];
+        const prev = idx > 0 ? pts[idx - 1] : null;
+        showLatencyPopup(point, prev, lineCfg, pctLabels, evt.native);
+      };
+
       latencyChartInstance = new Chart(document.getElementById('latencyChart').getContext('2d'), {
         type: 'line', data: { datasets },
         plugins: [makeInfoPlugin('latencyInfo', (_, idx) => {
@@ -772,6 +792,174 @@
     }
 
     function hideCommitPopup() { document.getElementById('commitPopup').style.display = 'none'; }
+
+    function showMemoryPopup(point, prevPoint, wk, label, evt) {
+      const popup = document.getElementById('commitPopup');
+      const repo = currentData.metadata.repo || 'valkey-io/valkey';
+      const hash = point.commit;
+      const shortHash = hash.slice(0, 7);
+
+      // Memory value
+      const total = point.breakdown ? Object.values(point.breakdown).reduce((s,v)=>s+v,0) : point.results[wk].rps;
+      let deltaHtml = '';
+      if (prevPoint) {
+        const prevTotal = prevPoint.breakdown ? Object.values(prevPoint.breakdown).reduce((s,v)=>s+v,0) : prevPoint.results[wk].rps;
+        const delta = ((total - prevTotal) / prevTotal) * 100;
+        const gap = point.commit_index - prevPoint.commit_index;
+        const gapText = gap === 1 ? 'vs previous commit' : `vs ${gap} commits ago`;
+        // Memory is deterministic (CV=0), so any change > 0.1% is significant
+        const isSignificant = Math.abs(delta) > 0.1;
+        const isUp = delta > 0; // for memory, up = bad (more overhead)
+        let cls, arrow, badgeCls, badgeText;
+        if (!isSignificant) {
+          cls = 'cpop-delta-noise'; arrow = '△'; badgeCls = 'cpop-badge-noise'; badgeText = 'unchanged';
+        } else if (isUp) {
+          cls = 'cpop-delta-sig-down'; arrow = '▲'; badgeCls = 'cpop-badge-regress'; badgeText = 'increased';
+        } else {
+          cls = 'cpop-delta-sig-up'; arrow = '▼'; badgeCls = 'cpop-badge-sig'; badgeText = 'reduced';
+        }
+        const sign = delta > 0 ? '+' : '';
+        const absDelta = Math.abs(total - prevTotal).toFixed(1);
+        deltaHtml = `<div class="cpop-delta ${cls}"><span>${arrow} ${sign}${delta.toFixed(1)}% (${sign}${(total-prevTotal).toFixed(1)} B/key)</span><span class="cpop-badge ${badgeCls}">${badgeText}</span><span style="color:var(--muted);font-weight:400;font-size:12px">${gapText}</span></div>`;
+      }
+
+      // Breakdown grid
+      let breakdownHtml = '';
+      if (point.breakdown) {
+        const entries = Object.entries(point.breakdown).filter(([,v]) => v > 0.1).sort((a,b) => b[1]-a[1]);
+        const items = entries.map(([cat, val]) => {
+          const c = CATEGORY_COLORS[cat] || '#6b7280';
+          let dStr = '';
+          if (prevPoint?.breakdown) {
+            const prevVal = prevPoint.breakdown[cat] || 0;
+            const d = val - prevVal;
+            if (Math.abs(d) > 0.05) {
+              const sign = d > 0 ? '+' : '';
+              const dCls = d > 0 ? 'cpop-delta-sig-down' : 'cpop-delta-sig-up';
+              dStr = `<div class="cpop-perf-d ${dCls}">${sign}${d.toFixed(1)}</div>`;
+            }
+          }
+          return `<div class="cpop-perf-item"><div class="cpop-perf-name" style="color:${c}">${cat}</div><div class="cpop-perf-val">${val.toFixed(1)}</div>${dStr}</div>`;
+        });
+        breakdownHtml = `<div class="cpop-perf"><div class="cpop-perf-label">Breakdown (B/key)</div><div class="cpop-perf-grid" style="grid-template-columns:1fr 1fr">${items.join('')}</div></div>`;
+      }
+
+      const platLabel = PLATFORM_LABELS[document.getElementById('platformSelect').value] || '';
+      popup.innerHTML = `<div class="cpop" style="position:relative">
+        <button class="cpop-close" onclick="hideCommitPopup()">✕</button>
+        <div class="cpop-header">
+          <a class="cpop-hash" href="https://github.com/${repo}/commit/${hash}" target="_blank">${shortHash}</a>
+          <span class="cpop-date">${point.date}</span>
+        </div>
+        <div class="cpop-title">${point.pr_title || shortHash}</div>
+        <div class="cpop-links">
+          ${point.pr ? `<a href="https://github.com/${repo}/pull/${point.pr}" target="_blank">🔗 PR #${point.pr}</a>` : ''}
+          <a href="https://github.com/${repo}/commit/${hash}" target="_blank">📄 Commit</a>
+        </div>
+        <hr class="cpop-sep">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">${label}</div>
+        <div class="cpop-rps">${total.toFixed(1)} <span class="cpop-rps-unit">B/key</span></div>
+        <div class="cpop-cv">deterministic (CV ≈ 0%)</div>
+        ${deltaHtml}
+        ${breakdownHtml ? '<hr class="cpop-sep">' + breakdownHtml : ''}
+        <div class="cpop-footer"><span>Esc to dismiss</span><span>${platLabel}</span></div>
+      </div>`;
+
+      popup.style.display = 'block';
+      const rect = popup.getBoundingClientRect();
+      let left = evt.clientX + 12, top = evt.clientY - 20;
+      if (left + rect.width > window.innerWidth - 16) left = evt.clientX - rect.width - 12;
+      if (top + rect.height > window.innerHeight - 16) top = window.innerHeight - rect.height - 16;
+      if (top < 8) top = 8;
+      popup.style.left = left + 'px'; popup.style.top = top + 'px';
+    }
+
+    function showLatencyPopup(point, prevPoint, lineCfg, pctLabels, evt) {
+      const popup = document.getElementById('commitPopup');
+      const repo = currentData.metadata.repo || 'valkey-io/valkey';
+      const hash = point.commit;
+      const shortHash = hash.slice(0, 7);
+      const h = point.histogram || [];
+
+      // Primary metric: p99
+      const p99 = h[7]?.[1] || 0;
+      const p50 = h[3]?.[1] || 0;
+      const p999 = h[9]?.[1] || 0;
+
+      let deltaHtml = '';
+      if (prevPoint) {
+        const prevH = prevPoint.histogram || [];
+        const prevP99 = prevH[7]?.[1] || 0;
+        if (prevP99 > 0 && p99 > 0) {
+          const delta = ((p99 - prevP99) / prevP99) * 100;
+          const gap = point.commit_index - prevPoint.commit_index;
+          const gapText = gap === 1 ? 'vs previous commit' : `vs ${gap} commits ago`;
+          const isSignificant = Math.abs(delta) > 2; // 2% threshold for latency
+          const isUp = delta > 0; // for latency, up = bad
+          let cls, arrow, badgeCls, badgeText;
+          if (!isSignificant) {
+            cls = 'cpop-delta-noise'; arrow = '△'; badgeCls = 'cpop-badge-noise'; badgeText = 'stable';
+          } else if (isUp) {
+            cls = 'cpop-delta-sig-down'; arrow = '▲'; badgeCls = 'cpop-badge-regress'; badgeText = 'slower';
+          } else {
+            cls = 'cpop-delta-sig-up'; arrow = '▼'; badgeCls = 'cpop-badge-sig'; badgeText = 'faster';
+          }
+          const sign = delta > 0 ? '+' : '';
+          deltaHtml = `<div class="cpop-delta ${cls}"><span>${arrow} ${sign}${delta.toFixed(1)}% p99</span><span class="cpop-badge ${badgeCls}">${badgeText}</span><span style="color:var(--muted);font-weight:400;font-size:12px">${gapText}</span></div>`;
+        }
+      }
+
+      // Percentile grid
+      const keyPcts = [
+        { label: 'p50', val: p50 },
+        { label: 'p90', val: h[5]?.[1] || 0 },
+        { label: 'p99', val: p99 },
+        { label: 'p99.9', val: p999 },
+      ];
+      const prevH = prevPoint?.histogram || [];
+      const prevPcts = [prevH[3]?.[1], prevH[5]?.[1], prevH[7]?.[1], prevH[9]?.[1]];
+      const pctItems = keyPcts.map((pct, i) => {
+        let dStr = '';
+        if (prevPcts[i] && prevPcts[i] > 0) {
+          const d = ((pct.val - prevPcts[i]) / prevPcts[i]) * 100;
+          if (Math.abs(d) > 1) {
+            const sign = d > 0 ? '+' : '';
+            const dCls = d > 0 ? 'cpop-delta-sig-down' : 'cpop-delta-sig-up';
+            dStr = `<div class="cpop-perf-d ${dCls}">${sign}${d.toFixed(0)}%</div>`;
+          }
+        }
+        return `<div class="cpop-perf-item"><div class="cpop-perf-name">${pct.label}</div><div class="cpop-perf-val">${formatUs(pct.val)}</div>${dStr}</div>`;
+      });
+
+      const platLabel = PLATFORM_LABELS[document.getElementById('platformSelect').value] || '';
+      popup.innerHTML = `<div class="cpop" style="position:relative">
+        <button class="cpop-close" onclick="hideCommitPopup()">✕</button>
+        <div class="cpop-header">
+          <a class="cpop-hash" href="https://github.com/${repo}/commit/${hash}" target="_blank">${shortHash}</a>
+          <span class="cpop-date">${point.date}</span>
+        </div>
+        <div class="cpop-title">${point.pr_title || shortHash}</div>
+        <div class="cpop-links">
+          ${point.pr ? `<a href="https://github.com/${repo}/pull/${point.pr}" target="_blank">🔗 PR #${point.pr}</a>` : ''}
+          <a href="https://github.com/${repo}/commit/${hash}" target="_blank">📄 Commit</a>
+        </div>
+        <hr class="cpop-sep">
+        <div class="cpop-rps">${formatUs(p99)} <span class="cpop-rps-unit">p99 latency</span></div>
+        <div class="cpop-cv">@ ${(point.target_rps/1e6).toFixed(2)}M rps (70% load)</div>
+        ${deltaHtml}
+        <hr class="cpop-sep">
+        <div class="cpop-perf"><div class="cpop-perf-label">Percentiles</div><div class="cpop-perf-grid" style="grid-template-columns:1fr 1fr 1fr 1fr">${pctItems.join('')}</div></div>
+        <div class="cpop-footer"><span>Esc to dismiss</span><span>${platLabel}</span></div>
+      </div>`;
+
+      popup.style.display = 'block';
+      const rect = popup.getBoundingClientRect();
+      let left = evt.clientX + 12, top = evt.clientY - 20;
+      if (left + rect.width > window.innerWidth - 16) left = evt.clientX - rect.width - 12;
+      if (top + rect.height > window.innerHeight - 16) top = window.innerHeight - rect.height - 16;
+      if (top < 8) top = 8;
+      popup.style.left = left + 'px'; popup.style.top = top + 'px';
+    }
 
     // Click vs drag detection
     let mouseDownPos = null;
