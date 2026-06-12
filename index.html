@@ -166,11 +166,17 @@
 
     function syncZoom(src, min, max) { allCharts.forEach(c => { if (c !== src) { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); } }); }
 
+    function getVersionReleases(data) {
+      const landmarks = (data.landmarks || []).filter(l => l.commit_index != null);
+      return [...new Map(landmarks.map(l => [l.label, l])).values()]
+        .filter(l => /^\d+\./.test(l.label))
+        .sort((a, b) => a.commit_index - b.commit_index);
+    }
+
     function zoomAll(mode) {
       if (!currentData) return;
       const tc = globalMaxCommits;
-      const landmarks = (currentData.landmarks || []).filter(l => l.commit_index != null);
-      const releases = [...new Map(landmarks.map(l => [l.label, l])).values()];
+      const releases = getVersionReleases(currentData);
       let min = 0, max = tc + 1;
       if (mode === 'lastRelease') {
         const lm = releases.at(-1);
@@ -258,8 +264,8 @@
       const workload = data.workloads[0];
       document.getElementById('workload-label').textContent = 'Workload: ' + workload;
 
-      // Update release button labels with version numbers
-      const releases = [...new Map((data.landmarks || []).filter(l => l.commit_index != null).map(l => [l.label, l])).values()];
+      // Update release button labels with version numbers (sorted, version-only)
+      const releases = getVersionReleases(data);
       const lastRel = releases.at(-1), prevRel = releases.at(-2);
       document.getElementById('btn-last-release').textContent = lastRel ? `Since ${lastRel.label}` : 'Since Last Release';
       document.getElementById('btn-prev-release').textContent = prevRel ? `Since ${prevRel.label}` : 'Since Previous Release';
