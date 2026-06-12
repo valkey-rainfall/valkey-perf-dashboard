@@ -826,7 +826,12 @@
       // Breakdown grid
       let breakdownHtml = '';
       if (point.breakdown) {
-        const entries = Object.entries(point.breakdown).filter(([,v]) => v > 0.1).sort((a,b) => b[1]-a[1]);
+        // Include categories from previous point that dropped to zero
+        const allCats = new Set(Object.keys(point.breakdown));
+        if (prevPoint?.breakdown) Object.keys(prevPoint.breakdown).forEach(k => allCats.add(k));
+        const entries = [...allCats].map(cat => [cat, point.breakdown[cat] || 0])
+          .filter(([cat, val]) => val > 0.1 || (prevPoint?.breakdown?.[cat] || 0) > 0.1)
+          .sort((a, b) => b[1] - a[1]);
         const items = entries.map(([cat, val]) => {
           const c = CATEGORY_COLORS[cat] || '#6b7280';
           let dStr = '';
@@ -839,7 +844,8 @@
               dStr = `<div class="cpop-perf-d ${dCls}">${sign}${d.toFixed(1)}</div>`;
             }
           }
-          return `<div class="cpop-perf-item"><div class="cpop-perf-name" style="color:${c}">${cat}</div><div class="cpop-perf-val">${val.toFixed(1)}</div>${dStr}</div>`;
+          const valStr = val < 0.05 ? '<span style="color:var(--muted)">0</span>' : val.toFixed(1);
+          return `<div class="cpop-perf-item"><div class="cpop-perf-name" style="color:${c}">${cat}</div><div class="cpop-perf-val">${valStr}</div>${dStr}</div>`;
         });
         breakdownHtml = `<div class="cpop-perf"><div class="cpop-perf-label">Breakdown (B/key)</div><div class="cpop-perf-grid" style="grid-template-columns:1fr 1fr">${items.join('')}</div></div>`;
       }
@@ -931,6 +937,33 @@
         return `<div class="cpop-perf-item"><div class="cpop-perf-name">${pct.label}</div><div class="cpop-perf-val">${formatUs(pct.val)}</div>${dStr}</div>`;
       });
 
+      // Inline SVG histogram sparkline (log-scale latency bars)
+      let histogramSvg = '';
+      if (h.length >= 11) {
+        const W = 280, H = 50, barW = W / 11;
+        const maxVal = h[10]?.[1] || p999 * 2;
+        // Use log scale for bar heights since tail is orders of magnitude larger
+        const logMax = Math.log10(Math.max(maxVal, 1));
+        const bars = h.map((entry, i) => {
+          const val = entry[1] || 0;
+          const barH = val > 0 ? (Math.log10(val) / logMax) * H : 0;
+          const x = i * barW;
+          // Color: p50=green, p99=indigo, p99.9=red, others=muted
+          let fill = 'rgba(148,163,184,0.4)';
+          if (i === 3) fill = '#22c55e'; // p50
+          else if (i === 7) fill = '#6366f1'; // p99
+          else if (i === 9) fill = '#ef4444'; // p99.9
+          return `<rect x="${x+1}" y="${H - barH}" width="${barW-2}" height="${barH}" fill="${fill}" rx="1"/>`;
+        }).join('');
+        // Labels for key percentiles
+        const labels = [
+          { i: 3, text: 'p50', color: '#22c55e' },
+          { i: 7, text: 'p99', color: '#6366f1' },
+          { i: 9, text: 'p99.9', color: '#ef4444' },
+        ].map(l => `<text x="${l.i * barW + barW/2}" y="${H + 10}" text-anchor="middle" font-size="8" fill="${l.color}">${l.text}</text>`).join('');
+        histogramSvg = `<div style="margin-top:8px"><svg width="${W}" height="${H + 14}" style="display:block">${bars}${labels}</svg></div>`;
+      }
+
       const platLabel = PLATFORM_LABELS[document.getElementById('platformSelect').value] || '';
       popup.innerHTML = `<div class="cpop" style="position:relative">
         <button class="cpop-close" onclick="hideCommitPopup()">✕</button>
@@ -949,6 +982,7 @@
         ${deltaHtml}
         <hr class="cpop-sep">
         <div class="cpop-perf"><div class="cpop-perf-label">Percentiles</div><div class="cpop-perf-grid" style="grid-template-columns:1fr 1fr 1fr 1fr">${pctItems.join('')}</div></div>
+        ${histogramSvg}
         <div class="cpop-footer"><span>Esc to dismiss</span><span>${platLabel}</span></div>
       </div>`;
 
