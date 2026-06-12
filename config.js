@@ -3,9 +3,9 @@
 const DATA_URL = 'https://data.conductress.rainsupreme.net';
 const PLATFORMS = ['amd64', 'arm64', 'intel'];
 const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
-const MEMORY_WORKLOADS = ['memory-set-v64', 'memory-set-v64-expire', 'memory-zadd-m20', 'memory-sadd-m20', 'memory-hset-f64-v64'];
+const MEMORY_WORKLOADS = ['memory-set-k16-v64', 'memory-set-k16-v64-expire', 'memory-zadd-m20', 'memory-sadd-m20', 'memory-hset-f64-v64'];
 const MEMORY_USER_DATA = {
-  'memory-set-v64': 80, 'memory-set-v64-expire': 80,
+  'memory-set-k16-v64': 80, 'memory-set-k16-v64-expire': 80,
   'memory-zadd-m20': 28, 'memory-sadd-m20': 20, 'memory-hset-f64-v64': 128,
 };
 

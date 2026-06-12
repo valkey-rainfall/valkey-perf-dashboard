@@ -182,7 +182,7 @@
       allCharts.forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
     }
 
-    function getWorkloadId() { return manifest?.workloads?.[0]?.id || 'get16b-t7-p10'; }
+    function getWorkloadId() { return manifest?.workloads?.[0]?.id || 'get-k16-v16-t7-p10'; }
 
     // Info row plugin: updates a fixed div on hover, shows default content otherwise
     function makeInfoPlugin(elId, formatter, defaultContent) {
