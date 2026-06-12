@@ -77,6 +77,40 @@
     .help-body ul { margin: 0.4rem 0 0.8rem 1.2rem; }
     .help-body li { margin-bottom: 0.3rem; }
     .help-body code { background: var(--bg); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem; }
+
+    /* Commit detail popup */
+    #commitPopup { display: none; position: fixed; z-index: 900; max-width: 420px; width: 90%; }
+    .cpop { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .cpop-close { position: absolute; top: 8px; right: 12px; background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; line-height: 1; }
+    .cpop-close:hover { color: var(--text); }
+    .cpop-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .cpop-hash { font-family: monospace; font-size: 13px; background: var(--bg); padding: 2px 8px; border-radius: 4px; color: var(--accent); text-decoration: none; }
+    .cpop-hash:hover { text-decoration: underline; }
+    .cpop-date { font-size: 12px; color: var(--muted); }
+    .cpop-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
+    .cpop-links { display: flex; gap: 12px; margin-bottom: 10px; }
+    .cpop-links a { font-size: 12px; color: var(--accent); text-decoration: none; }
+    .cpop-links a:hover { text-decoration: underline; }
+    .cpop-sep { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+    .cpop-rps { font-size: 22px; font-weight: 700; }
+    .cpop-rps-unit { font-size: 12px; font-weight: 400; color: var(--muted); }
+    .cpop-cv { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .cpop-delta { font-size: 13px; margin-top: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .cpop-delta-sig-up { color: var(--ok); }
+    .cpop-delta-sig-down { color: var(--danger); }
+    .cpop-delta-noise { color: var(--muted); }
+    .cpop-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    .cpop-badge-sig { background: rgba(34,197,94,0.15); color: var(--ok); }
+    .cpop-badge-noise { background: rgba(148,163,184,0.15); color: var(--muted); }
+    .cpop-badge-regress { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .cpop-perf { margin-top: 8px; }
+    .cpop-perf-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .cpop-perf-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+    .cpop-perf-item { background: var(--bg); border-radius: 5px; padding: 5px 7px; }
+    .cpop-perf-name { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+    .cpop-perf-val { font-size: 13px; font-weight: 600; margin-top: 1px; }
+    .cpop-perf-d { font-size: 10px; margin-top: 1px; }
+    .cpop-footer { font-size: 11px; color: var(--muted); margin-top: 8px; display: flex; justify-content: space-between; }
   </style>
 </head>
 <body>
@@ -271,6 +305,7 @@
       document.getElementById('btn-prev-release').textContent = prevRel ? `Since ${prevRel.label}` : 'Since Previous Release';
 
       const points = data.points.filter(p => p.results[workload]).sort((a, b) => a.commit_index - b.commit_index);
+      currentPoints = points; currentWorkload = workload;
       const rpsValues = points.map(p => p.results[workload].rps);
       const maxRps = Math.max(...rpsValues), minRps = Math.min(...rpsValues), latestRps = rpsValues.at(-1);
 
@@ -296,10 +331,15 @@
       opts.plugins.legend = { display: false };
       opts.scales.y = { title: { display: true, text: 'M ops/sec', color: '#64748b' }, ticks: { color: '#64748b', callback: v => (v/1e6).toFixed(1)+'M' }, grid: { color: 'var(--border)' } };
       opts.onClick = (evt, els) => {
-        if (els.length && els[0].datasetIndex === 2) {
-          const row = document.getElementById('row-' + points[els[0].index].commit.slice(0,10));
-          if (row) { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); row.style.background = 'var(--accent)'; setTimeout(() => row.style.background = '', 2000); }
-        }
+        // Distinguish click from drag (zoom): if mouse moved >5px, it's a drag
+        if (mouseDownPos && (Math.abs(evt.native.clientX - mouseDownPos.x) > 5 || Math.abs(evt.native.clientY - mouseDownPos.y) > 5)) return;
+        if (!els.length) return;
+        // Find nearest point from main dataset (index 2 = the line)
+        const el = els.find(e => e.datasetIndex === 2) || els[0];
+        const idx = el.index;
+        const point = points[idx];
+        const prevPoint = findPrevPoint(points, idx);
+        showCommitPopup(point, prevPoint, workload, evt.native);
       };
 
       const cvUpper = points.map(p => { const r = p.results[workload]; return { x: p.commit_index, y: r.rps * (1 + (r.cv||0)/100) }; });
@@ -413,6 +453,7 @@
 
     async function renderPerfCharts(platform) {
       perfChartInstances.forEach(c => c.destroy()); perfChartInstances = [];
+      popupPerfData = {};
       if (!manifest) return;
       const container = document.getElementById('perfCharts'); container.innerHTML = '';
       const workloadId = getWorkloadId();
@@ -461,6 +502,7 @@
             const sd = await r.json();
             const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
             if (!pts.length) continue;
+            popupPerfData[metricId] = pts;
             maxIdx = Math.max(maxIdx, pts.at(-1).commit_index);
             const color = CATEGORY_COLORS[metricId] || CHART_COLORS[colorIdx % CHART_COLORS.length];
             datasets.push({
@@ -611,7 +653,141 @@
 
     async function loadManifest() { try { const r = await fetch(`${DATA_URL}/manifest.json`); if (r.ok) manifest = await r.json(); } catch {} }
 
+    // =========================================================================
+    // Commit detail popup
+    // =========================================================================
+
+    let popupPerfData = {}; // metricId -> sorted points array (populated during renderPerfCharts)
+
+    // Precision-aware RPS formatting: sig figs based on CV
+    function formatRpsPrecision(rps, cv) {
+      const sigFigs = Math.max(2, Math.min(4, Math.floor(-Math.log10(Math.max(cv, 0.01) / 100))));
+      const millions = rps / 1e6;
+      return millions.toPrecision(sigFigs) + 'M';
+    }
+
+    // Find previous measured point in the sorted points array
+    function findPrevPoint(points, idx) {
+      return idx > 0 ? points[idx - 1] : null;
+    }
+
+    // Compute combined uncertainty for delta between two points
+    function combinedUncertainty(cv1, cv2) {
+      return Math.sqrt((cv1 || 0) ** 2 + (cv2 || 0) ** 2);
+    }
+
+    function showCommitPopup(point, prevPoint, workload, evt) {
+      const popup = document.getElementById('commitPopup');
+      const r = point.results[workload];
+      const repo = currentData.metadata.repo || 'valkey-io/valkey';
+      const hash = point.commit;
+      const shortHash = hash.slice(0, 7);
+
+      // RPS and CV
+      const rpsStr = formatRpsPrecision(r.rps, r.cv || 0);
+
+      // Delta
+      let deltaHtml = '';
+      if (prevPoint) {
+        const prevR = prevPoint.results[workload];
+        const delta = ((r.rps - prevR.rps) / prevR.rps) * 100;
+        const unc = combinedUncertainty(r.cv, prevR.cv);
+        const gap = point.commit_index - prevPoint.commit_index;
+        const gapText = gap === 1 ? 'vs previous commit' : `vs ${gap} commits ago`;
+        const isSignificant = Math.abs(delta) > unc;
+        const isUp = delta > 0;
+
+        let cls, arrow, badgeCls, badgeText;
+        if (!isSignificant) {
+          cls = 'cpop-delta-noise'; arrow = '△'; badgeCls = 'cpop-badge-noise'; badgeText = 'in noise';
+        } else if (isUp) {
+          cls = 'cpop-delta-sig-up'; arrow = '▲'; badgeCls = 'cpop-badge-sig'; badgeText = 'significant';
+        } else {
+          cls = 'cpop-delta-sig-down'; arrow = '▼'; badgeCls = 'cpop-badge-regress'; badgeText = 'regression';
+        }
+        const sign = delta > 0 ? '+' : '';
+        deltaHtml = `<div class="cpop-delta ${cls}"><span>${arrow} ${sign}${delta.toFixed(1)}% ±${unc.toFixed(1)}%</span><span class="cpop-badge ${badgeCls}">${badgeText}</span><span style="color:var(--muted);font-weight:400;font-size:12px">${gapText}</span></div>`;
+      }
+
+      // Perf counters (from loaded data)
+      let perfHtml = '';
+      const perfMetrics = Object.keys(popupPerfData);
+      if (perfMetrics.length) {
+        const items = [];
+        for (const metricId of perfMetrics) {
+          const pts = popupPerfData[metricId];
+          const mp = pts.find(p => p.commit_index === point.commit_index);
+          if (!mp) continue;
+          const prevMp = prevPoint ? pts.find(p => p.commit_index === prevPoint.commit_index) : null;
+          let deltaStr = '';
+          if (prevMp) {
+            const d = mp.value - prevMp.value;
+            const sign = d > 0 ? '+' : '';
+            // For "insn/req" lower is better, for IPC higher is better
+            const isGood = metricId === 'ipc' ? d > 0 : d < 0;
+            const dCls = Math.abs(d) < 0.01 * Math.abs(mp.value) ? 'cpop-delta-noise' : (isGood ? 'cpop-delta-sig-up' : 'cpop-delta-sig-down');
+            deltaStr = `<div class="cpop-perf-d ${dCls}">${sign}${d >= 100 ? Math.round(d) : d.toFixed(2)}</div>`;
+          }
+          const label = metricId.replace(/-/g, ' ').replace('pct', '%');
+          const val = mp.value >= 100 ? Math.round(mp.value).toLocaleString() : mp.value.toFixed(2);
+          items.push(`<div class="cpop-perf-item"><div class="cpop-perf-name">${label}</div><div class="cpop-perf-val">${val}</div>${deltaStr}</div>`);
+        }
+        if (items.length) {
+          perfHtml = `<div class="cpop-perf"><div class="cpop-perf-label">Perf counters</div><div class="cpop-perf-grid">${items.join('')}</div></div>`;
+        }
+      }
+
+      // Platform label
+      const platLabel = PLATFORM_LABELS[document.getElementById('platformSelect').value] || '';
+
+      popup.innerHTML = `<div class="cpop" style="position:relative">
+        <button class="cpop-close" onclick="hideCommitPopup()">✕</button>
+        <div class="cpop-header">
+          <a class="cpop-hash" href="https://github.com/${repo}/commit/${hash}" target="_blank">${shortHash}</a>
+          <span class="cpop-date">${point.date}</span>
+        </div>
+        <div class="cpop-title">${point.pr_title || shortHash}${point.pr ? '' : ''}</div>
+        <div class="cpop-links">
+          ${point.pr ? `<a href="https://github.com/${repo}/pull/${point.pr}" target="_blank">🔗 PR #${point.pr}</a>` : ''}
+          <a href="https://github.com/${repo}/commit/${hash}" target="_blank">📄 Commit</a>
+        </div>
+        <hr class="cpop-sep">
+        <div class="cpop-rps">${rpsStr} <span class="cpop-rps-unit">rps</span></div>
+        <div class="cpop-cv">${r.reps || '?'} reps · CV ${(r.cv||0).toFixed(2)}%</div>
+        ${deltaHtml}
+        ${perfHtml ? '<hr class="cpop-sep">' + perfHtml : ''}
+        <div class="cpop-footer"><span>Esc to dismiss</span><span>${platLabel}</span></div>
+      </div>`;
+
+      // Position near click but within viewport
+      popup.style.display = 'block';
+      const rect = popup.getBoundingClientRect();
+      let left = evt.clientX + 12;
+      let top = evt.clientY - 20;
+      if (left + rect.width > window.innerWidth - 16) left = evt.clientX - rect.width - 12;
+      if (top + rect.height > window.innerHeight - 16) top = window.innerHeight - rect.height - 16;
+      if (top < 8) top = 8;
+      popup.style.left = left + 'px';
+      popup.style.top = top + 'px';
+    }
+
+    function hideCommitPopup() { document.getElementById('commitPopup').style.display = 'none'; }
+
+    // Click vs drag detection
+    let mouseDownPos = null;
+    document.addEventListener('mousedown', e => { mouseDownPos = { x: e.clientX, y: e.clientY }; });
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCommitPopup(); });
+    document.addEventListener('mousedown', e => {
+      const popup = document.getElementById('commitPopup');
+      if (popup.style.display === 'block' && !popup.contains(e.target)) hideCommitPopup();
+    });
+
+    // Store points for popup access
+    let currentPoints = null, currentWorkload = null;
+
     init();
   </script>
+  <div id="commitPopup"></div>
 </body>
 </html>
