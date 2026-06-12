@@ -182,7 +182,7 @@
       allCharts.forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
     }
 
-    function getWorkloadId() { return manifest?.workloads?.[0]?.id || 'get-k16-v16-t7-p10'; }
+    function getWorkloadId() { return document.getElementById('workloadSelect')?.value || THROUGHPUT_WORKLOADS[0].id; }
 
     // Info row plugin: updates a fixed div on hover, shows default content otherwise
     function makeInfoPlugin(elId, formatter, defaultContent) {
@@ -231,6 +231,14 @@
 
     async function init() {
       await loadManifest();
+      // Populate workload selector
+      const wlSel = document.getElementById('workloadSelect');
+      for (const wl of THROUGHPUT_WORKLOADS) {
+        const o = document.createElement('option'); o.value = wl.id; o.textContent = wl.label; wlSel.appendChild(o);
+      }
+      if (THROUGHPUT_WORKLOADS.length > 1) wlSel.style.display = '';
+      wlSel.addEventListener('change', () => render(document.getElementById('platformSelect').value));
+
       const sel = document.getElementById('platformSelect');
       for (const p of PLATFORMS) {
         try {
