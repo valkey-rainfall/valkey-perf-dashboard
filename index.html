@@ -198,7 +198,38 @@
       }
     });
 
-    function syncZoom(src, min, max) { allCharts.forEach(c => { if (c !== src) { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); } }); }
+    function syncZoom(src, min, max) { allCharts.forEach(c => { if (c !== src) { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); } }); updateHashState(); }
+
+    // =========================================================================
+    // URL hash state (shareable views)
+    // =========================================================================
+    const DEFAULT_PLATFORM = PLATFORMS[0];
+    const DEFAULT_WORKLOAD = THROUGHPUT_WORKLOADS[0].id;
+
+    function parseHashState() {
+      const params = new URLSearchParams(location.hash.slice(1));
+      return {
+        platform: params.get('platform'),
+        workload: params.get('workload'),
+        zoom: params.get('zoom')?.split(',').map(Number),
+      };
+    }
+
+    function updateHashState() {
+      const params = new URLSearchParams();
+      const plat = document.getElementById('platformSelect').value;
+      const wl = document.getElementById('workloadSelect').value || DEFAULT_WORKLOAD;
+      if (plat && plat !== DEFAULT_PLATFORM) params.set('platform', plat);
+      if (wl && wl !== DEFAULT_WORKLOAD) params.set('workload', wl);
+      // Zoom: check if any chart has non-default range
+      if (chart && chart.options.scales.x.min > 0) {
+        const min = Math.round(chart.options.scales.x.min);
+        const max = Math.round(chart.options.scales.x.max);
+        params.set('zoom', `${min},${max}`);
+      }
+      const hash = params.toString();
+      history.replaceState(null, '', hash ? '#' + hash : location.pathname);
+    }
 
     function getVersionReleases(data) {
       const landmarks = (data.landmarks || []).filter(l => l.commit_index != null);
@@ -220,6 +251,7 @@
         if (lm) min = lm.commit_index;
       } else if (mode === 'last100') { min = tc - 100; }
       allCharts.forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
+      updateHashState();
     }
 
     function getWorkloadId() { return document.getElementById('workloadSelect')?.value || (typeof THROUGHPUT_WORKLOADS !== 'undefined' ? THROUGHPUT_WORKLOADS[0].id : 'get-k16-v16-t7-p10'); }
@@ -257,7 +289,7 @@
         plugins: {
           tooltip: { enabled: false },
           annotation: { annotations },
-          zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } },
+          zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => { syncZoom(c, c.scales.x.min, c.scales.x.max); updateHashState(); } } },
         },
         scales: {
           x: { type: 'linear', min: 0, max: totalCommits + 1, ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: 'var(--border)' } },
@@ -271,14 +303,17 @@
 
     async function init() {
       await loadManifest();
+      const hashState = parseHashState();
+
       // Populate workload selector
       const wlSel = document.getElementById('workloadSelect');
       const workloads = typeof THROUGHPUT_WORKLOADS !== 'undefined' ? THROUGHPUT_WORKLOADS : [{ id: 'get-k16-v16-t7-p10', label: 'GET k16 v16' }];
       for (const wl of workloads) {
         const o = document.createElement('option'); o.value = wl.id; o.textContent = wl.label; wlSel.appendChild(o);
       }
+      if (hashState.workload && workloads.some(w => w.id === hashState.workload)) wlSel.value = hashState.workload;
       if (workloads.length > 1) wlSel.style.display = '';
-      wlSel.addEventListener('change', () => render(document.getElementById('platformSelect').value));
+      wlSel.addEventListener('change', () => { render(document.getElementById('platformSelect').value); updateHashState(); });
 
       const sel = document.getElementById('platformSelect');
       for (const p of PLATFORMS) {
@@ -287,8 +322,16 @@
           if (r.ok) { const o = document.createElement('option'); o.value = p; o.textContent = PLATFORM_LABELS[p] || p; sel.appendChild(o); }
         } catch {}
       }
-      sel.addEventListener('change', () => render(sel.value));
-      if (sel.options.length > 0) render(sel.value);
+      if (hashState.platform && [...sel.options].some(o => o.value === hashState.platform)) sel.value = hashState.platform;
+      sel.addEventListener('change', () => { render(sel.value); updateHashState(); });
+      if (sel.options.length > 0) {
+        await render(sel.value);
+        // Apply zoom from hash after render (charts exist now)
+        if (hashState.zoom && hashState.zoom.length === 2) {
+          const [min, max] = hashState.zoom;
+          allCharts.forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
+        }
+      }
     }
 
     async function render(platform) {
@@ -550,7 +593,7 @@
             }
             return datasets.map(ds => { const pt = ds.data[idx]; return pt ? infoItem(ds.label, pt.y.toFixed(2)) : ''; }).filter(Boolean).join('<span class="info-sep"> · </span>');
           })],
-          options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: datasets.length > 1, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { enabled: false }, zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart:c}) => syncZoom(c, c.scales.x.min, c.scales.x.max) } } }, scales },
+          options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: datasets.length > 1, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { enabled: false }, zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart:c}) => { syncZoom(c, c.scales.x.min, c.scales.x.max); updateHashState(); } } } }, scales },
         });
         perfChartInstances.push(ci); allCharts.push(ci);
       }
