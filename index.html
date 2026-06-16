@@ -116,10 +116,11 @@
 <body>
   <header>
     <div>
-      <h1 style="font-size:1.1rem;margin:0;">Valkey Unstable — Performance History</h1>
+      <h1 id="pageTitle" style="font-size:1.1rem;margin:0;">Valkey Unstable — Performance History</h1>
       <span id="workload-label" style="color:var(--muted);font-size:0.85rem;"></span>
     </div>
     <div class="controls" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin:0;">
+      <select id="engineSelect"></select>
       <select id="platformSelect"></select>
       <select id="workloadSelect" style="display:none"></select>
     </div>
@@ -209,6 +210,7 @@
     function parseHashState() {
       const params = new URLSearchParams(location.hash.slice(1));
       return {
+        engine: params.get('engine'),
         platform: params.get('platform'),
         workload: params.get('workload'),
         zoom: params.get('zoom')?.split(',').map(Number),
@@ -217,8 +219,10 @@
 
     function updateHashState() {
       const params = new URLSearchParams();
+      const engine = getEngine();
       const plat = document.getElementById('platformSelect').value;
       const wl = document.getElementById('workloadSelect').value || DEFAULT_WORKLOAD;
+      if (engine && engine !== 'valkey') params.set('engine', engine);
       if (plat && plat !== DEFAULT_PLATFORM) params.set('platform', plat);
       if (wl && wl !== DEFAULT_WORKLOAD) params.set('workload', wl);
       // Zoom: check if any chart has non-default range
@@ -254,7 +258,12 @@
       updateHashState();
     }
 
-    function getWorkloadId() { return document.getElementById('workloadSelect')?.value || (typeof THROUGHPUT_WORKLOADS !== 'undefined' ? THROUGHPUT_WORKLOADS[0].id : 'get-k16-v16-t7-p10'); }
+    function getEngine() { return document.getElementById('engineSelect')?.value || 'valkey'; }
+    function getWorkloadId() {
+      const wl = document.getElementById('workloadSelect')?.value || (typeof THROUGHPUT_WORKLOADS !== 'undefined' ? THROUGHPUT_WORKLOADS[0].id : 'get-k16-v16-t7-p10');
+      const engine = getEngine();
+      return engine === 'valkey' ? wl : `${engine}-${wl}`;
+    }
 
     // Info row plugin: updates a fixed div on hover, shows default content otherwise
     function makeInfoPlugin(elId, formatter, defaultContent) {
@@ -305,6 +314,14 @@
       await loadManifest();
       const hashState = parseHashState();
 
+      // Populate engine selector
+      const engineSel = document.getElementById('engineSelect');
+      for (const e of ENGINES) {
+        const o = document.createElement('option'); o.value = e.id; o.textContent = e.label; engineSel.appendChild(o);
+      }
+      if (hashState.engine && [...engineSel.options].some(o => o.value === hashState.engine)) engineSel.value = hashState.engine;
+      engineSel.addEventListener('change', () => { render(document.getElementById('platformSelect').value); updateHashState(); });
+
       // Populate workload selector (filtered by platform)
       const wlSel = document.getElementById('workloadSelect');
       const workloads = typeof THROUGHPUT_WORKLOADS !== 'undefined' ? THROUGHPUT_WORKLOADS : [{ id: 'get-k16-v16-t7-p10', label: 'GET k16 v16' }];
@@ -347,6 +364,8 @@
       const data = await resp.json(); currentData = data;
       const workload = data.workloads[0];
       document.getElementById('workload-label').textContent = 'Workload: ' + workload;
+      const engineLabel = (typeof ENGINES !== 'undefined' ? ENGINES.find(e => e.id === getEngine())?.label : null) || 'Valkey';
+      document.getElementById('pageTitle').textContent = `${engineLabel} Unstable — Performance History`;
 
       // Update release button labels with version numbers (sorted, version-only)
       const releases = getVersionReleases(data);

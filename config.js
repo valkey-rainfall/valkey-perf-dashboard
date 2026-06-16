@@ -1,6 +1,10 @@
 // Dashboard configuration: constants, colors, and help text.
 
 const DATA_URL = 'https://data.conductress.rainsupreme.net';
+const ENGINES = [
+  { id: 'valkey', label: 'Valkey' },
+  { id: 'redis', label: 'Redis' },
+];
 const PLATFORMS = ['amd64', 'arm64', 'intel'];
 const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
 const THROUGHPUT_WORKLOADS = [
