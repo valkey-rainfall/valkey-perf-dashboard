@@ -305,14 +305,21 @@
       await loadManifest();
       const hashState = parseHashState();
 
-      // Populate workload selector
+      // Populate workload selector (filtered by platform)
       const wlSel = document.getElementById('workloadSelect');
       const workloads = typeof THROUGHPUT_WORKLOADS !== 'undefined' ? THROUGHPUT_WORKLOADS : [{ id: 'get-k16-v16-t7-p10', label: 'GET k16 v16' }];
-      for (const wl of workloads) {
-        const o = document.createElement('option'); o.value = wl.id; o.textContent = wl.label; wlSel.appendChild(o);
+      function updateWorkloadOptions(platform) {
+        const cur = wlSel.value;
+        wlSel.innerHTML = '';
+        for (const wl of workloads) {
+          if (wl.platforms && !wl.platforms.includes(platform)) continue;
+          const o = document.createElement('option'); o.value = wl.id; o.textContent = wl.label; wlSel.appendChild(o);
+        }
+        if ([...wlSel.options].some(o => o.value === cur)) wlSel.value = cur;
+        wlSel.style.display = wlSel.options.length > 1 ? '' : 'none';
       }
-      if (hashState.workload && workloads.some(w => w.id === hashState.workload)) wlSel.value = hashState.workload;
-      if (workloads.length > 1) wlSel.style.display = '';
+      updateWorkloadOptions(hashState.platform || PLATFORMS[0]);
+      if (hashState.workload && [...wlSel.options].some(o => o.value === hashState.workload)) wlSel.value = hashState.workload;
       wlSel.addEventListener('change', () => { render(document.getElementById('platformSelect').value); updateHashState(); });
 
       const sel = document.getElementById('platformSelect');
@@ -323,7 +330,7 @@
         } catch {}
       }
       if (hashState.platform && [...sel.options].some(o => o.value === hashState.platform)) sel.value = hashState.platform;
-      sel.addEventListener('change', () => { render(sel.value); updateHashState(); });
+      sel.addEventListener('change', () => { updateWorkloadOptions(sel.value); render(sel.value); updateHashState(); });
       if (sel.options.length > 0) {
         await render(sel.value);
         // Apply zoom from hash after render (charts exist now)

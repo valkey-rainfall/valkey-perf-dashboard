@@ -9,6 +9,10 @@ const THROUGHPUT_WORKLOADS = [
   { id: 'get-k16-v128-t7-p10', label: 'GET k16 v128' },
   { id: 'set-k16-v16-t7-p10', label: 'SET k16 v16' },
   { id: 'set-k16-v128-t7-p10', label: 'SET k16 v128' },
+  { id: 'get-k16-v16-t24-p100', label: 'GET t24 P100 (Intel)', platforms: ['intel'] },
+  { id: 'set-k16-v16-t24-p100', label: 'SET t24 P100 (Intel)', platforms: ['intel'] },
+  { id: 'get-k16-v16-t9-p50', label: 'GET t9 P50 (ARM)', platforms: ['arm64'] },
+  { id: 'set-k16-v16-t9-p50', label: 'SET t9 P50 (ARM)', platforms: ['arm64'] },
 ];
 const MEMORY_WORKLOADS = ['memory-set-k16-v64', 'memory-set-k16-v64-expire', 'memory-zadd-m20', 'memory-sadd-m20', 'memory-hset-f64-v64'];
 const MEMORY_USER_DATA = {
