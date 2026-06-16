@@ -49,6 +49,29 @@
     .zoom-btn { font-size: 0.8rem; padding: 3px 10px; cursor: pointer; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px; }
     .zoom-btn:hover { background: var(--border); }
 
+    /* Flat list selector */
+    .selector-toggle { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.85rem; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; }
+    .selector-toggle:hover { border-color: var(--accent); }
+    .selector-panel { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 200; background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-top: 0.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.4); max-height: 360px; overflow: hidden; flex-direction: column; }
+    .selector-panel.open { display: flex; }
+    .chip-bar { display: flex; gap: 0.4rem; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; }
+    .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .chip:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+    .selector-list { overflow-y: auto; padding: 0.4rem; flex: 1; }
+    .selector-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.6rem; border-radius: 5px; cursor: pointer; font-size: 0.82rem; transition: background 0.1s; }
+    .selector-item:hover { background: var(--bg); }
+    .selector-item.selected { background: rgba(99,102,241,0.12); }
+    .selector-item.primary { font-weight: 600; }
+    .selector-item .si-check { width: 14px; height: 14px; border: 1.5px solid var(--border); border-radius: 3px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+    .selector-item.selected .si-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .selector-item .si-star { opacity: 0; font-size: 11px; margin-left: auto; color: var(--muted); cursor: pointer; }
+    .selector-item.selected .si-star { opacity: 0.5; }
+    .selector-item.primary .si-star { opacity: 1; color: var(--accent); }
+    .selector-item .si-color { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .selector-item .si-label { flex: 1; }
+    .selector-item .si-platform { font-size: 0.7rem; color: var(--muted); }
+
     /* Annotations */
     .annotations { display: grid; gap: 0.5rem; }
     .annotation { background: var(--card); border-radius: 6px; padding: 0.7rem 1rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
@@ -119,10 +142,15 @@
       <h1 id="pageTitle" style="font-size:1.1rem;margin:0;">Valkey Unstable — Performance History</h1>
       <span id="workload-label" style="color:var(--muted);font-size:0.85rem;"></span>
     </div>
-    <div class="controls" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin:0;">
-      <select id="engineSelect"></select>
-      <select id="platformSelect"></select>
-      <select id="workloadSelect" style="display:none"></select>
+    <div style="position:relative;">
+      <button class="selector-toggle" onclick="toggleSelectorPanel()">
+        <span id="selectorSummary">Loading...</span>
+        <span style="font-size:0.7rem;">▼</span>
+      </button>
+      <div id="selectorPanel" class="selector-panel">
+        <div class="chip-bar" id="chipBar"></div>
+        <div class="selector-list" id="selectorList"></div>
+      </div>
     </div>
     <div style="display:flex;gap:0.4rem;">
       <button id="btn-prev-release" onclick="zoomAll('prevRelease')" class="zoom-btn">Since Previous Release</button>
@@ -175,6 +203,154 @@
     let chart = null, currentData = null, allCharts = [], manifest = null, perfChartInstances = [], globalMaxCommits = 0;
 
     // =========================================================================
+    // Multi-select state
+    // =========================================================================
+    let selectedWorkloads = [];  // [{engine, platform, workloadId}]
+    let primaryWorkload = null;  // {engine, platform, workloadId} — drives sub-charts
+    let activeFilters = { engine: null, platform: null }; // chip filters
+
+    const MULTI_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+
+    function getSelectionKey(s) { return `${s.engine}:${s.platform}:${s.workloadId}`; }
+    function getWorkloadFileId(s) { return s.engine === 'valkey' ? s.workloadId : `${s.engine}-${s.workloadId}`; }
+
+    // =========================================================================
+    // Selector panel
+    // =========================================================================
+
+    function toggleSelectorPanel() {
+      const panel = document.getElementById('selectorPanel');
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) {
+        setTimeout(() => document.addEventListener('click', closePanelOnClickOutside, { once: true }), 0);
+      }
+    }
+    function closePanelOnClickOutside(e) {
+      const panel = document.getElementById('selectorPanel');
+      const toggle = document.querySelector('.selector-toggle');
+      if (!panel.contains(e.target) && !toggle.contains(e.target)) {
+        panel.classList.remove('open');
+      } else if (panel.classList.contains('open')) {
+        setTimeout(() => document.addEventListener('click', closePanelOnClickOutside, { once: true }), 0);
+      }
+    }
+
+    function buildSelectorItems() {
+      const list = document.getElementById('selectorList');
+      list.innerHTML = '';
+      const items = [];
+      for (const eng of ENGINES) {
+        for (const plat of PLATFORMS) {
+          for (const wl of THROUGHPUT_WORKLOADS) {
+            if (wl.platforms && !wl.platforms.includes(plat)) continue;
+            items.push({ engine: eng.id, platform: plat, workloadId: wl.id, label: wl.label, engineLabel: eng.label, platLabel: PLATFORM_LABELS[plat] || plat });
+          }
+        }
+      }
+
+      const filtered = items.filter(it => {
+        if (activeFilters.engine && it.engine !== activeFilters.engine) return false;
+        if (activeFilters.platform && it.platform !== activeFilters.platform) return false;
+        return true;
+      });
+
+      for (const it of filtered) {
+        const key = getSelectionKey(it);
+        const isSelected = selectedWorkloads.some(s => getSelectionKey(s) === key);
+        const isPrimary = primaryWorkload && getSelectionKey(primaryWorkload) === key;
+        const colorIdx = selectedWorkloads.findIndex(s => getSelectionKey(s) === key);
+
+        const div = document.createElement('div');
+        div.className = `selector-item${isSelected ? ' selected' : ''}${isPrimary ? ' primary' : ''}`;
+        div.innerHTML = `
+          <span class="si-check">${isSelected ? '✓' : ''}</span>
+          <span class="si-color" style="background:${isSelected ? MULTI_COLORS[colorIdx % MULTI_COLORS.length] : 'transparent'}"></span>
+          <span class="si-label">${it.engineLabel} · ${it.label}</span>
+          <span class="si-platform">${it.platLabel}</span>
+          <span class="si-star" title="Set as primary (drives detail charts)">★</span>
+        `;
+
+        // Click row = toggle selection
+        div.addEventListener('click', (e) => {
+          if (e.target.closest('.si-star')) return;
+          toggleSelection(it);
+        });
+        // Click star = set primary
+        div.querySelector('.si-star').addEventListener('click', () => {
+          if (!isSelected) toggleSelection(it);
+          primaryWorkload = it;
+          onSelectionChanged();
+        });
+        list.appendChild(div);
+      }
+    }
+
+    function buildChips() {
+      const bar = document.getElementById('chipBar');
+      bar.innerHTML = '';
+      // Engine chips
+      for (const eng of ENGINES) {
+        const chip = document.createElement('span');
+        chip.className = `chip${activeFilters.engine === eng.id ? ' active' : ''}`;
+        chip.textContent = eng.label;
+        chip.onclick = () => { activeFilters.engine = activeFilters.engine === eng.id ? null : eng.id; buildChips(); buildSelectorItems(); };
+        bar.appendChild(chip);
+      }
+      // Separator
+      bar.appendChild(Object.assign(document.createElement('span'), { style: 'width:1px;height:16px;background:var(--border);', className: '' }));
+      // Platform chips
+      for (const plat of PLATFORMS) {
+        const chip = document.createElement('span');
+        chip.className = `chip${activeFilters.platform === plat ? ' active' : ''}`;
+        chip.textContent = (PLATFORM_LABELS[plat] || plat).split(' ')[0]; // short label
+        chip.onclick = () => { activeFilters.platform = activeFilters.platform === plat ? null : plat; buildChips(); buildSelectorItems(); };
+        bar.appendChild(chip);
+      }
+    }
+
+    function toggleSelection(item) {
+      const key = getSelectionKey(item);
+      const idx = selectedWorkloads.findIndex(s => getSelectionKey(s) === key);
+      if (idx >= 0) {
+        selectedWorkloads.splice(idx, 1);
+        if (primaryWorkload && getSelectionKey(primaryWorkload) === key) {
+          primaryWorkload = selectedWorkloads[0] || null;
+        }
+      } else {
+        // Only allow multi-select within same engine+platform
+        const sameContext = selectedWorkloads.length === 0 ||
+          (selectedWorkloads[0].engine === item.engine && selectedWorkloads[0].platform === item.platform);
+        if (!sameContext) {
+          // Switch context — clear previous selections
+          selectedWorkloads = [];
+        }
+        selectedWorkloads.push(item);
+        if (!primaryWorkload) primaryWorkload = item;
+      }
+      onSelectionChanged();
+    }
+
+    function onSelectionChanged() {
+      buildSelectorItems();
+      updateSelectorSummary();
+      updateHashState();
+      if (selectedWorkloads.length > 0) renderAll();
+    }
+
+    function updateSelectorSummary() {
+      const el = document.getElementById('selectorSummary');
+      if (!selectedWorkloads.length) { el.textContent = 'Select workload...'; return; }
+      if (selectedWorkloads.length === 1) {
+        const s = selectedWorkloads[0];
+        const wl = THROUGHPUT_WORKLOADS.find(w => w.id === s.workloadId);
+        const eng = ENGINES.find(e => e.id === s.engine);
+        el.textContent = `${eng?.label || s.engine} · ${(PLATFORM_LABELS[s.platform]||s.platform).split('(')[0].trim()} · ${wl?.label || s.workloadId}`;
+      } else {
+        el.textContent = `${selectedWorkloads.length} workloads selected`;
+      }
+    }
+
+    // =========================================================================
     // Shared utilities
     // =========================================================================
 
@@ -213,19 +389,24 @@
         engine: params.get('engine'),
         platform: params.get('platform'),
         workload: params.get('workload'),
+        workloads: params.get('workloads')?.split(','),
         zoom: params.get('zoom')?.split(',').map(Number),
       };
     }
 
     function updateHashState() {
       const params = new URLSearchParams();
-      const engine = getEngine();
-      const plat = document.getElementById('platformSelect').value;
-      const wl = document.getElementById('workloadSelect').value || DEFAULT_WORKLOAD;
+      if (!primaryWorkload) { history.replaceState(null, '', location.pathname); return; }
+      const engine = primaryWorkload.engine;
+      const plat = primaryWorkload.platform;
       if (engine && engine !== 'valkey') params.set('engine', engine);
       if (plat && plat !== DEFAULT_PLATFORM) params.set('platform', plat);
-      if (wl && wl !== DEFAULT_WORKLOAD) params.set('workload', wl);
-      // Zoom: check if any chart has non-default range
+      if (selectedWorkloads.length === 1) {
+        const wl = selectedWorkloads[0].workloadId;
+        if (wl !== DEFAULT_WORKLOAD) params.set('workload', wl);
+      } else if (selectedWorkloads.length > 1) {
+        params.set('workloads', selectedWorkloads.map(s => s.workloadId).join(','));
+      }
       if (chart && chart.options.scales.x.min > 0) {
         const min = Math.round(chart.options.scales.x.min);
         const max = Math.round(chart.options.scales.x.max);
@@ -258,11 +439,11 @@
       updateHashState();
     }
 
-    function getEngine() { return document.getElementById('engineSelect')?.value || 'valkey'; }
+    // Legacy compat: getEngine/getWorkloadId now read from selection state
+    function getEngine() { return primaryWorkload?.engine || 'valkey'; }
     function getWorkloadId() {
-      const wl = document.getElementById('workloadSelect')?.value || (typeof THROUGHPUT_WORKLOADS !== 'undefined' ? THROUGHPUT_WORKLOADS[0].id : 'get-k16-v16-t7-p10');
-      const engine = getEngine();
-      return engine === 'valkey' ? wl : `${engine}-${wl}`;
+      if (!primaryWorkload) return THROUGHPUT_WORKLOADS[0].id;
+      return getWorkloadFileId(primaryWorkload);
     }
 
     // Info row plugin: updates a fixed div on hover, shows default content otherwise
@@ -314,43 +495,23 @@
       await loadManifest();
       const hashState = parseHashState();
 
-      // Populate engine selector
-      const engineSel = document.getElementById('engineSelect');
-      for (const e of ENGINES) {
-        const o = document.createElement('option'); o.value = e.id; o.textContent = e.label; engineSel.appendChild(o);
+      // Restore selection from hash state
+      const engine = hashState.engine || 'valkey';
+      const platform = hashState.platform || DEFAULT_PLATFORM;
+      const workloadIds = hashState.workloads || [hashState.workload || DEFAULT_WORKLOAD];
+      for (const wlId of workloadIds) {
+        selectedWorkloads.push({ engine, platform, workloadId: wlId });
       }
-      if (hashState.engine && [...engineSel.options].some(o => o.value === hashState.engine)) engineSel.value = hashState.engine;
-      engineSel.addEventListener('change', () => { render(document.getElementById('platformSelect').value); updateHashState(); });
+      primaryWorkload = selectedWorkloads[0] || null;
 
-      // Populate workload selector (filtered by platform)
-      const wlSel = document.getElementById('workloadSelect');
-      const workloads = typeof THROUGHPUT_WORKLOADS !== 'undefined' ? THROUGHPUT_WORKLOADS : [{ id: 'get-k16-v16-t7-p10', label: 'GET k16 v16' }];
-      function updateWorkloadOptions(platform) {
-        const cur = wlSel.value;
-        wlSel.innerHTML = '';
-        for (const wl of workloads) {
-          if (wl.platforms && !wl.platforms.includes(platform)) continue;
-          const o = document.createElement('option'); o.value = wl.id; o.textContent = wl.label; wlSel.appendChild(o);
-        }
-        if ([...wlSel.options].some(o => o.value === cur)) wlSel.value = cur;
-        wlSel.style.display = wlSel.options.length > 1 ? '' : 'none';
-      }
-      updateWorkloadOptions(hashState.platform || PLATFORMS[0]);
-      if (hashState.workload && [...wlSel.options].some(o => o.value === hashState.workload)) wlSel.value = hashState.workload;
-      wlSel.addEventListener('change', () => { render(document.getElementById('platformSelect').value); updateHashState(); });
+      // Build UI
+      buildChips();
+      buildSelectorItems();
+      updateSelectorSummary();
 
-      const sel = document.getElementById('platformSelect');
-      for (const p of PLATFORMS) {
-        try {
-          const r = await fetch(`${DATA_URL}/series-${p}-${getWorkloadId()}-throughput.json`);
-          if (r.ok) { const o = document.createElement('option'); o.value = p; o.textContent = PLATFORM_LABELS[p] || p; sel.appendChild(o); }
-        } catch {}
-      }
-      if (hashState.platform && [...sel.options].some(o => o.value === hashState.platform)) sel.value = hashState.platform;
-      sel.addEventListener('change', () => { updateWorkloadOptions(sel.value); render(sel.value); updateHashState(); });
-      if (sel.options.length > 0) {
-        await render(sel.value);
-        // Apply zoom from hash after render (charts exist now)
+      // Render
+      if (selectedWorkloads.length > 0) {
+        await renderAll();
         if (hashState.zoom && hashState.zoom.length === 2) {
           const [min, max] = hashState.zoom;
           allCharts.forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
@@ -358,16 +519,26 @@
       }
     }
 
+    async function renderAll() {
+      if (!primaryWorkload) return;
+      const platform = primaryWorkload.platform;
+      await render(platform);
+    }
+
     async function render(platform) {
-      const resp = await fetch(`${DATA_URL}/series-${platform}-${getWorkloadId()}-throughput.json`);
+      // Fetch primary workload data (drives sub-charts + page title)
+      const primaryFileId = getWorkloadId();
+      const resp = await fetch(`${DATA_URL}/series-${platform}-${primaryFileId}-throughput.json`);
       if (!resp.ok) return;
       const data = await resp.json(); currentData = data;
       const workload = data.workloads[0];
-      document.getElementById('workload-label').textContent = 'Workload: ' + workload;
-      const engineLabel = (typeof ENGINES !== 'undefined' ? ENGINES.find(e => e.id === getEngine())?.label : null) || 'Valkey';
+      const engineLabel = ENGINES.find(e => e.id === getEngine())?.label || 'Valkey';
       document.getElementById('pageTitle').textContent = `${engineLabel} Unstable — Performance History`;
+      document.getElementById('workload-label').textContent = selectedWorkloads.length > 1
+        ? `${selectedWorkloads.length} workloads overlaid`
+        : 'Workload: ' + workload;
 
-      // Update release button labels with version numbers (sorted, version-only)
+      // Update release button labels
       const releases = getVersionReleases(data);
       const lastRel = releases.at(-1), prevRel = releases.at(-2);
       document.getElementById('btn-last-release').textContent = lastRel ? `Since ${lastRel.label}` : 'Since Last Release';
@@ -378,7 +549,6 @@
       const rpsValues = points.map(p => p.results[workload].rps);
       const maxRps = Math.max(...rpsValues), minRps = Math.min(...rpsValues), latestRps = rpsValues.at(-1);
 
-      // Default info row content (stats)
       const defaultInfo = [
         infoItem('points', points.length),
         infoItem('latest', (latestRps/1e6).toFixed(3)+'M'),
@@ -388,53 +558,94 @@
       ].join('');
       document.getElementById('chartInfo').innerHTML = defaultInfo;
 
-      // Annotation map
+      // Annotation map (from primary)
       const annMap = {}; data.annotations.forEach(a => { annMap[a.commit] = a; });
-      const ptColors = points.map(p => { const a = annMap[p.commit]; return a ? (a.good ? '#22c55e' : '#ef4444') : '#6366f1'; });
-      const ptRadii = points.map(p => annMap[p.commit] ? 6 : 3);
 
-      // Throughput chart
+      // ---- Multi-select throughput datasets ----
       if (chart) chart.destroy(); allCharts = [];
       globalMaxCommits = Math.max(globalMaxCommits, data.metadata.total_commits);
-      const opts = baseChartOpts(data.metadata.total_commits, data.landmarks);
-      opts.plugins.legend = { display: false };
+
+      const allDatasets = [];
+      const allSeriesData = []; // [{points, workload, color, selection}] for info row
+
+      for (let si = 0; si < selectedWorkloads.length; si++) {
+        const sel = selectedWorkloads[si];
+        const fileId = getWorkloadFileId(sel);
+        const color = MULTI_COLORS[si % MULTI_COLORS.length];
+        let sData, sWorkload, sPoints;
+
+        if (si === 0) {
+          // Primary — already fetched
+          sData = data; sWorkload = workload; sPoints = points;
+        } else {
+          try {
+            const r2 = await fetch(`${DATA_URL}/series-${sel.platform}-${fileId}-throughput.json`);
+            if (!r2.ok) continue;
+            sData = await r2.json();
+            sWorkload = sData.workloads[0];
+            sPoints = sData.points.filter(p => p.results[sWorkload]).sort((a, b) => a.commit_index - b.commit_index);
+            globalMaxCommits = Math.max(globalMaxCommits, sData.metadata.total_commits);
+          } catch { continue; }
+        }
+
+        const wlLabel = THROUGHPUT_WORKLOADS.find(w => w.id === sel.workloadId)?.label || sel.workloadId;
+        allSeriesData.push({ points: sPoints, workload: sWorkload, color, label: wlLabel, selection: sel });
+
+        // CV band (only for primary or if single-select)
+        if (selectedWorkloads.length === 1) {
+          const cvUpper = sPoints.map(p => { const r = p.results[sWorkload]; return { x: p.commit_index, y: r.rps * (1 + (r.cv||0)/100) }; });
+          const cvLower = sPoints.map(p => { const r = p.results[sWorkload]; return { x: p.commit_index, y: r.rps * (1 - (r.cv||0)/100) }; });
+          allDatasets.push(
+            { label: 'CV+', data: cvUpper, borderColor: 'transparent', backgroundColor: color + '20', fill: '+1', pointRadius: 0, tension: 0 },
+            { label: 'CV-', data: cvLower, borderColor: 'transparent', fill: false, pointRadius: 0, tension: 0 },
+          );
+        }
+
+        // Main line
+        const ptColors = sPoints.map(p => { const a = annMap[p.commit]; return a ? (a.good ? '#22c55e' : '#ef4444') : color; });
+        const ptRadii = sPoints.map(p => annMap[p.commit] ? 5 : 2.5);
+        allDatasets.push({
+          label: wlLabel, data: sPoints.map(p => ({x: p.commit_index, y: p.results[sWorkload].rps})),
+          borderColor: color, backgroundColor: 'transparent',
+          pointBackgroundColor: selectedWorkloads.length === 1 ? ptColors : color,
+          pointRadius: selectedWorkloads.length === 1 ? ptRadii : 2,
+          borderWidth: si === 0 ? 2 : 1.5, tension: 0,
+        });
+      }
+
+      const opts = baseChartOpts(globalMaxCommits, data.landmarks);
+      opts.plugins.legend = { display: selectedWorkloads.length > 1, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, color: '#94a3b8', filter: item => !['CV+','CV-'].includes(item.text) } };
       opts.scales.y = { title: { display: true, text: 'M ops/sec', color: '#64748b' }, ticks: { color: '#64748b', callback: v => (v/1e6).toFixed(1)+'M' }, grid: { color: 'var(--border)' } };
       opts.onClick = (evt, els) => {
-        // Distinguish click from drag (zoom): if mouse moved >5px, it's a drag
         if (mouseDownPos && (Math.abs(evt.native.clientX - mouseDownPos.x) > 5 || Math.abs(evt.native.clientY - mouseDownPos.y) > 5)) return;
         if (!els.length) return;
-        // Find nearest point from main dataset (index 2 = the line)
-        const el = els.find(e => e.datasetIndex === 2) || els[0];
+        // Use primary series for popup
+        const el = els.find(e => { const ds = allDatasets[e.datasetIndex]; return ds.label === allSeriesData[0]?.label; }) || els[0];
         const idx = el.index;
-        const point = points[idx];
-        const prevPoint = findPrevPoint(points, idx);
-        showCommitPopup(point, prevPoint, workload, evt.native);
+        if (idx < points.length) {
+          const point = points[idx];
+          const prevPoint = findPrevPoint(points, idx);
+          showCommitPopup(point, prevPoint, workload, evt.native);
+        }
       };
-
-      const cvUpper = points.map(p => { const r = p.results[workload]; return { x: p.commit_index, y: r.rps * (1 + (r.cv||0)/100) }; });
-      const cvLower = points.map(p => { const r = p.results[workload]; return { x: p.commit_index, y: r.rps * (1 - (r.cv||0)/100) }; });
 
       chart = new Chart(document.getElementById('chart').getContext('2d'), {
         type: 'line',
         plugins: [makeInfoPlugin('chartInfo', (_, idx) => {
-          const p = points[idx], r = p.results[workload];
-          return [
-            infoItem('', p.date), `${p.commit.slice(0,8)}${p.pr ? ' #'+p.pr : ''}`,
-            infoItem('ops/sec', (r.rps/1e6).toFixed(3)+'M'),
-            infoItem('CV', r.cv.toFixed(2)+'%'),
-            p.pr_title || '',
-          ].filter(Boolean).join('<span class="info-sep"> · </span>');
+          // Show info for all series at this index
+          return allSeriesData.map(sd => {
+            if (idx >= sd.points.length) return '';
+            const p = sd.points[idx], r = p.results[sd.workload];
+            const prefix = selectedWorkloads.length > 1 ? `<span style="color:${sd.color}">●</span> ${sd.label}: ` : '';
+            return `${prefix}${infoItem('', (r.rps/1e6).toFixed(3)+'M')} ${infoItem('CV', r.cv.toFixed(2)+'%')}`;
+          }).filter(Boolean).join('<span class="info-sep"> · </span>');
         }, defaultInfo)],
-        data: { datasets: [
-          { label: 'CV+', data: cvUpper, borderColor: 'transparent', backgroundColor: 'rgba(99,102,241,0.15)', fill: '+1', pointRadius: 0, tension: 0 },
-          { label: 'CV-', data: cvLower, borderColor: 'transparent', fill: false, pointRadius: 0, tension: 0 },
-          { label: 'ops/sec', data: points.map(p => ({x: p.commit_index, y: p.results[workload].rps})), borderColor: '#6366f1', backgroundColor: 'transparent', pointBackgroundColor: ptColors, pointRadius: ptRadii, tension: 0 },
-        ]},
+        data: { datasets: allDatasets },
         options: opts,
       });
       allCharts.push(chart);
 
-      // Memory, Perf, Latency, Annotations, Table (parallel)
+      // Sub-charts use primary workload only
       await Promise.all([renderMemory(platform, data), renderPerfCharts(platform), renderLatency(platform)]);
       renderAnnotations(data);
       renderTable(points, workload);
@@ -827,7 +1038,7 @@
       }
 
       // Platform label
-      const platLabel = PLATFORM_LABELS[document.getElementById('platformSelect').value] || '';
+      const platLabel = PLATFORM_LABELS[primaryWorkload?.platform] || '';
 
       popup.innerHTML = `<div class="cpop" style="position:relative">
         <button class="cpop-close" onclick="hideCommitPopup()">✕</button>
@@ -919,7 +1130,7 @@
         breakdownHtml = `<div class="cpop-perf"><div class="cpop-perf-label">Breakdown (B/key)</div><div class="cpop-perf-grid" style="grid-template-columns:1fr 1fr">${items.join('')}</div></div>`;
       }
 
-      const platLabel = PLATFORM_LABELS[document.getElementById('platformSelect').value] || '';
+      const platLabel = PLATFORM_LABELS[primaryWorkload?.platform] || '';
       popup.innerHTML = `<div class="cpop" style="position:relative">
         <button class="cpop-close" onclick="hideCommitPopup()">✕</button>
         <div class="cpop-header">
@@ -1033,7 +1244,7 @@
         histogramSvg = `<div style="margin-top:8px"><svg width="${W}" height="${H + 14}" style="display:block">${bars}${labels}</svg></div>`;
       }
 
-      const platLabel = PLATFORM_LABELS[document.getElementById('platformSelect').value] || '';
+      const platLabel = PLATFORM_LABELS[primaryWorkload?.platform] || '';
       popup.innerHTML = `<div class="cpop" style="position:relative">
         <button class="cpop-close" onclick="hideCommitPopup()">✕</button>
         <div class="cpop-header">
