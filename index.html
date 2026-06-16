@@ -52,22 +52,25 @@
     /* Flat list selector */
     .selector-toggle { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.85rem; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; }
     .selector-toggle:hover { border-color: var(--accent); }
-    .selector-panel { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 200; background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-top: 0.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.4); max-height: 360px; overflow: hidden; flex-direction: column; }
+    .selector-toggle .arrow { transition: transform 0.2s; }
+    .selector-toggle.open .arrow { transform: rotate(180deg); }
+    .selector-panel { display: none; background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-top: 0.75rem; overflow: hidden; flex-direction: column; }
     .selector-panel.open { display: flex; }
-    .chip-bar { display: flex; gap: 0.4rem; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .chip-bar { display: flex; gap: 0.4rem; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center; }
     .chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; }
     .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
     .chip:hover:not(.active) { border-color: var(--muted); color: var(--text); }
-    .selector-list { overflow-y: auto; padding: 0.4rem; flex: 1; }
-    .selector-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.6rem; border-radius: 5px; cursor: pointer; font-size: 0.82rem; transition: background 0.1s; }
+    .selector-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2px; padding: 0.5rem; max-height: 260px; overflow-y: auto; }
+    .selector-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.6rem; border-radius: 5px; cursor: pointer; font-size: 0.82rem; transition: background 0.1s; }
     .selector-item:hover { background: var(--bg); }
     .selector-item.selected { background: rgba(99,102,241,0.12); }
     .selector-item.primary { font-weight: 600; }
     .selector-item .si-check { width: 14px; height: 14px; border: 1.5px solid var(--border); border-radius: 3px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; }
     .selector-item.selected .si-check { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .selector-item .si-star { opacity: 0; font-size: 11px; margin-left: auto; color: var(--muted); cursor: pointer; }
-    .selector-item.selected .si-star { opacity: 0.5; }
-    .selector-item.primary .si-star { opacity: 1; color: var(--accent); }
+    .selector-item .si-star { font-size: 13px; margin-left: auto; color: var(--border); cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: all 0.15s; }
+    .selector-item .si-star:hover { color: var(--accent); background: rgba(99,102,241,0.1); }
+    .selector-item.selected .si-star { color: var(--muted); }
+    .selector-item.primary .si-star { color: var(--accent); }
     .selector-item .si-color { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .selector-item .si-label { flex: 1; }
     .selector-item .si-platform { font-size: 0.7rem; color: var(--muted); }
@@ -142,16 +145,10 @@
       <h1 id="pageTitle" style="font-size:1.1rem;margin:0;">Valkey Unstable — Performance History</h1>
       <span id="workload-label" style="color:var(--muted);font-size:0.85rem;"></span>
     </div>
-    <div style="position:relative;">
-      <button class="selector-toggle" onclick="toggleSelectorPanel()">
-        <span id="selectorSummary">Loading...</span>
-        <span style="font-size:0.7rem;">▼</span>
-      </button>
-      <div id="selectorPanel" class="selector-panel">
-        <div class="chip-bar" id="chipBar"></div>
-        <div class="selector-list" id="selectorList"></div>
-      </div>
-    </div>
+    <button class="selector-toggle" id="selectorToggle" onclick="toggleSelectorPanel()">
+      <span id="selectorSummary">Loading...</span>
+      <span class="arrow" style="font-size:0.7rem;">▼</span>
+    </button>
     <div style="display:flex;gap:0.4rem;">
       <button id="btn-prev-release" onclick="zoomAll('prevRelease')" class="zoom-btn">Since Previous Release</button>
       <button id="btn-last-release" onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
@@ -160,6 +157,12 @@
     </div>
     <a href="status.html" style="margin-left:auto;color:var(--muted);font-size:0.8rem;text-decoration:none;">Host Status ↗</a>
   </header>
+
+  <!-- Workload selector panel (inline, expands below header) -->
+  <div id="selectorPanel" class="selector-panel">
+    <div class="chip-bar" id="chipBar"></div>
+    <div class="selector-list" id="selectorList"></div>
+  </div>
 
   <!-- Throughput -->
   <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Throughput</h2><button class="help-btn" onclick="showHelp('throughput')">?</button></div>
@@ -220,19 +223,9 @@
 
     function toggleSelectorPanel() {
       const panel = document.getElementById('selectorPanel');
+      const toggle = document.getElementById('selectorToggle');
       panel.classList.toggle('open');
-      if (panel.classList.contains('open')) {
-        setTimeout(() => document.addEventListener('click', closePanelOnClickOutside, { once: true }), 0);
-      }
-    }
-    function closePanelOnClickOutside(e) {
-      const panel = document.getElementById('selectorPanel');
-      const toggle = document.querySelector('.selector-toggle');
-      if (!panel.contains(e.target) && !toggle.contains(e.target)) {
-        panel.classList.remove('open');
-      } else if (panel.classList.contains('open')) {
-        setTimeout(() => document.addEventListener('click', closePanelOnClickOutside, { once: true }), 0);
-      }
+      toggle.classList.toggle('open');
     }
 
     function buildSelectorItems() {
