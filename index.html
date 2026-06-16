@@ -210,7 +210,7 @@
     // =========================================================================
     let selectedWorkloads = [];  // [{engine, platform, workloadId}]
     let primaryWorkload = null;  // {engine, platform, workloadId} — drives sub-charts
-    let activeFilters = { engine: null, platform: null }; // chip filters
+    let activeFilters = { engine: null, platform: null, command: null, valsize: null }; // chip filters
 
     const MULTI_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
@@ -236,7 +236,11 @@
         for (const plat of PLATFORMS) {
           for (const wl of THROUGHPUT_WORKLOADS) {
             if (wl.platforms && !wl.platforms.includes(plat)) continue;
-            items.push({ engine: eng.id, platform: plat, workloadId: wl.id, label: wl.label, engineLabel: eng.label, platLabel: PLATFORM_LABELS[plat] || plat });
+            // Parse command and value size from workload ID (e.g. "get-k16-v128-t7-p10")
+            const parts = wl.id.match(/^(get|set)-k\d+-v(\d+)/);
+            const command = parts ? parts[1] : null;
+            const valsize = parts ? parts[2] : null;
+            items.push({ engine: eng.id, platform: plat, workloadId: wl.id, label: wl.label, engineLabel: eng.label, platLabel: PLATFORM_LABELS[plat] || plat, command, valsize });
           }
         }
       }
@@ -244,6 +248,8 @@
       const filtered = items.filter(it => {
         if (activeFilters.engine && it.engine !== activeFilters.engine) return false;
         if (activeFilters.platform && it.platform !== activeFilters.platform) return false;
+        if (activeFilters.command && it.command !== activeFilters.command) return false;
+        if (activeFilters.valsize && it.valsize !== activeFilters.valsize) return false;
         return true;
       });
 
@@ -281,23 +287,30 @@
     function buildChips() {
       const bar = document.getElementById('chipBar');
       bar.innerHTML = '';
-      // Engine chips
-      for (const eng of ENGINES) {
-        const chip = document.createElement('span');
-        chip.className = `chip${activeFilters.engine === eng.id ? ' active' : ''}`;
-        chip.textContent = eng.label;
-        chip.onclick = () => { activeFilters.engine = activeFilters.engine === eng.id ? null : eng.id; buildChips(); buildSelectorItems(); };
-        bar.appendChild(chip);
-      }
-      // Separator
-      bar.appendChild(Object.assign(document.createElement('span'), { style: 'width:1px;height:16px;background:var(--border);', className: '' }));
-      // Platform chips
-      for (const plat of PLATFORMS) {
-        const chip = document.createElement('span');
-        chip.className = `chip${activeFilters.platform === plat ? ' active' : ''}`;
-        chip.textContent = (PLATFORM_LABELS[plat] || plat).split(' ')[0]; // short label
-        chip.onclick = () => { activeFilters.platform = activeFilters.platform === plat ? null : plat; buildChips(); buildSelectorItems(); };
-        bar.appendChild(chip);
+
+      // Extract unique values from workload definitions (data-driven)
+      const commands = [...new Set(THROUGHPUT_WORKLOADS.map(wl => wl.id.match(/^(get|set)/)?.[1]).filter(Boolean))];
+      const valsizes = [...new Set(THROUGHPUT_WORKLOADS.map(wl => wl.id.match(/v(\d+)/)?.[1]).filter(Boolean))];
+
+      const groups = [
+        { key: 'engine', values: ENGINES.map(e => ({ id: e.id, label: e.label })) },
+        { key: 'platform', values: PLATFORMS.map(p => ({ id: p, label: (PLATFORM_LABELS[p] || p).split(' ')[0] })) },
+        { key: 'command', values: commands.map(c => ({ id: c, label: c.toUpperCase() })) },
+        { key: 'valsize', values: valsizes.map(v => ({ id: v, label: 'v' + v })) },
+      ];
+
+      for (let gi = 0; gi < groups.length; gi++) {
+        if (gi > 0) bar.appendChild(Object.assign(document.createElement('span'), { style: 'width:1px;height:16px;background:var(--border)' }));
+        for (const val of groups[gi].values) {
+          const chip = document.createElement('span');
+          chip.className = `chip${activeFilters[groups[gi].key] === val.id ? ' active' : ''}`;
+          chip.textContent = val.label;
+          chip.onclick = ((g, v) => () => {
+            activeFilters[g.key] = activeFilters[g.key] === v.id ? null : v.id;
+            buildChips(); buildSelectorItems();
+          })(groups[gi], val);
+          bar.appendChild(chip);
+        }
       }
     }
 
@@ -556,7 +569,7 @@
 
       // ---- Multi-select throughput datasets ----
       if (chart) chart.destroy(); allCharts = [];
-      globalMaxCommits = Math.max(globalMaxCommits, data.metadata.total_commits);
+      globalMaxCommits = data.metadata.total_commits; // Reset to primary engine's commit count
 
       const allDatasets = [];
       const allSeriesData = []; // [{points, workload, color, selection}] for info row
