@@ -331,8 +331,10 @@
           selectedWorkloads = [];
         }
         selectedWorkloads.push(item);
-        if (!primaryWorkload) primaryWorkload = item;
       }
+      // Single selection is always primary
+      if (selectedWorkloads.length === 1) primaryWorkload = selectedWorkloads[0];
+      else if (!primaryWorkload) primaryWorkload = selectedWorkloads[0];
       onSelectionChanged();
     }
 
@@ -535,7 +537,22 @@
       // Fetch primary workload data (drives sub-charts + page title)
       const primaryFileId = getWorkloadId();
       const resp = await fetch(`${DATA_URL}/series-${platform}-${primaryFileId}-throughput.json`);
-      if (!resp.ok) return;
+      if (!resp.ok) {
+        // No data for this selection — clear all charts
+        if (chart) { chart.destroy(); chart = null; }
+        allCharts.forEach(c => c.destroy()); allCharts = [];
+        memoryChartInstances.forEach(c => c.destroy()); memoryChartInstances = [];
+        perfChartInstances.forEach(c => c.destroy()); perfChartInstances = [];
+        if (latencyChartInstance) { latencyChartInstance.destroy(); latencyChartInstance = null; }
+        document.getElementById('chartInfo').innerHTML = '<span style="color:var(--muted)">No data available for this selection</span>';
+        document.getElementById('memoryChartsGrid').innerHTML = '';
+        document.getElementById('perfCharts').innerHTML = '';
+        document.getElementById('latencySection').style.display = 'none';
+        document.getElementById('annotations').innerHTML = '';
+        document.getElementById('datapoints').innerHTML = '';
+        currentData = null; currentPoints = null;
+        return;
+      }
       const data = await resp.json(); currentData = data;
       const workload = data.workloads[0];
       const engineLabel = ENGINES.find(e => e.id === getEngine())?.label || 'Valkey';
