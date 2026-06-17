@@ -41,6 +41,8 @@ async function discoverWorkloads() {
     for (const wId of m.throughput_workloads) {
       // Skip engine-prefixed workloads (e.g. redis-get-*) -- engine prefix is added at fetch time
       if (ENGINES.some(e => e.id !== 'valkey' && wId.startsWith(e.id + '-'))) continue;
+      // Skip malformed IDs missing thread/pipeline suffix (stale pre-rename data)
+      if (!/^(get|set)-k\d+-v\d+-t\d+-p\d+$/.test(wId)) continue;
       if (!platformWorkloads[wId]) platformWorkloads[wId] = new Set();
       platformWorkloads[wId].add(PLATFORMS[i]);
     }
