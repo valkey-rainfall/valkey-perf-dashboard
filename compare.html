@@ -79,6 +79,23 @@
     const COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms); // cross-platform only
     const COMPARE_MEMORY = MEMORY_WORKLOADS;
 
+    function workloadLabel(id) {
+      const raw = id.replace(/^memory-/, '');
+      const parts = raw.split('-');
+      const cmd = parts[0].toUpperCase();
+      const specs = parts.slice(1).map(p => {
+        if (p.startsWith('k')) return `K=${p.slice(1)}B`;
+        if (p.startsWith('v')) return `V=${p.slice(1)}B`;
+        if (p.startsWith('t')) return `T=${p.slice(1)}`;
+        if (p.startsWith('p')) return `P=${p.slice(1)}`;
+        if (p.startsWith('m')) return `M=${p.slice(1)}B`;
+        if (p.startsWith('f')) return `F=${p.slice(1)}`;
+        if (p === 'expire') return '+expire';
+        return p;
+      });
+      return `${cmd} ${specs.join(' ')}`;
+    }
+
     let activePlatform = PLATFORMS[0];
     let mode = 'release'; // 'release' or 'head'
     let cache = {};
@@ -263,14 +280,14 @@
       for (const w of COMPARE_WORKLOADS) {
         const v = getValueAtCommitIndex(data.valkey[w.id], vRelease.commit_index, w.id);
         const r = getValueAtCommitIndex(data.redis[w.id], rRelease.commit_index, w.id);
-        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">—</span></div>`; continue; }
+        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w.id)}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">—</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
         const p = welchPValue(v.value, v.cv, v.reps, r.value, r.cv, r.reps);
         const sig = p !== null && p < 0.05;
         const cls = sig ? (pct > 0 ? 'positive' : 'negative') : 'neutral';
         const verdict = sig ? (pct > 0 ? `${pct.toFixed(1)}% faster` : `${Math.abs(pct).toFixed(1)}% slower`) : 'Not significant';
         const delta = fmtRps(Math.abs(v.value - r.value));
-        rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-num">${fmtRps(v.value)}</span><span class="summary-num">${fmtRps(r.value)}</span><span class="summary-num ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span><span class="summary-val ${cls}">${verdict} ${pValueLabel(p)}</span></div>`;
+        rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w.id)}</span><span class="summary-num">${fmtRps(v.value)}</span><span class="summary-num">${fmtRps(r.value)}</span><span class="summary-num ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span><span class="summary-val ${cls}">${verdict} ${pValueLabel(p)}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -280,13 +297,13 @@
       for (const w of COMPARE_WORKLOADS) {
         const v = getLatestValue(data.valkey[w.id], w.id);
         const r = getLatestValue(data.redis[w.id], w.id);
-        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
+        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w.id)}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
         const p = welchPValue(v.value, v.cv, v.reps, r.value, r.cv, r.reps);
         const sig = p !== null && p < 0.05;
         const cls = sig ? (pct > 0 ? 'positive' : 'negative') : 'neutral';
         const verdict = sig ? (pct > 0 ? `${pct.toFixed(1)}% faster` : `${Math.abs(pct).toFixed(1)}% slower`) : 'Not significant';
-        rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-num">${fmtRps(v.value)}</span><span class="summary-num">${fmtRps(r.value)}</span><span class="summary-num ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span><span class="summary-val ${cls}">${verdict} ${pValueLabel(p)}</span></div>`;
+        rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w.id)}</span><span class="summary-num">${fmtRps(v.value)}</span><span class="summary-num">${fmtRps(r.value)}</span><span class="summary-num ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span><span class="summary-val ${cls}">${verdict} ${pValueLabel(p)}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -296,12 +313,12 @@
       for (const w of COMPARE_MEMORY) {
         const v = getValueAtCommitIndex(data.valkey[w], vRelease.commit_index, w);
         const r = getValueAtCommitIndex(data.redis[w], rRelease.commit_index, w);
-        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">—</span></div>`; continue; }
+        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w)}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">—</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
         const cls = pct < -1 ? 'positive' : pct > 1 ? 'negative' : 'neutral';
         const verdict = pct < -1 ? `${Math.abs(pct).toFixed(1)}% less` : pct > 1 ? `${pct.toFixed(1)}% more` : 'Equal';
         const diff = (v.value - r.value).toFixed(1);
-        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-num">${v.value.toFixed(1)} B</span><span class="summary-num">${r.value.toFixed(1)} B</span><span class="summary-num ${cls}">${diff > 0 ? '+' : ''}${diff} B</span><span class="summary-val ${cls}">${verdict}</span></div>`;
+        rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w)}</span><span class="summary-num">${v.value.toFixed(1)} B</span><span class="summary-num">${r.value.toFixed(1)} B</span><span class="summary-num ${cls}">${diff > 0 ? '+' : ''}${diff} B</span><span class="summary-val ${cls}">${verdict}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -311,12 +328,12 @@
       for (const w of COMPARE_MEMORY) {
         const v = getLatestValue(data.valkey[w], w);
         const r = getLatestValue(data.redis[w], w);
-        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
+        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w)}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
         const cls = pct < -1 ? 'positive' : pct > 1 ? 'negative' : 'neutral';
         const verdict = pct < -1 ? `${Math.abs(pct).toFixed(1)}% less` : pct > 1 ? `${pct.toFixed(1)}% more` : 'Equal';
         const diff = (v.value - r.value).toFixed(1);
-        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-num">${v.value.toFixed(1)} B</span><span class="summary-num">${r.value.toFixed(1)} B</span><span class="summary-num ${cls}">${diff > 0 ? '+' : ''}${diff} B</span><span class="summary-val ${cls}">${verdict}</span></div>`;
+        rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w)}</span><span class="summary-num">${v.value.toFixed(1)} B</span><span class="summary-num">${r.value.toFixed(1)} B</span><span class="summary-num ${cls}">${diff > 0 ? '+' : ''}${diff} B</span><span class="summary-val ${cls}">${verdict}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -382,7 +399,7 @@
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
       const workloads = type === 'throughput' ? COMPARE_WORKLOADS : COMPARE_MEMORY;
-      const labels = workloads.map(w => type === 'throughput' ? w.label : w.replace('memory-', ''));
+      const labels = workloads.map(w => type === 'throughput' ? workloadLabel(w.id) : workloadLabel(w));
       const valkeyVals = [], redisVals = [], valkeyErr = [], redisErr = [];
 
       const valkeySource = Object.values(data.valkey).find(d => d);
