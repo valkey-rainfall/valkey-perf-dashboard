@@ -39,6 +39,8 @@ async function discoverWorkloads() {
     const m = manifests[i];
     if (!m || !m.throughput_workloads) continue;
     for (const wId of m.throughput_workloads) {
+      // Skip engine-prefixed workloads (e.g. redis-get-*) -- engine prefix is added at fetch time
+      if (ENGINES.some(e => e.id !== 'valkey' && wId.startsWith(e.id + '-'))) continue;
       if (!platformWorkloads[wId]) platformWorkloads[wId] = new Set();
       platformWorkloads[wId].add(PLATFORMS[i]);
     }
