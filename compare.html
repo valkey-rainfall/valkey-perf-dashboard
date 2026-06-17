@@ -459,10 +459,10 @@
         const vOverhead = valkeyVals.map((v, i) => v !== null ? v - userData[i] : null);
         const rOverhead = redisVals.map((v, i) => v !== null ? v - userData[i] : null);
         datasets = [
-          { label: 'User Data', data: userData, backgroundColor: 'rgba(100,116,139,0.35)', borderWidth: 0, stack: 'valkey', barPercentage: 0.4, categoryPercentage: 0.8 },
-          { label: 'Valkey Overhead', data: vOverhead, backgroundColor: 'rgba(99,102,241,0.75)', borderColor: '#6366f1', borderWidth: 1, stack: 'valkey', barPercentage: 0.4, categoryPercentage: 0.8 },
-          { label: 'User Data', data: userData, backgroundColor: 'rgba(100,116,139,0.35)', borderWidth: 0, stack: 'redis', barPercentage: 0.4, categoryPercentage: 0.8 },
-          { label: 'Redis Overhead', data: rOverhead, backgroundColor: 'rgba(239,68,68,0.75)', borderColor: '#ef4444', borderWidth: 1, stack: 'redis', barPercentage: 0.4, categoryPercentage: 0.8 },
+          { label: 'User Data', data: userData, backgroundColor: 'rgba(100,116,139,0.35)', borderWidth: 0, stack: 'valkey' },
+          { label: 'Valkey Overhead', data: vOverhead, backgroundColor: 'rgba(99,102,241,0.75)', borderColor: '#6366f1', borderWidth: 1, stack: 'valkey' },
+          { label: 'User Data', data: userData, backgroundColor: 'rgba(100,116,139,0.35)', borderWidth: 0, stack: 'redis' },
+          { label: 'Redis Overhead', data: rOverhead, backgroundColor: 'rgba(239,68,68,0.75)', borderColor: '#ef4444', borderWidth: 1, stack: 'redis' },
         ];
       } else {
         datasets = [
@@ -481,6 +481,7 @@
         options: {
           indexAxis: 'y',
           responsive: true, maintainAspectRatio: false,
+          datasets: { bar: { barPercentage: 0.9, categoryPercentage: 0.95 } },
           plugins: {
             legend: { labels: { color: '#e2e8f0', boxWidth: 12, filter: (item) => type === 'memory' ? !item.text.startsWith('User Data') || item.datasetIndex === 0 : true } },
             tooltip: { callbacks: { label: ctx => {
