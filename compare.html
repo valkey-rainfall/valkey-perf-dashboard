@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valkey vs Redis — Engine Comparison</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117; --text: #e2e8f0; --card: #1a1d2e; --border: #2d3148;
+      --accent: #6366f1; --muted: #64748b; --ok: #22c55e; --warn: #eab308; --danger: #ef4444;
+      --valkey: #6366f1; --redis: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 1.5rem; }
+    header { position: sticky; top: 0; z-index: 100; background: var(--bg); padding: 0.75rem 1.5rem; margin: -1.5rem -1.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+    h1 { font-size: 1.1rem; margin: 0; }
+    h2 { font-size: 1rem; margin: 1.5rem 0 0.5rem; color: var(--text); }
+    a { color: var(--muted); text-decoration: none; font-size: 0.8rem; }
+    a:hover { color: var(--text); }
+
+    .platform-tabs { display: flex; gap: 0.3rem; }
+    .platform-tab { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 0.35rem 0.8rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
+    .platform-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    .comparison-mode { display: flex; gap: 0.3rem; margin-left: auto; }
+    .mode-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 0.35rem 0.8rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
+    .mode-btn.active { background: var(--border); color: var(--text); }
+
+    .section { margin-bottom: 2rem; }
+    .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1rem; }
+    .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+    .chart-card canvas { width: 100%; height: 220px; }
+    .chart-card h3 { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+
+    .legend { display: flex; gap: 1.5rem; align-items: center; margin: 0.75rem 0; font-size: 0.8rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; }
+    .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
+
+    .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.5rem; margin-bottom: 1rem; }
+    .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { color: var(--muted); }
+    .summary-val { font-weight: 600; }
+    .summary-val.positive { color: var(--ok); }
+    .summary-val.negative { color: var(--danger); }
+    .summary-val.neutral { color: var(--muted); }
+
+    .note { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; font-style: italic; }
+    .loading { color: var(--muted); font-size: 0.85rem; padding: 2rem; text-align: center; }
+    .badge { font-size: 0.7rem; padding: 1px 6px; border-radius: 3px; margin-left: 0.5rem; }
+    .badge-head { background: var(--warn); color: #000; }
+    .badge-release { background: var(--accent); color: #fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Valkey vs Redis — Engine Comparison</h1>
+    <div class="platform-tabs" id="platformTabs"></div>
+    <div class="comparison-mode">
+      <button class="mode-btn active" onclick="setMode('release')" id="mode-release">At Releases</button>
+      <button class="mode-btn" onclick="setMode('head')" id="mode-head">Current HEAD</button>
+    </div>
+    <a href="index.html">← Performance History</a>
+  </header>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--valkey)"></div> Valkey</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--redis)"></div> Redis</div>
+  </div>
+
+  <div id="content"><div class="loading">Loading comparison data...</div></div>
+
+  <script src="config.js"></script>
+  <script>
+    const COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms); // cross-platform only
+    const COMPARE_MEMORY = MEMORY_WORKLOADS;
+
+    let activePlatform = PLATFORMS[0];
+    let mode = 'release'; // 'release' or 'head'
+    let cache = {};
+
+    // --- Data fetching ---
+    async function fetchSeries(engine, platform, workloadId, type) {
+      const prefix = engine === 'valkey' ? '' : `${engine}-`;
+      let fileId;
+      if (type === 'memory') {
+        fileId = engine === 'valkey' ? workloadId : workloadId.replace('memory-', `memory-${engine}-`);
+      } else {
+        fileId = `${prefix}${workloadId}`;
+      }
+      const key = `${platform}-${fileId}-${type}`;
+      if (cache[key]) return cache[key];
+      try {
+        const r = await fetch(`${DATA_URL}/series-${platform}-${fileId}-${type}.json`);
+        if (!r.ok) return null;
+        cache[key] = await r.json();
+        return cache[key];
+      } catch { return null; }
+    }
+
+    // --- Extract comparison data ---
+    function getReleasesFromLandmarks(data) {
+      if (!data || !data.landmarks) return [];
+      return data.landmarks
+        .filter(l => /^\d+\./.test(l.label))
+        .sort((a, b) => a.commit_index - b.commit_index);
+    }
+
+    function getValueAtCommitIndex(data, commitIndex, workloadId) {
+      if (!data || !data.points) return null;
+      // Find closest point to this commit_index
+      let best = null, bestDist = Infinity;
+      for (const p of data.points) {
+        const dist = Math.abs(p.commit_index - commitIndex);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = p;
+        }
+      }
+      if (!best || !best.results) return null;
+      // Try exact workload key or with engine prefix
+      const result = best.results[workloadId] || best.results[`redis-${workloadId}`];
+      return result ? { value: result.rps, cv: result.cv, date: best.date, commit: best.commit, breakdown: best.breakdown } : null;
+    }
+
+    function getLatestValue(data, workloadId) {
+      if (!data || !data.points || data.points.length === 0) return null;
+      // Median of last 5 points for stability
+      const recent = data.points.slice(-5);
+      const values = recent.map(p => {
+        const r = p.results[workloadId] || p.results[`redis-${workloadId}`];
+        return r ? r.rps : null;
+      }).filter(v => v !== null);
+      if (values.length === 0) return null;
+      values.sort((a, b) => a - b);
+      const median = values[Math.floor(values.length / 2)];
+      const last = recent[recent.length - 1];
+      return { value: median, n: values.length, date: last.date, commit: last.commit, breakdown: last.breakdown };
+    }
+
+    // --- Rendering ---
+    function renderPlatformTabs() {
+      const el = document.getElementById('platformTabs');
+      el.innerHTML = PLATFORMS.map(p =>
+        `<button class="platform-tab ${p === activePlatform ? 'active' : ''}" onclick="setPlatform('${p}')">${PLATFORM_LABELS[p]}</button>`
+      ).join('');
+    }
+
+    function setPlatform(p) { activePlatform = p; renderPlatformTabs(); render(); }
+    function setMode(m) {
+      mode = m;
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`mode-${m}`).classList.add('active');
+      render();
+    }
+
+    async function render() {
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="loading">Loading...</div>';
+
+      // Fetch all data for current platform
+      const throughputData = {};
+      const memoryData = {};
+      for (const engine of ['valkey', 'redis']) {
+        throughputData[engine] = {};
+        for (const w of COMPARE_WORKLOADS) {
+          throughputData[engine][w.id] = await fetchSeries(engine, activePlatform, w.id, 'throughput');
+        }
+        memoryData[engine] = {};
+        for (const w of COMPARE_MEMORY) {
+          memoryData[engine][w] = await fetchSeries(engine, activePlatform, w, 'memory');
+        }
+      }
+
+      let html = '';
+
+      if (mode === 'release') {
+        html += renderReleaseComparison(throughputData, memoryData);
+      } else {
+        html += renderHeadComparison(throughputData, memoryData);
+      }
+
+      content.innerHTML = html;
+      // Render charts after DOM is ready
+      requestAnimationFrame(() => renderCharts(throughputData, memoryData));
+    }
+
+    function renderReleaseComparison(throughputData, memoryData) {
+      // Find the latest release for each engine
+      const valkeyReleases = getReleasesFromLandmarks(Object.values(throughputData.valkey).find(d => d));
+      const redisReleases = getReleasesFromLandmarks(Object.values(throughputData.redis).find(d => d));
+
+      const latestValkey = valkeyReleases[valkeyReleases.length - 1];
+      const latestRedis = redisReleases[redisReleases.length - 1];
+
+      if (!latestValkey || !latestRedis) {
+        return '<div class="loading">Insufficient release data for comparison.</div>';
+      }
+
+      let html = `<div class="summary-card">
+        <div class="summary-row"><span class="summary-label">Comparing</span>
+          <span>Valkey <strong>${latestValkey.label}</strong> <span class="badge badge-release">${latestValkey.date}</span>
+          vs Redis <strong>${latestRedis.label}</strong> <span class="badge badge-release">${latestRedis.date}</span></span></div>
+      </div>`;
+
+      html += '<div class="section"><h2>Throughput (requests/sec)</h2>';
+      html += '<div class="chart-grid">';
+      html += `<div class="chart-card"><h3>All Workloads — % Difference (positive = Valkey faster)</h3><canvas id="throughput-bars"></canvas></div>`;
+      html += '</div>';
+      html += renderThroughputTable(throughputData, latestValkey, latestRedis);
+      html += '</div>';
+
+      html += '<div class="section"><h2>Memory Overhead (bytes/key)</h2>';
+      html += '<div class="chart-grid">';
+      html += `<div class="chart-card"><h3>All Workloads — % Difference (positive = Valkey uses more)</h3><canvas id="memory-bars"></canvas></div>`;
+      html += '</div>';
+      html += renderMemoryTable(memoryData, latestValkey, latestRedis);
+      html += '</div>';
+
+      return html;
+    }
+
+    function renderHeadComparison(throughputData, memoryData) {
+      let html = `<div class="summary-card">
+        <div class="summary-row"><span class="summary-label">Comparing</span>
+          <span>Valkey <strong>HEAD</strong> <span class="badge badge-head">unstable</span>
+          vs Redis <strong>HEAD</strong> <span class="badge badge-head">unstable</span>
+          — median of last 5 data points</span></div>
+      </div>`;
+
+      html += '<div class="section"><h2>Throughput (requests/sec)</h2>';
+      html += '<div class="chart-grid">';
+      html += `<div class="chart-card"><h3>All Workloads — % Difference (positive = Valkey faster)</h3><canvas id="throughput-bars"></canvas></div>`;
+      html += '</div>';
+      html += renderThroughputTableHead(throughputData);
+      html += '</div>';
+
+      html += '<div class="section"><h2>Memory Overhead (bytes/key)</h2>';
+      html += '<div class="chart-grid">';
+      html += `<div class="chart-card"><h3>All Workloads — % Difference (positive = Valkey uses more)</h3><canvas id="memory-bars"></canvas></div>`;
+      html += '</div>';
+      html += renderMemoryTableHead(memoryData);
+      html += '</div>';
+
+      return html;
+    }
+
+    function renderThroughputTable(data, vRelease, rRelease) {
+      let rows = '';
+      for (const w of COMPARE_WORKLOADS) {
+        const v = getValueAtCommitIndex(data.valkey[w.id], vRelease.commit_index, w.id);
+        const r = getValueAtCommitIndex(data.redis[w.id], rRelease.commit_index, w.id);
+        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-val neutral">—</span></div>`; continue; }
+        const pct = ((v.value - r.value) / r.value * 100);
+        const cls = pct > 2 ? 'positive' : pct < -2 ? 'negative' : 'neutral';
+        rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-val ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}% (${fmtRps(v.value)} vs ${fmtRps(r.value)})</span></div>`;
+      }
+      return `<div class="summary-card">${rows}</div>`;
+    }
+
+    function renderThroughputTableHead(data) {
+      let rows = '';
+      for (const w of COMPARE_WORKLOADS) {
+        const v = getLatestValue(data.valkey[w.id], w.id);
+        const r = getLatestValue(data.redis[w.id], w.id);
+        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
+        const pct = ((v.value - r.value) / r.value * 100);
+        const cls = pct > 2 ? 'positive' : pct < -2 ? 'negative' : 'neutral';
+        rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-val ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}% (${fmtRps(v.value)} vs ${fmtRps(r.value)})</span></div>`;
+      }
+      return `<div class="summary-card">${rows}</div>`;
+    }
+
+    function renderMemoryTable(data, vRelease, rRelease) {
+      let rows = '';
+      for (const w of COMPARE_MEMORY) {
+        const v = getValueAtCommitIndex(data.valkey[w], vRelease.commit_index, w);
+        const r = getValueAtCommitIndex(data.redis[w], rRelease.commit_index, w);
+        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-val neutral">—</span></div>`; continue; }
+        const pct = ((v.value - r.value) / r.value * 100);
+        const cls = pct > 2 ? 'negative' : pct < -2 ? 'positive' : 'neutral'; // inverted: lower memory is better
+        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-val ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}% (${v.value.toFixed(1)} vs ${r.value.toFixed(1)} B/key)</span></div>`;
+      }
+      return `<div class="summary-card">${rows}</div>`;
+    }
+
+    function renderMemoryTableHead(data) {
+      let rows = '';
+      for (const w of COMPARE_MEMORY) {
+        const v = getLatestValue(data.valkey[w], w);
+        const r = getLatestValue(data.redis[w], w);
+        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
+        const pct = ((v.value - r.value) / r.value * 100);
+        const cls = pct > 2 ? 'negative' : pct < -2 ? 'positive' : 'neutral';
+        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-val ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}% (${v.value.toFixed(1)} vs ${r.value.toFixed(1)} B/key)</span></div>`;
+      }
+      return `<div class="summary-card">${rows}</div>`;
+    }
+
+    function renderCharts(throughputData, memoryData) {
+      renderBarChart('throughput-bars', throughputData, 'throughput');
+      renderBarChart('memory-bars', memoryData, 'memory');
+    }
+
+    function renderBarChart(canvasId, data, type) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const workloads = type === 'throughput' ? COMPARE_WORKLOADS : COMPARE_MEMORY;
+      const labels = workloads.map(w => type === 'throughput' ? w.label : w.replace('memory-', ''));
+      const diffs = [];
+
+      // Get comparison values based on mode
+      const valkeySource = Object.values(type === 'throughput' ? data.valkey : data.valkey).find(d => d);
+      const redisSource = Object.values(type === 'throughput' ? data.redis : data.redis).find(d => d);
+      const vReleases = getReleasesFromLandmarks(valkeySource);
+      const rReleases = getReleasesFromLandmarks(redisSource);
+      const latestV = vReleases[vReleases.length - 1];
+      const latestR = rReleases[rReleases.length - 1];
+
+      for (const w of workloads) {
+        const wId = type === 'throughput' ? w.id : w;
+        const vData = type === 'throughput' ? data.valkey[wId] : data.valkey[wId];
+        const rData = type === 'throughput' ? data.redis[wId] : data.redis[wId];
+
+        let v, r;
+        if (mode === 'release' && latestV && latestR) {
+          v = getValueAtCommitIndex(vData, latestV.commit_index, wId);
+          r = getValueAtCommitIndex(rData, latestR.commit_index, wId);
+        } else {
+          v = getLatestValue(vData, wId);
+          r = getLatestValue(rData, wId);
+        }
+        if (v && r && r.value !== 0) {
+          let pct = (v.value - r.value) / r.value * 100;
+          if (type === 'memory') pct = -pct; // invert: less memory = positive
+          diffs.push(pct);
+        } else {
+          diffs.push(null);
+        }
+      }
+
+      new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            data: diffs,
+            backgroundColor: diffs.map(d => d === null ? '#333' : d > 0 ? 'rgba(99,102,241,0.7)' : 'rgba(239,68,68,0.7)'),
+            borderColor: diffs.map(d => d === null ? '#555' : d > 0 ? '#6366f1' : '#ef4444'),
+            borderWidth: 1,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ctx.raw !== null ? `${ctx.raw > 0 ? '+' : ''}${ctx.raw.toFixed(1)}%` : 'No data' } }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', callback: v => `${v > 0 ? '+' : ''}${v}%` },
+              title: { display: true, text: type === 'throughput' ? 'Valkey faster →' : '← Valkey more efficient', color: '#64748b', font: { size: 11 } }
+            },
+            y: { grid: { display: false }, ticks: { color: '#e2e8f0', font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function fmtRps(v) {
+      if (v >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+      if (v >= 1e3) return (v / 1e3).toFixed(0) + 'K';
+      return v.toFixed(0);
+    }
+
+    // --- Init ---
+    renderPlatformTabs();
+    render();
+  </script>
+</body>
+</html>
