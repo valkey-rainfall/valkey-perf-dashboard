@@ -207,14 +207,14 @@
 
       html += '<div class="section"><h2>Throughput (requests/sec)</h2>';
       html += '<div class="chart-grid">';
-      html += `<div class="chart-card"><h3>All Workloads — % Difference (positive = Valkey faster)</h3><canvas id="throughput-bars"></canvas></div>`;
+      html += `<div class="chart-card"><h3>Throughput by Workload</h3><canvas id="throughput-bars"></canvas></div>`;
       html += '</div>';
       html += renderThroughputTable(throughputData, latestValkey, latestRedis);
       html += '</div>';
 
       html += '<div class="section"><h2>Memory Overhead (bytes/key)</h2>';
       html += '<div class="chart-grid">';
-      html += `<div class="chart-card"><h3>All Workloads — % Difference (positive = Valkey uses more)</h3><canvas id="memory-bars"></canvas></div>`;
+      html += `<div class="chart-card"><h3>Memory by Workload</h3><canvas id="memory-bars"></canvas></div>`;
       html += '</div>';
       html += renderMemoryTable(memoryData, latestValkey, latestRedis);
       html += '</div>';
@@ -232,14 +232,14 @@
 
       html += '<div class="section"><h2>Throughput (requests/sec)</h2>';
       html += '<div class="chart-grid">';
-      html += `<div class="chart-card"><h3>All Workloads — % Difference (positive = Valkey faster)</h3><canvas id="throughput-bars"></canvas></div>`;
+      html += `<div class="chart-card"><h3>Throughput by Workload</h3><canvas id="throughput-bars"></canvas></div>`;
       html += '</div>';
       html += renderThroughputTableHead(throughputData);
       html += '</div>';
 
       html += '<div class="section"><h2>Memory Overhead (bytes/key)</h2>';
       html += '<div class="chart-grid">';
-      html += `<div class="chart-card"><h3>All Workloads — % Difference (positive = Valkey uses more)</h3><canvas id="memory-bars"></canvas></div>`;
+      html += `<div class="chart-card"><h3>Memory by Workload</h3><canvas id="memory-bars"></canvas></div>`;
       html += '</div>';
       html += renderMemoryTableHead(memoryData);
       html += '</div>';
@@ -255,7 +255,8 @@
         if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-val neutral">—</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
         const cls = pct > 2 ? 'positive' : pct < -2 ? 'negative' : 'neutral';
-        rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-val ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}% (${fmtRps(v.value)} vs ${fmtRps(r.value)})</span></div>`;
+        const verdict = pct > 2 ? `Valkey ${pct.toFixed(1)}% faster` : pct < -2 ? `Valkey ${Math.abs(pct).toFixed(1)}% slower` : 'Within noise';
+        rows += `<div class="summary-row"><span class="summary-label">${w.label}<br><span style="font-size:0.75rem">${fmtRps(v.value)} vs ${fmtRps(r.value)}</span></span><span class="summary-val ${cls}">${verdict}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -268,7 +269,8 @@
         if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
         const cls = pct > 2 ? 'positive' : pct < -2 ? 'negative' : 'neutral';
-        rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-val ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}% (${fmtRps(v.value)} vs ${fmtRps(r.value)})</span></div>`;
+        const verdict = pct > 2 ? `Valkey ${pct.toFixed(1)}% faster` : pct < -2 ? `Valkey ${Math.abs(pct).toFixed(1)}% slower` : 'Within noise';
+        rows += `<div class="summary-row"><span class="summary-label">${w.label}<br><span style="font-size:0.75rem">${fmtRps(v.value)} vs ${fmtRps(r.value)}</span></span><span class="summary-val ${cls}">${verdict}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -281,7 +283,8 @@
         if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-val neutral">—</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
         const cls = pct > 2 ? 'negative' : pct < -2 ? 'positive' : 'neutral'; // inverted: lower memory is better
-        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-val ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}% (${v.value.toFixed(1)} vs ${r.value.toFixed(1)} B/key)</span></div>`;
+        const verdict = pct < -2 ? `Valkey ${Math.abs(pct).toFixed(1)}% less` : pct > 2 ? `Valkey ${pct.toFixed(1)}% more` : 'Within noise';
+        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}<br><span style="font-size:0.75rem">${v.value.toFixed(1)} vs ${r.value.toFixed(1)} B/key</span></span><span class="summary-val ${cls}">${verdict}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -294,7 +297,8 @@
         if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
         const cls = pct > 2 ? 'negative' : pct < -2 ? 'positive' : 'neutral';
-        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-val ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}% (${v.value.toFixed(1)} vs ${r.value.toFixed(1)} B/key)</span></div>`;
+        const verdict = pct < -2 ? `Valkey ${Math.abs(pct).toFixed(1)}% less` : pct > 2 ? `Valkey ${pct.toFixed(1)}% more` : 'Within noise';
+        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}<br><span style="font-size:0.75rem">${v.value.toFixed(1)} vs ${r.value.toFixed(1)} B/key</span></span><span class="summary-val ${cls}">${verdict}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -309,11 +313,10 @@
       if (!canvas) return;
       const workloads = type === 'throughput' ? COMPARE_WORKLOADS : COMPARE_MEMORY;
       const labels = workloads.map(w => type === 'throughput' ? w.label : w.replace('memory-', ''));
-      const diffs = [];
+      const valkeyVals = [], redisVals = [];
 
-      // Get comparison values based on mode
-      const valkeySource = Object.values(type === 'throughput' ? data.valkey : data.valkey).find(d => d);
-      const redisSource = Object.values(type === 'throughput' ? data.redis : data.redis).find(d => d);
+      const valkeySource = Object.values(data.valkey).find(d => d);
+      const redisSource = Object.values(data.redis).find(d => d);
       const vReleases = getReleasesFromLandmarks(valkeySource);
       const rReleases = getReleasesFromLandmarks(redisSource);
       const latestV = vReleases[vReleases.length - 1];
@@ -321,46 +324,38 @@
 
       for (const w of workloads) {
         const wId = type === 'throughput' ? w.id : w;
-        const vData = type === 'throughput' ? data.valkey[wId] : data.valkey[wId];
-        const rData = type === 'throughput' ? data.redis[wId] : data.redis[wId];
-
         let v, r;
         if (mode === 'release' && latestV && latestR) {
-          v = getValueAtCommitIndex(vData, latestV.commit_index, wId);
-          r = getValueAtCommitIndex(rData, latestR.commit_index, wId);
+          v = getValueAtCommitIndex(data.valkey[wId], latestV.commit_index, wId);
+          r = getValueAtCommitIndex(data.redis[wId], latestR.commit_index, wId);
         } else {
-          v = getLatestValue(vData, wId);
-          r = getLatestValue(rData, wId);
+          v = getLatestValue(data.valkey[wId], wId);
+          r = getLatestValue(data.redis[wId], wId);
         }
-        if (v && r && r.value !== 0) {
-          let pct = (v.value - r.value) / r.value * 100;
-          if (type === 'memory') pct = -pct; // invert: less memory = positive
-          diffs.push(pct);
-        } else {
-          diffs.push(null);
-        }
+        valkeyVals.push(v ? v.value : null);
+        redisVals.push(r ? r.value : null);
       }
 
+      const unit = type === 'throughput' ? ' rps' : ' B/key';
       new Chart(canvas, {
         type: 'bar',
         data: {
           labels,
-          datasets: [{
-            data: diffs,
-            backgroundColor: diffs.map(d => d === null ? '#333' : d > 0 ? 'rgba(99,102,241,0.7)' : 'rgba(239,68,68,0.7)'),
-            borderColor: diffs.map(d => d === null ? '#555' : d > 0 ? '#6366f1' : '#ef4444'),
-            borderWidth: 1,
-          }]
+          datasets: [
+            { label: 'Valkey', data: valkeyVals, backgroundColor: 'rgba(99,102,241,0.75)', borderColor: '#6366f1', borderWidth: 1 },
+            { label: 'Redis', data: redisVals, backgroundColor: 'rgba(239,68,68,0.75)', borderColor: '#ef4444', borderWidth: 1 },
+          ]
         },
         options: {
           indexAxis: 'y',
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false },
-            tooltip: { callbacks: { label: ctx => ctx.raw !== null ? `${ctx.raw > 0 ? '+' : ''}${ctx.raw.toFixed(1)}%` : 'No data' } }
+          plugins: {
+            legend: { labels: { color: '#e2e8f0', boxWidth: 12 } },
+            tooltip: { callbacks: { label: ctx => ctx.raw !== null ? `${ctx.dataset.label}: ${type === 'throughput' ? fmtRps(ctx.raw) : ctx.raw.toFixed(1) + ' B/key'}` : 'No data' } }
           },
           scales: {
-            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', callback: v => `${v > 0 ? '+' : ''}${v}%` },
-              title: { display: true, text: type === 'throughput' ? 'Valkey faster →' : '← Valkey more efficient', color: '#64748b', font: { size: 11 } }
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', callback: v => type === 'throughput' ? fmtRps(v) : v + ' B' },
+              title: { display: true, text: type === 'throughput' ? 'Requests/sec' : 'Bytes/key', color: '#64748b', font: { size: 11 } }
             },
             y: { grid: { display: false }, ticks: { color: '#e2e8f0', font: { size: 11 } } }
           }
