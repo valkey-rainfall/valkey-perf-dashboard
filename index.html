@@ -312,6 +312,38 @@
           bar.appendChild(chip);
         }
       }
+
+      // Clear button (only show when something is selected or filtered)
+      const hasFilter = Object.values(activeFilters).some(v => v);
+      if (selectedWorkloads.length > 0 || hasFilter) {
+        bar.appendChild(Object.assign(document.createElement('span'), { style: 'width:1px;height:16px;background:var(--border)' }));
+        const clear = document.createElement('span');
+        clear.className = 'chip';
+        clear.style.borderColor = 'var(--danger)';
+        clear.style.color = 'var(--danger)';
+        clear.textContent = '✕ Clear';
+        clear.onclick = clearSelection;
+        bar.appendChild(clear);
+      }
+    }
+
+    function clearSelection() {
+      selectedWorkloads = [];
+      primaryWorkload = null;
+      activeFilters = { engine: null, platform: null, command: null, valsize: null };
+      buildChips();
+      buildSelectorItems();
+      updateSelectorSummary();
+      updateHashState();
+      // Clear charts
+      if (chart) { chart.destroy(); chart = null; }
+      allCharts.forEach(c => c.destroy()); allCharts = [];
+      document.getElementById('chartInfo').innerHTML = '<span style="color:var(--muted)">Select a workload to view</span>';
+      document.getElementById('memoryChartsGrid').innerHTML = '';
+      document.getElementById('perfCharts').innerHTML = '';
+      document.getElementById('latencySection').style.display = 'none';
+      document.getElementById('annotations').innerHTML = '';
+      document.getElementById('datapoints').innerHTML = '';
     }
 
     function toggleSelection(item) {
