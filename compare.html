@@ -76,7 +76,7 @@
 
   <script src="config.js"></script>
   <script>
-    const COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms); // cross-platform only
+    let COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms); // cross-platform only
     const COMPARE_MEMORY = MEMORY_WORKLOADS;
 
     function workloadLabel(id) {
@@ -532,8 +532,12 @@
     }
 
     // --- Init ---
-    renderPlatformTabs();
-    render();
+    (async () => {
+      await discoverWorkloads();
+      COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms);
+      renderPlatformTabs();
+      render();
+    })();
   </script>
 </body>
 </html>

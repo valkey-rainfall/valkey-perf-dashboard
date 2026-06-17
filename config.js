@@ -7,17 +7,59 @@ const ENGINES = [
 ];
 const PLATFORMS = ['amd64', 'arm64', 'intel'];
 const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
-const THROUGHPUT_WORKLOADS = [
+// Fallback workloads (used if manifest fetch fails)
+let THROUGHPUT_WORKLOADS = [
   { id: 'get-k16-v16-t7-p10', label: 'GET k16 v16' },
   { id: 'get-k16-v64-t7-p10', label: 'GET k16 v64' },
   { id: 'get-k16-v128-t7-p10', label: 'GET k16 v128' },
   { id: 'set-k16-v16-t7-p10', label: 'SET k16 v16' },
   { id: 'set-k16-v128-t7-p10', label: 'SET k16 v128' },
+  { id: 'get-k16-v16-t7-p1', label: 'GET k16 v16 P1' },
+  { id: 'get-k16-v128-t7-p1', label: 'GET k16 v128 P1' },
+  { id: 'set-k16-v16-t7-p1', label: 'SET k16 v16 P1' },
+  { id: 'set-k16-v128-t7-p1', label: 'SET k16 v128 P1' },
   { id: 'get-k16-v16-t24-p100', label: 'GET t24 P100 (Intel)', platforms: ['intel'] },
   { id: 'set-k16-v16-t24-p100', label: 'SET t24 P100 (Intel)', platforms: ['intel'] },
   { id: 'get-k16-v16-t9-p50', label: 'GET t9 P50 (ARM)', platforms: ['arm64'] },
   { id: 'set-k16-v16-t9-p50', label: 'SET t9 P50 (ARM)', platforms: ['arm64'] },
 ];
+
+// Auto-discover workloads from per-platform manifests on data server.
+// Merges all platforms, infers platform restrictions.
+async function discoverWorkloads() {
+  const manifests = await Promise.all(PLATFORMS.map(async p => {
+    try {
+      const r = await fetch(`${DATA_URL}/manifest-${p}.json`);
+      if (!r.ok) return null;
+      return await r.json();
+    } catch { return null; }
+  }));
+  const platformWorkloads = {}; // workload_id -> Set of platforms it appears on
+  for (let i = 0; i < PLATFORMS.length; i++) {
+    const m = manifests[i];
+    if (!m || !m.throughput_workloads) continue;
+    for (const wId of m.throughput_workloads) {
+      if (!platformWorkloads[wId]) platformWorkloads[wId] = new Set();
+      platformWorkloads[wId].add(PLATFORMS[i]);
+    }
+  }
+  if (Object.keys(platformWorkloads).length === 0) return; // Keep fallback
+  THROUGHPUT_WORKLOADS = Object.entries(platformWorkloads).map(([id, plats]) => {
+    // Generate human label from ID: get-k16-v128-t7-p1 -> "GET k16 v128 P1"
+    const m = id.match(/^(?:(redis)-)?(get|set)-k(\d+)-v(\d+)-t(\d+)-p(\d+)$/);
+    let label = id;
+    if (m) {
+      const [, engine, cmd, k, v, t, p] = m;
+      label = `${cmd.toUpperCase()} k${k} v${v}`;
+      if (p !== '10') label += ` P${p}`;
+      if (t !== '7') label += ` t${t}`;
+      if (engine) label = `Redis ${label}`;
+    }
+    const entry = { id, label };
+    if (plats.size < PLATFORMS.length) entry.platforms = [...plats];
+    return entry;
+  });
+}
 const MEMORY_WORKLOADS = ['memory-set-k16-v64', 'memory-set-k16-v64-expire', 'memory-zadd-m20', 'memory-sadd-m20', 'memory-hset-f64-v64'];
 const MEMORY_USER_DATA = {
   'memory-set-k16-v64': 80, 'memory-set-k16-v64-expire': 80,
