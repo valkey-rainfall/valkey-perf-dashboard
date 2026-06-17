@@ -718,7 +718,7 @@
 
       for (const workloadId of MEMORY_WORKLOADS) {
         try {
-          const fileId = getEngine() === 'valkey' ? workloadId : `${getEngine()}-${workloadId}`;
+          const fileId = getEngine() === 'valkey' ? workloadId : workloadId.replace('memory-', `memory-${getEngine()}-`);
           const r = await fetch(`${DATA_URL}/series-${platform}-${fileId}-memory.json`);
           if (!r.ok) continue;
           const memData = await r.json();
