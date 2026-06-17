@@ -122,22 +122,25 @@
       if (!best || !best.results) return null;
       // Try exact workload key or with engine prefix
       const result = best.results[workloadId] || best.results[`redis-${workloadId}`];
-      return result ? { value: result.rps, cv: result.cv, date: best.date, commit: best.commit, breakdown: best.breakdown } : null;
+      return result ? { value: result.rps, cv: result.cv, reps: result.reps || 3, date: best.date, commit: best.commit, breakdown: best.breakdown } : null;
     }
 
     function getLatestValue(data, workloadId) {
       if (!data || !data.points || data.points.length === 0) return null;
-      // Median of last 5 points for stability
+      // Use last 5 points: median value, pooled CV, total reps
       const recent = data.points.slice(-5);
-      const values = recent.map(p => {
+      const entries = recent.map(p => {
         const r = p.results[workloadId] || p.results[`redis-${workloadId}`];
-        return r ? r.rps : null;
+        return r ? { rps: r.rps, cv: r.cv, reps: r.reps || 3 } : null;
       }).filter(v => v !== null);
-      if (values.length === 0) return null;
-      values.sort((a, b) => a - b);
+      if (entries.length === 0) return null;
+      const values = entries.map(e => e.rps).sort((a, b) => a - b);
       const median = values[Math.floor(values.length / 2)];
+      const totalReps = entries.reduce((s, e) => s + e.reps, 0);
+      // Pooled CV: RMS of individual CVs
+      const pooledCv = Math.sqrt(entries.reduce((s, e) => s + e.cv * e.cv, 0) / entries.length);
       const last = recent[recent.length - 1];
-      return { value: median, n: values.length, date: last.date, commit: last.commit, breakdown: last.breakdown };
+      return { value: median, cv: pooledCv, reps: totalReps, n: entries.length, date: last.date, commit: last.commit, breakdown: last.breakdown };
     }
 
     // --- Rendering ---
@@ -254,9 +257,11 @@
         const r = getValueAtCommitIndex(data.redis[w.id], rRelease.commit_index, w.id);
         if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-val neutral">—</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
-        const cls = pct > 2 ? 'positive' : pct < -2 ? 'negative' : 'neutral';
-        const verdict = pct > 2 ? `Valkey ${pct.toFixed(1)}% faster` : pct < -2 ? `Valkey ${Math.abs(pct).toFixed(1)}% slower` : 'Within noise';
-        rows += `<div class="summary-row"><span class="summary-label">${w.label}<br><span style="font-size:0.75rem">${fmtRps(v.value)} vs ${fmtRps(r.value)}</span></span><span class="summary-val ${cls}">${verdict}</span></div>`;
+        const p = welchPValue(v.value, v.cv, v.reps, r.value, r.cv, r.reps);
+        const sig = p !== null && p < 0.05;
+        const cls = sig ? (pct > 0 ? 'positive' : 'negative') : 'neutral';
+        const verdict = sig ? (pct > 0 ? `Valkey ${pct.toFixed(1)}% faster` : `Valkey ${Math.abs(pct).toFixed(1)}% slower`) : 'Not significant';
+        rows += `<div class="summary-row"><span class="summary-label">${w.label}<br><span style="font-size:0.75rem">${fmtRps(v.value)} vs ${fmtRps(r.value)}</span></span><span class="summary-val ${cls}">${verdict} ${pValueLabel(p)}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -268,9 +273,11 @@
         const r = getLatestValue(data.redis[w.id], w.id);
         if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.label}</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
-        const cls = pct > 2 ? 'positive' : pct < -2 ? 'negative' : 'neutral';
-        const verdict = pct > 2 ? `Valkey ${pct.toFixed(1)}% faster` : pct < -2 ? `Valkey ${Math.abs(pct).toFixed(1)}% slower` : 'Within noise';
-        rows += `<div class="summary-row"><span class="summary-label">${w.label}<br><span style="font-size:0.75rem">${fmtRps(v.value)} vs ${fmtRps(r.value)}</span></span><span class="summary-val ${cls}">${verdict}</span></div>`;
+        const p = welchPValue(v.value, v.cv, v.reps, r.value, r.cv, r.reps);
+        const sig = p !== null && p < 0.05;
+        const cls = sig ? (pct > 0 ? 'positive' : 'negative') : 'neutral';
+        const verdict = sig ? (pct > 0 ? `Valkey ${pct.toFixed(1)}% faster` : `Valkey ${Math.abs(pct).toFixed(1)}% slower`) : 'Not significant';
+        rows += `<div class="summary-row"><span class="summary-label">${w.label}<br><span style="font-size:0.75rem">${fmtRps(v.value)} vs ${fmtRps(r.value)}</span></span><span class="summary-val ${cls}">${verdict} ${pValueLabel(p)}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -282,9 +289,11 @@
         const r = getValueAtCommitIndex(data.redis[w], rRelease.commit_index, w);
         if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-val neutral">—</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
-        const cls = pct > 2 ? 'negative' : pct < -2 ? 'positive' : 'neutral'; // inverted: lower memory is better
-        const verdict = pct < -2 ? `Valkey ${Math.abs(pct).toFixed(1)}% less` : pct > 2 ? `Valkey ${pct.toFixed(1)}% more` : 'Within noise';
-        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}<br><span style="font-size:0.75rem">${v.value.toFixed(1)} vs ${r.value.toFixed(1)} B/key</span></span><span class="summary-val ${cls}">${verdict}</span></div>`;
+        const p = welchPValue(v.value, v.cv, v.reps, r.value, r.cv, r.reps);
+        const sig = p !== null && p < 0.05;
+        const cls = sig ? (pct < 0 ? 'positive' : 'negative') : 'neutral';
+        const verdict = sig ? (pct < 0 ? `Valkey ${Math.abs(pct).toFixed(1)}% less` : `Valkey ${pct.toFixed(1)}% more`) : 'Not significant';
+        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}<br><span style="font-size:0.75rem">${v.value.toFixed(1)} vs ${r.value.toFixed(1)} B/key</span></span><span class="summary-val ${cls}">${verdict} ${pValueLabel(p)}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -296,11 +305,65 @@
         const r = getLatestValue(data.redis[w], w);
         if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
-        const cls = pct > 2 ? 'negative' : pct < -2 ? 'positive' : 'neutral';
-        const verdict = pct < -2 ? `Valkey ${Math.abs(pct).toFixed(1)}% less` : pct > 2 ? `Valkey ${pct.toFixed(1)}% more` : 'Within noise';
-        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}<br><span style="font-size:0.75rem">${v.value.toFixed(1)} vs ${r.value.toFixed(1)} B/key</span></span><span class="summary-val ${cls}">${verdict}</span></div>`;
+        const p = welchPValue(v.value, v.cv, v.reps, r.value, r.cv, r.reps);
+        const sig = p !== null && p < 0.05;
+        const cls = sig ? (pct < 0 ? 'positive' : 'negative') : 'neutral';
+        const verdict = sig ? (pct < 0 ? `Valkey ${Math.abs(pct).toFixed(1)}% less` : `Valkey ${pct.toFixed(1)}% more`) : 'Not significant';
+        rows += `<div class="summary-row"><span class="summary-label">${w.replace('memory-','')}<br><span style="font-size:0.75rem">${v.value.toFixed(1)} vs ${r.value.toFixed(1)} B/key</span></span><span class="summary-val ${cls}">${verdict} ${pValueLabel(p)}</span></div>`;
       }
       return `<div class="summary-card">${rows}</div>`;
+    }
+
+    // --- Stats helpers ---
+    function ci95(value, cv, reps) {
+      // CI95 half-width from CV% and sample size (t ≈ 2 for small n)
+      if (!cv || !reps || reps < 2) return 0;
+      const se = (cv / 100) * value / Math.sqrt(reps);
+      return 1.96 * se;
+    }
+
+    function welchPValue(v1, cv1, n1, v2, cv2, n2) {
+      // Approximate Welch's t-test p-value from means, CVs, and sample sizes
+      if (!cv1 || !cv2 || n1 < 2 || n2 < 2) return null;
+      const s1 = (cv1 / 100) * v1; // std dev
+      const s2 = (cv2 / 100) * v2;
+      const se = Math.sqrt((s1 * s1) / n1 + (s2 * s2) / n2);
+      if (se === 0) return 0; // identical measurements
+      const t = Math.abs(v1 - v2) / se;
+      // Welch-Satterthwaite df
+      const a = (s1 * s1) / n1, b = (s2 * s2) / n2;
+      const df = ((a + b) ** 2) / (a * a / (n1 - 1) + b * b / (n2 - 1));
+      // Approximate p-value from t and df using regularized incomplete beta
+      return tDistPValue(t, df);
+    }
+
+    function tDistPValue(t, df) {
+      // Two-tailed p-value approximation using normal for large df, otherwise beta approx
+      if (df > 100) {
+        // Normal approximation
+        const z = t;
+        return 2 * (1 - normalCDF(z));
+      }
+      // Approximation via: p ≈ 2 * (1 - normalCDF(t * (1 - 1/(4*df))))
+      const adj = t * (1 - 1 / (4 * df));
+      return 2 * (1 - normalCDF(adj));
+    }
+
+    function normalCDF(x) {
+      // Abramowitz & Stegun approximation
+      if (x < 0) return 1 - normalCDF(-x);
+      const t = 1 / (1 + 0.2316419 * x);
+      const d = 0.3989422804014327; // 1/sqrt(2*pi)
+      const p = d * Math.exp(-x * x / 2) * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+      return 1 - p;
+    }
+
+    function pValueLabel(p) {
+      if (p === null) return '';
+      if (p < 0.001) return '<span style="color:var(--ok);font-weight:600">p&lt;0.001</span>';
+      if (p < 0.01) return `<span style="color:var(--ok)">p=${p.toFixed(3)}</span>`;
+      if (p < 0.05) return `<span style="color:var(--warn)">p=${p.toFixed(3)}</span>`;
+      return `<span style="color:var(--muted)">p=${p.toFixed(2)} (n.s.)</span>`;
     }
 
     function renderCharts(throughputData, memoryData) {
@@ -313,7 +376,7 @@
       if (!canvas) return;
       const workloads = type === 'throughput' ? COMPARE_WORKLOADS : COMPARE_MEMORY;
       const labels = workloads.map(w => type === 'throughput' ? w.label : w.replace('memory-', ''));
-      const valkeyVals = [], redisVals = [];
+      const valkeyVals = [], redisVals = [], valkeyErr = [], redisErr = [];
 
       const valkeySource = Object.values(data.valkey).find(d => d);
       const redisSource = Object.values(data.redis).find(d => d);
@@ -334,11 +397,43 @@
         }
         valkeyVals.push(v ? v.value : null);
         redisVals.push(r ? r.value : null);
+        valkeyErr.push(v ? ci95(v.value, v.cv, v.reps) : 0);
+        redisErr.push(r ? ci95(r.value, r.cv, r.reps) : 0);
       }
 
-      const unit = type === 'throughput' ? ' rps' : ' B/key';
+      // Error bar plugin (draws CI95 whiskers)
+      const errorBarPlugin = {
+        id: 'errorBars',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          chart.data.datasets.forEach((ds, dsIdx) => {
+            const meta = chart.getDatasetMeta(dsIdx);
+            const errs = dsIdx === 0 ? valkeyErr : redisErr;
+            meta.data.forEach((bar, i) => {
+              const err = errs[i];
+              if (!err || !ds.data[i]) return;
+              const scale = chart.scales.x;
+              const xCenter = bar.x;
+              const xMin = scale.getPixelForValue(ds.data[i] - err);
+              const xMax = scale.getPixelForValue(ds.data[i] + err);
+              const y = bar.y;
+              ctx.save();
+              ctx.strokeStyle = '#e2e8f0';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.moveTo(xMin, y); ctx.lineTo(xMax, y);
+              ctx.moveTo(xMin, y - 4); ctx.lineTo(xMin, y + 4);
+              ctx.moveTo(xMax, y - 4); ctx.lineTo(xMax, y + 4);
+              ctx.stroke();
+              ctx.restore();
+            });
+          });
+        }
+      };
+
       new Chart(canvas, {
         type: 'bar',
+        plugins: [errorBarPlugin],
         data: {
           labels,
           datasets: [
@@ -351,7 +446,7 @@
           responsive: true, maintainAspectRatio: false,
           plugins: {
             legend: { labels: { color: '#e2e8f0', boxWidth: 12 } },
-            tooltip: { callbacks: { label: ctx => ctx.raw !== null ? `${ctx.dataset.label}: ${type === 'throughput' ? fmtRps(ctx.raw) : ctx.raw.toFixed(1) + ' B/key'}` : 'No data' } }
+            tooltip: { callbacks: { label: ctx => ctx.raw !== null ? `${ctx.dataset.label}: ${type === 'throughput' ? fmtRps(ctx.raw) : ctx.raw.toFixed(1) + ' B/key'} ±${type === 'throughput' ? fmtRps(ctx.datasetIndex === 0 ? valkeyErr[ctx.dataIndex] : redisErr[ctx.dataIndex]) : (ctx.datasetIndex === 0 ? valkeyErr[ctx.dataIndex] : redisErr[ctx.dataIndex]).toFixed(1)}` : 'No data' } }
           },
           scales: {
             x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', callback: v => type === 'throughput' ? fmtRps(v) : v + ' B' },
