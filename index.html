@@ -172,7 +172,7 @@
 
   <!-- Latency Band Chart -->
   <div id="latencySection" style="display:none">
-    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Request Latency (P=1 @ 100K rps flat)</h2><button class="help-btn" onclick="showHelp('latency')">?</button></div>
+    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 id="latencyHeader" style="margin:0">Request Latency (P=1 @ 100K rps flat)</h2><button class="help-btn" onclick="showHelp('latency')">?</button></div>
     <div class="chart-panel chart-panel--throughput" style="position:relative"><canvas id="latencyChart"></canvas></div>
     <div id="latencyInfo" class="info-row"></div>
   </div>
@@ -907,10 +907,17 @@
     async function renderLatency(platform) {
       if (latencyChartInstance) { latencyChartInstance.destroy(); allCharts = allCharts.filter(c => c !== latencyChartInstance); latencyChartInstance = null; }
       const section = document.getElementById('latencySection');
+      // Derive latency workload from primary selection (command + k16-v16, no thread/pipe suffix)
+      const command = primaryWorkload?.workloadId?.match(/^(get|set)/)?.[1] || 'get';
+      const baseLatencyId = `${command}-k16-v16`;
+      const engine = getEngine();
+      const latencyFileId = engine === 'valkey' ? baseLatencyId : `${engine}-${baseLatencyId}`;
       let resp;
-      try { resp = await fetch(`${DATA_URL}/series-${platform}-get-k16-v16-latency.json`); } catch { section.style.display = 'none'; return; }
+      try { resp = await fetch(`${DATA_URL}/series-${platform}-${latencyFileId}-latency.json`); } catch { section.style.display = 'none'; return; }
       if (!resp.ok) { section.style.display = 'none'; return; }
       section.style.display = '';
+      const engineLabel = ENGINES.find(e => e.id === engine)?.label || 'Valkey';
+      document.getElementById('latencyHeader').textContent = `${engineLabel} ${command.toUpperCase()} Latency (P=1 @ 100K rps flat)`;
       const data = await resp.json();
       const pts = data.points.sort((a, b) => a.commit_index - b.commit_index);
       if (!pts.length) { section.style.display = 'none'; return; }
