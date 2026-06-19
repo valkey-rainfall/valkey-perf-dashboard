@@ -74,6 +74,11 @@ const CATEGORY_COLORS = {
   robj_embval: '#6366f1', robj_embkey: '#f472b6', sds: '#10b981', hashtable: '#f59e0b', hash_entry: '#fb923c', skiplist: '#ef4444',
   robj: '#06b6d4', listpack: '#a855f7', dict: '#78716c', server_infra: '#84cc16', other: '#9ca3af',
   'tma-retiring-pct': '#22c55e', 'tma-fe-bound-pct': '#f59e0b', 'tma-be-bound-pct': '#ef4444', 'tma-bad-spec-pct': '#8b5cf6',
+  // CPU profile categories (main + IO thread flamegraph breakdown)
+  hash_lookup: '#f59e0b', command_parse: '#6366f1', command_overhead: '#8b5cf6', reply_build: '#06b6d4',
+  string_ops: '#14b8a6', networking_io: '#3b82f6', memory_alloc: '#a855f7', commandlog: '#eab308',
+  key_access: '#10b981', cleanup: '#f472b6', acl_check: '#fb923c', synchronization: '#ef4444',
+  idle: '#cbd5e1',
 };
 const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -122,6 +127,19 @@ const HELP_TEXT = {
       </ul>
       <p><strong>For Valkey:</strong> Backend-bound dominates because the main loop does random hash table lookups (pointer chasing, poor cache locality). Improvements to data structure layout directly reduce backend stalls.</p>
       <p><strong>Only available on Intel</strong> (Sapphire Rapids). ARM and AMD use different stall metrics.</p>
+    `
+  },
+  cpu: {
+    title: 'CPU Profile (per-thread flamegraph)',
+    content: `
+      <p><strong>What it measures:</strong> On-CPU time decomposed by functional category, sampled with <code>perf record --call-graph fp</code> during the throughput run (zero measurable overhead). Collapsed stacks are categorized by leaf function, normalized to 100% of samples per commit.</p>
+      <p><strong>Two charts:</strong></p>
+      <ul>
+        <li><strong>Main Thread</strong> — the single-threaded command-processing loop (the throughput bottleneck): hash lookups, command parsing, reply building, etc.</li>
+        <li><strong>IO Threads</strong> — socket read/write, RESP parsing, and the <span style="color:#cbd5e1">■</span> <strong>idle</strong> band (job-queue spin + epoll wait) that dominates at low pipeline depth.</li>
+      </ul>
+      <p><strong>How to read it:</strong> Each vertical slice is one commit; band thickness is that category's share of CPU samples. A band growing over time means that category is taking a larger fraction of CPU — useful for attributing throughput regressions to specific code paths.</p>
+      <p><strong>Forward-only:</strong> only commits swept after CPU profiling was enabled have data, so the series is sparse on the historical timeline.</p>
     `
   },
   latency: {

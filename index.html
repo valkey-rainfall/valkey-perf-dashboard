@@ -814,8 +814,40 @@
       for (const group of perfGroups) {
         const datasets = []; let maxIdx = 0; let colorIdx = 0;
         const isTMA = group.id === 'tma';
+        const isCPU = group.id === 'cpu-main' || group.id === 'cpu-io';
 
-        if (isTMA) {
+        if (isCPU) {
+          // Single series file per CPU chart; each point has a `breakdown` dict
+          // (category -> %). Render as a 100%-normalized stacked area (like memory).
+          let cpuPts = null, categories = null;
+          try {
+            const r = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-${group.id}.json`);
+            if (r.ok) {
+              const sd = await r.json();
+              const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
+              if (pts.length) {
+                cpuPts = pts;
+                // Use the file's declared category order; fall back to union of keys.
+                categories = sd.metadata?.categories
+                  || [...new Set(pts.flatMap(p => Object.keys(p.breakdown || {})))];
+                maxIdx = Math.max(maxIdx, pts.at(-1).commit_index);
+              }
+            }
+          } catch { /* sparse: leave datasets empty */ }
+          if (cpuPts) {
+            // Drop categories that are zero across all points to reduce legend clutter.
+            const active = categories.filter(cat => cpuPts.some(p => (p.breakdown?.[cat] || 0) > 0.05));
+            active.forEach((cat, i) => {
+              const color = CATEGORY_COLORS[cat] || CHART_COLORS[i % CHART_COLORS.length];
+              datasets.push({
+                label: cat, data: cpuPts.map(p => ({ x: p.commit_index, y: p.breakdown?.[cat] || 0 })),
+                borderColor: color, backgroundColor: color + '99',
+                fill: i === 0 ? 'origin' : '-1',
+                pointRadius: 0, borderWidth: 1, tension: 0,
+              });
+            });
+          }
+        } else if (isTMA) {
           // Fetch all TMA series, then build cumulative stacked area (like memory breakdown)
           const rawSeries = [];
           for (const metricId of group.series) {
@@ -870,12 +902,14 @@
         if (!datasets.length) continue; hasAny = true;
 
         const div = document.createElement('div'); div.className = 'chart-panel chart-panel--perf';
-        const helpBtn = isTMA ? `<button class="help-btn" onclick="showHelp('tma')" style="margin-left:0.3rem">?</button>` : '';
+        const helpBtn = (isTMA || isCPU) ? `<button class="help-btn" onclick="showHelp('${isCPU ? 'cpu' : 'tma'}')" style="margin-left:0.3rem">?</button>` : '';
         div.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem">${group.title}${helpBtn}</div><canvas></canvas>`;
         container.appendChild(div);
 
         const scales = { x: { type: 'linear', min: 0, max: maxIdx, ticks: { color: '#64748b', maxTicksLimit: 6 }, grid: { color: 'var(--border)' } } };
-        if (isTMA) {
+        if (isCPU) {
+          scales.y = { stacked: true, min: 0, max: 100, title: { display: true, text: '% of samples', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'var(--border)' } };
+        } else if (isTMA) {
           scales.y = { title: { display: true, text: '%', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'var(--border)' } };
         } else {
           for (const axis of (group.y_axes || [{id:'left',label:'',series:[]}])) {
@@ -886,6 +920,9 @@
         const ci = new Chart(div.querySelector('canvas').getContext('2d'), {
           type: 'line', data: { datasets },
           plugins: [makeInfoPlugin('perfInfo', (_, idx) => {
+            if (isCPU) {
+              return datasets.map(ds => { const pt = ds.data[idx]; return (pt && pt.y > 0.05) ? infoItem(ds.label, pt.y.toFixed(1) + '%') : ''; }).filter(Boolean).join('<span class="info-sep"> · </span>');
+            }
             if (isTMA) {
               return datasets.map((ds, i) => { const pt = ds.data[idx]; if (!pt) return ''; const prev = i > 0 ? datasets[i-1].data[idx]?.y || 0 : 0; return infoItem(ds.label, (pt.y - prev).toFixed(1) + '%'); }).filter(Boolean).join('<span class="info-sep"> · </span>');
             }
