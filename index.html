@@ -32,7 +32,7 @@
     .chart-panel canvas { width: 100%; }
     .chart-panel--throughput { height: 320px; }
     .chart-panel--memory { height: 290px; }
-    .chart-panel--perf { height: 200px; margin-bottom: 0.75rem; }
+    .chart-panel--perf { height: 400px; margin-bottom: 0.75rem; }
 
     /* Info row: always visible below its chart */
     .info-row {
@@ -201,13 +201,6 @@
   <div class="chart-panel chart-panel--throughput"><canvas id="chart"></canvas></div>
   <div id="chartInfo" class="info-row"></div>
 
-  <!-- Latency Band Chart -->
-  <div id="latencySection" style="display:none">
-    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 id="latencyHeader" style="margin:0">Request Latency (P=1 @ 100K rps flat)</h2><button class="help-btn" onclick="showHelp('latency')">?</button></div>
-    <div class="chart-panel chart-panel--throughput" style="position:relative"><canvas id="latencyChart"></canvas></div>
-    <div id="latencyInfo" class="info-row"></div>
-  </div>
-
   <!-- Perf Counters (skeleton: 4 placeholder slots) -->
   <div id="perfChartsSection">
     <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Performance Counters</h2><button class="help-btn" onclick="showHelp('perf')">?</button></div>
@@ -218,6 +211,13 @@
       <div class="chart-panel chart-panel--perf"></div>
     </div>
     <div id="perfInfo" class="info-row" style="margin-top:0.5rem;"></div>
+  </div>
+
+  <!-- Latency Band Chart -->
+  <div id="latencySection" style="display:none">
+    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 id="latencyHeader" style="margin:1.5rem 0 0.5rem">Request Latency (P=1 @ 100K rps flat)</h2><button class="help-btn" onclick="showHelp('latency')">?</button></div>
+    <div class="chart-panel chart-panel--throughput" style="position:relative"><canvas id="latencyChart"></canvas></div>
+    <div id="latencyInfo" class="info-row"></div>
   </div>
 
   <!-- Memory (2x2 grid for multiple workloads) -->
