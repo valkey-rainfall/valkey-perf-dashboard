@@ -7,6 +7,8 @@ const ENGINES = [
 ];
 const PLATFORMS = ['amd64', 'arm64', 'intel'];
 const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
+// Raw per-platform manifests, populated by discoverWorkloads(); used for perf/cpu chart group definitions.
+let PLATFORM_MANIFESTS = {};
 // Fallback workloads (used if manifest fetch fails)
 let THROUGHPUT_WORKLOADS = [
   { id: 'get-k16-v16-t7-p10', label: 'GET k16 v16' },
@@ -35,6 +37,11 @@ async function discoverWorkloads() {
     } catch { return null; }
   }));
   const platformWorkloads = {}; // workload_id -> Set of platforms it appears on
+  // Expose raw manifests so the dashboard can read group definitions (perf/cpu charts).
+  PLATFORM_MANIFESTS = {};
+  for (let i = 0; i < PLATFORMS.length; i++) {
+    if (manifests[i]) PLATFORM_MANIFESTS[PLATFORMS[i]] = manifests[i];
+  }
   for (let i = 0; i < PLATFORMS.length; i++) {
     const m = manifests[i];
     if (!m || !m.throughput_workloads) continue;
