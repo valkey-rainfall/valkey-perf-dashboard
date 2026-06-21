@@ -846,7 +846,7 @@
       for (const group of perfGroups) {
         const datasets = []; let maxIdx = 0; let colorIdx = 0;
         let cpuClickPts = null; // CPU points (with commit) for flamegraph drill-down
-        const isTMA = group.id === 'tma';
+        const isTMA = group.id === 'tma' || group.id === 'tma-main' || group.id === 'tma-io';
         const isCPU = group.id === 'cpu-main' || group.id === 'cpu-io';
 
         if (isCPU) {
