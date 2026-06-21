@@ -349,24 +349,36 @@
         }
       }
 
-      // Clear button (only show when something is selected or filtered)
+      // Clear buttons (separate for filters and selection)
       const hasFilter = Object.values(activeFilters).some(v => v);
-      if (selectedWorkloads.length > 0 || hasFilter) {
+      if (hasFilter) {
         bar.appendChild(Object.assign(document.createElement('span'), { style: 'width:1px;height:16px;background:var(--border)' }));
-        const clear = document.createElement('span');
-        clear.className = 'chip';
-        clear.style.borderColor = 'var(--danger)';
-        clear.style.color = 'var(--danger)';
-        clear.textContent = '✕ Clear';
-        clear.onclick = clearSelection;
-        bar.appendChild(clear);
+        const clearF = document.createElement('span');
+        clearF.className = 'chip';
+        clearF.style.borderColor = 'var(--danger)';
+        clearF.style.color = 'var(--danger)';
+        clearF.textContent = '✕ Clear Filters';
+        clearF.onclick = () => {
+          activeFilters = { engine: null, platform: null, command: null, valsize: null, pipelining: null };
+          buildChips(); buildSelectorItems();
+        };
+        bar.appendChild(clearF);
+      }
+      if (selectedWorkloads.length > 0) {
+        if (!hasFilter) bar.appendChild(Object.assign(document.createElement('span'), { style: 'width:1px;height:16px;background:var(--border)' }));
+        const clearS = document.createElement('span');
+        clearS.className = 'chip';
+        clearS.style.borderColor = 'var(--danger)';
+        clearS.style.color = 'var(--danger)';
+        clearS.textContent = '✕ Clear Selection';
+        clearS.onclick = clearSelection;
+        bar.appendChild(clearS);
       }
     }
 
     function clearSelection() {
       selectedWorkloads = [];
       primaryWorkload = null;
-      activeFilters = { engine: null, platform: null, command: null, valsize: null, pipelining: null };
       buildChips();
       buildSelectorItems();
       updateSelectorSummary();

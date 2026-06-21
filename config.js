@@ -11,19 +11,19 @@ const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', i
 let PLATFORM_MANIFESTS = {};
 // Fallback workloads (used if manifest fetch fails)
 let THROUGHPUT_WORKLOADS = [
-  { id: 'get-k16-v16-t7-p10', label: 'GET k16 v16' },
-  { id: 'get-k16-v64-t7-p10', label: 'GET k16 v64' },
-  { id: 'get-k16-v128-t7-p10', label: 'GET k16 v128' },
-  { id: 'set-k16-v16-t7-p10', label: 'SET k16 v16' },
-  { id: 'set-k16-v128-t7-p10', label: 'SET k16 v128' },
-  { id: 'get-k16-v16-t7-p1', label: 'GET k16 v16 P1' },
-  { id: 'get-k16-v128-t7-p1', label: 'GET k16 v128 P1' },
-  { id: 'set-k16-v16-t7-p1', label: 'SET k16 v16 P1' },
-  { id: 'set-k16-v128-t7-p1', label: 'SET k16 v128 P1' },
-  { id: 'get-k16-v16-t24-p100', label: 'GET t24 P100 (Intel)', platforms: ['intel'] },
-  { id: 'set-k16-v16-t24-p100', label: 'SET t24 P100 (Intel)', platforms: ['intel'] },
-  { id: 'get-k16-v16-t9-p50', label: 'GET t9 P50 (ARM)', platforms: ['arm64'] },
-  { id: 'set-k16-v16-t9-p50', label: 'SET t9 P50 (ARM)', platforms: ['arm64'] },
+  { id: 'get-k16-v16-t7-p10', label: 'GET K=16B V=16B T=7 P=10' },
+  { id: 'get-k16-v64-t7-p10', label: 'GET K=16B V=64B T=7 P=10' },
+  { id: 'get-k16-v128-t7-p10', label: 'GET K=16B V=128B T=7 P=10' },
+  { id: 'set-k16-v16-t7-p10', label: 'SET K=16B V=16B T=7 P=10' },
+  { id: 'set-k16-v128-t7-p10', label: 'SET K=16B V=128B T=7 P=10' },
+  { id: 'get-k16-v16-t7-p1', label: 'GET K=16B V=16B T=7 P=1' },
+  { id: 'get-k16-v128-t7-p1', label: 'GET K=16B V=128B T=7 P=1' },
+  { id: 'set-k16-v16-t7-p1', label: 'SET K=16B V=16B T=7 P=1' },
+  { id: 'set-k16-v128-t7-p1', label: 'SET K=16B V=128B T=7 P=1' },
+  { id: 'get-k16-v16-t24-p100', label: 'GET K=16B V=16B T=24 P=100', platforms: ['intel'] },
+  { id: 'set-k16-v16-t24-p100', label: 'SET K=16B V=16B T=24 P=100', platforms: ['intel'] },
+  { id: 'get-k16-v16-t9-p50', label: 'GET K=16B V=16B T=9 P=50', platforms: ['arm64'] },
+  { id: 'set-k16-v16-t9-p50', label: 'SET K=16B V=16B T=9 P=50', platforms: ['arm64'] },
 ];
 
 // Auto-discover workloads from per-platform manifests on data server.
@@ -61,9 +61,7 @@ async function discoverWorkloads() {
     let label = id;
     if (m) {
       const [, engine, cmd, k, v, t, p] = m;
-      label = `${cmd.toUpperCase()} k${k} v${v}`;
-      if (p !== '10') label += ` P${p}`;
-      if (t !== '7') label += ` t${t}`;
+      label = `${cmd.toUpperCase()} K=${k}B V=${v}B T=${t} P=${p}`;
       if (engine) label = `Redis ${label}`;
     }
     const entry = { id, label };
