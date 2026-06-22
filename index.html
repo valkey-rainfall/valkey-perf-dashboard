@@ -852,7 +852,8 @@
       if (!platformManifest || !platformManifest.groups) return;
       const container = document.getElementById('perfCharts'); container.innerHTML = '';
       const workloadId = getWorkloadId();
-      const perfGroups = platformManifest.groups.filter(g => !['throughput', 'memory'].includes(g.id));
+      const HIDE_GROUPS = ['throughput', 'memory', 'efficiency', 'cache', 'pipeline', 'tma', 'branching'];
+      const perfGroups = platformManifest.groups.filter(g => !HIDE_GROUPS.includes(g.id));
       let hasAny = false;
 
       for (const group of perfGroups) {

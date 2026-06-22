@@ -77,7 +77,7 @@ const MEMORY_USER_DATA = {
 
 const CATEGORY_COLORS = {
   robj_embval: '#6366f1', robj_embkey: '#f472b6', sds: '#10b981', hashtable: '#f59e0b', hash_entry: '#fb923c', skiplist: '#ef4444',
-  robj: '#06b6d4', listpack: '#a855f7', dict: '#78716c', server_infra: '#84cc16', other: '#9ca3af',
+  robj: '#06b6d4', listpack: '#a855f7', dict: '#78716c', server_infra: '#84cc16', other: '#d97706',
   'tma-retiring-pct': '#22c55e', 'tma-fe-bound-pct': '#f59e0b', 'tma-be-bound-pct': '#ef4444', 'tma-bad-spec-pct': '#8b5cf6',
   // CPU profile categories (main + IO thread flamegraph breakdown)
   hash_lookup: '#f59e0b', command_parse: '#6366f1', command_overhead: '#8b5cf6', reply_build: '#06b6d4',
