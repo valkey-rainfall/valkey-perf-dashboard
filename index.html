@@ -329,7 +329,7 @@
 
       const groups = [
         { key: 'engine', values: ENGINES.map(e => ({ id: e.id, label: e.label })) },
-        { key: 'platform', values: PLATFORMS.map(p => ({ id: p, label: (PLATFORM_LABELS[p] || p).split(' ')[0] })) },
+        { key: 'platform', values: PLATFORMS.map(p => ({ id: p, label: PLATFORM_SHORT_LABELS[p] || (PLATFORM_LABELS[p] || p).split(' ')[0] })) },
         { key: 'command', values: commands.map(c => ({ id: c, label: c.toUpperCase() })) },
         { key: 'valsize', values: valsizes.map(v => ({ id: v, label: 'v' + v })) },
         { key: 'pipelining', values: pipelines.map(p => ({ id: p, label: 'P' + p })) },
@@ -432,7 +432,7 @@
         const s = selectedWorkloads[0];
         const wl = THROUGHPUT_WORKLOADS.find(w => w.id === s.workloadId);
         const eng = ENGINES.find(e => e.id === s.engine);
-        el.textContent = `${eng?.label || s.engine} · ${(PLATFORM_LABELS[s.platform]||s.platform).split('(')[0].trim()} · ${wl?.label || s.workloadId}`;
+        el.textContent = `${eng?.label || s.engine} · ${PLATFORM_SHORT_LABELS[s.platform] || (PLATFORM_LABELS[s.platform]||s.platform).split('(')[0].trim()} · ${wl?.label || s.workloadId}`;
       } else {
         el.textContent = `${selectedWorkloads.length} workloads selected`;
       }
@@ -1198,7 +1198,7 @@
       modal.classList.add('open');
       const repo = (currentData && currentData.metadata && currentData.metadata.repo) || 'valkey-io/valkey';
       const short = point.commit.slice(0, 10);
-      const platLabel = (PLATFORM_LABELS[platform] || platform).split(' ')[0];
+      const platLabel = PLATFORM_SHORT_LABELS[platform] || (PLATFORM_LABELS[platform] || platform).split(' ')[0];
       document.getElementById('fgTitle').textContent = `${workloadId} — ${platLabel}`;
       document.getElementById('fgSub').innerHTML =
         `<a href="https://github.com/${repo}/commit/${point.commit}" target="_blank">${short}</a> · ${point.date}` +
