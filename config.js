@@ -5,8 +5,8 @@ const ENGINES = [
   { id: 'valkey', label: 'Valkey' },
   { id: 'redis', label: 'Redis' },
 ];
-const PLATFORMS = ['amd64', 'arm64', 'intel'];
-const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
+const PLATFORMS = ['amd64', 'arm64', 'graviton4', 'intel'];
+const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', graviton4: 'ARM (Graviton 4)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
 // Raw per-platform manifests, populated by discoverWorkloads(); used for perf/cpu chart group definitions.
 let PLATFORM_MANIFESTS = {};
 // Fallback workloads (used if manifest fetch fails)
@@ -22,8 +22,8 @@ let THROUGHPUT_WORKLOADS = [
   { id: 'set-k16-v128-t7-p1', label: 'SET K=16B V=128B T=7 P=1' },
   { id: 'get-k16-v16-t24-p100', label: 'GET K=16B V=16B T=24 P=100', platforms: ['intel'] },
   { id: 'set-k16-v16-t24-p100', label: 'SET K=16B V=16B T=24 P=100', platforms: ['intel'] },
-  { id: 'get-k16-v16-t9-p50', label: 'GET K=16B V=16B T=9 P=50', platforms: ['arm64'] },
-  { id: 'set-k16-v16-t9-p50', label: 'SET K=16B V=16B T=9 P=50', platforms: ['arm64'] },
+  { id: 'get-k16-v16-t9-p50', label: 'GET K=16B V=16B T=9 P=50', platforms: ['arm64', 'graviton4'] },
+  { id: 'set-k16-v16-t9-p50', label: 'SET K=16B V=16B T=9 P=50', platforms: ['arm64', 'graviton4'] },
 ];
 
 // Auto-discover workloads from per-platform manifests on data server.
