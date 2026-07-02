@@ -64,7 +64,7 @@
     .chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; }
     .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
     .chip:hover:not(.active) { border-color: var(--muted); color: var(--text); }
-    .selector-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2px; padding: 0.5rem; max-height: 260px; overflow-y: auto; }
+    .selector-list { display: block; padding: 0.5rem; max-height: 260px; overflow-y: auto; }
     .selector-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.6rem; border-radius: 5px; cursor: pointer; font-size: 0.82rem; transition: background 0.1s; }
     .selector-item:hover { background: var(--bg); }
     .selector-item.selected { background: rgba(99,102,241,0.12); }
@@ -78,6 +78,20 @@
     .selector-item .si-color { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .selector-item .si-label { flex: 1; }
     .selector-item .si-platform { font-size: 0.7rem; color: var(--muted); }
+    .selector-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .selector-table th, .selector-table td { padding: 0.4rem 0.6rem; text-align: left; white-space: nowrap; }
+    .selector-table thead th { position: sticky; top: 0; background: var(--card); color: var(--muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+    .selector-table thead th.si-sel-col, .selector-table thead th.si-star-col { cursor: default; width: 1%; }
+    .selector-table tbody tr.selector-row { cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    .selector-table tbody tr.selector-row:hover { background: var(--bg); }
+    .selector-table tbody tr.selector-row.selected { background: rgba(99,102,241,0.12); }
+    .selector-table tbody tr.selector-row.primary { font-weight: 600; }
+    .selector-table .si-check { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border: 1.5px solid var(--border); border-radius: 3px; font-size: 10px; }
+    .selector-table tr.selected .si-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .selector-table .si-color { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 5px; vertical-align: middle; }
+    .selector-table .si-star { color: var(--border); cursor: pointer; padding: 2px 4px; border-radius: 3px; }
+    .selector-table .si-star:hover { color: var(--accent); background: rgba(99,102,241,0.1); }
+    .selector-table tr.primary .si-star { color: var(--accent); }
 
     /* Annotations */
     .annotations { display: grid; gap: 0.5rem; }
@@ -260,6 +274,7 @@
       toggle.classList.toggle('open');
     }
 
+    let selectorSort = { col: null, dir: 1 };
     function buildSelectorItems() {
       const list = document.getElementById('selectorList');
       list.innerHTML = '';
@@ -269,11 +284,12 @@
           for (const wl of THROUGHPUT_WORKLOADS) {
             if (wl.platforms && !wl.platforms.includes(plat)) continue;
             // Parse command, value size, and pipelining from workload ID (e.g. "get-k16-v128-t7-p10")
-            const parts = wl.id.match(/^(get|set)-k\d+-v(\d+)-t\d+-p(\d+)/);
+            const parts = wl.id.match(/^(get|set)-k\d+-v(\d+)-t(\d+)-p(\d+)/);
             const command = parts ? parts[1] : null;
             const valsize = parts ? parts[2] : null;
-            const pipelining = parts ? parts[3] : null;
-            items.push({ engine: eng.id, platform: plat, workloadId: wl.id, label: wl.label, engineLabel: eng.label, platLabel: PLATFORM_LABELS[plat] || plat, command, valsize, pipelining });
+            const threads = parts ? parts[3] : null;
+            const pipelining = parts ? parts[4] : null;
+            items.push({ engine: eng.id, platform: plat, workloadId: wl.id, label: wl.label, engineLabel: eng.label, platLabel: PLATFORM_SHORT_LABELS[plat] || PLATFORM_LABELS[plat] || plat, command, valsize, threads, pipelining });
           }
         }
       }
@@ -287,35 +303,70 @@
         return true;
       });
 
-      for (const it of filtered) {
-        const key = getSelectionKey(it);
-        const isSelected = selectedWorkloads.some(s => getSelectionKey(s) === key);
-        const isPrimary = primaryWorkload && getSelectionKey(primaryWorkload) === key;
-        const colorIdx = selectedWorkloads.findIndex(s => getSelectionKey(s) === key);
+      // One column per workload parameter; only render columns whose value actually varies
+      // across the filtered set (so a pinned filter collapses its column).
+      const allCols = [
+        { key: 'engine',     label: 'Engine',   text: it => it.engineLabel,                                      val: it => it.engine,        num: false },
+        { key: 'platform',   label: 'Platform', text: it => PLATFORM_SHORT_LABELS[it.platform] || it.platLabel,  val: it => it.platform,      num: false },
+        { key: 'command',    label: 'Cmd',      text: it => (it.command || '').toUpperCase(),                    val: it => it.command || '', num: false },
+        { key: 'valsize',    label: 'Value',    text: it => it.valsize ? 'v' + it.valsize : '',                  val: it => +it.valsize,      num: true },
+        { key: 'threads',    label: 'Threads',  text: it => it.threads ? 't' + it.threads : '',                  val: it => +it.threads,      num: true },
+        { key: 'pipelining', label: 'Pipeline', text: it => it.pipelining ? 'P' + it.pipelining : '',            val: it => +it.pipelining,   num: true },
+      ];
+      const varyCols = allCols.filter(c => new Set(filtered.map(it => c.text(it))).size > 1);
+      const shownCols = varyCols.length ? varyCols : allCols.slice(2, 4); // fallback: Cmd + Value
 
-        const div = document.createElement('div');
-        div.className = `selector-item${isSelected ? ' selected' : ''}${isPrimary ? ' primary' : ''}`;
-        div.innerHTML = `
-          <span class="si-check">${isSelected ? '✓' : ''}</span>
-          <span class="si-color" style="background:${isSelected ? MULTI_COLORS[colorIdx % MULTI_COLORS.length] : 'transparent'}"></span>
-          <span class="si-label">${it.engineLabel} · ${it.label}</span>
-          <span class="si-platform">${it.platLabel}</span>
-          <span class="si-star" title="Set as primary (drives detail charts)">★</span>
-        `;
+      if (selectorSort.col) {
+        const c = allCols.find(x => x.key === selectorSort.col);
+        if (c) filtered.sort((a, b) => c.num
+          ? (c.val(a) - c.val(b)) * selectorSort.dir
+          : String(c.val(a)).localeCompare(String(c.val(b))) * selectorSort.dir);
+      }
 
-        // Click row = toggle selection
-        div.addEventListener('click', (e) => {
+      const arrow = k => selectorSort.col === k ? (selectorSort.dir > 0 ? ' ▲' : ' ▼') : '';
+      const table = document.createElement('table');
+      table.className = 'selector-table';
+      table.innerHTML =
+        '<thead><tr><th class="si-sel-col"></th>' +
+        shownCols.map(c => `<th data-key="${c.key}">${c.label}${arrow(c.key)}</th>`).join('') +
+        '<th class="si-star-col"></th></tr></thead><tbody>' +
+        filtered.map((it, idx) => {
+          const key = getSelectionKey(it);
+          const isSelected = selectedWorkloads.some(s => getSelectionKey(s) === key);
+          const isPrimary = primaryWorkload && getSelectionKey(primaryWorkload) === key;
+          const colorIdx = selectedWorkloads.findIndex(s => getSelectionKey(s) === key);
+          const color = isSelected ? MULTI_COLORS[colorIdx % MULTI_COLORS.length] : 'transparent';
+          return `<tr class="selector-row${isSelected ? ' selected' : ''}${isPrimary ? ' primary' : ''}" data-idx="${idx}">` +
+            `<td class="si-sel-col"><span class="si-check">${isSelected ? '✓' : ''}</span><span class="si-color" style="background:${color}"></span></td>` +
+            shownCols.map(c => `<td>${c.text(it)}</td>`).join('') +
+            `<td class="si-star-col"><span class="si-star" title="Set as primary (drives detail charts)">★</span></td></tr>`;
+        }).join('') +
+        '</tbody>';
+
+      // Sort on header click
+      table.querySelectorAll('th[data-key]').forEach(th => {
+        th.addEventListener('click', () => {
+          const k = th.dataset.key;
+          if (selectorSort.col === k) selectorSort.dir = -selectorSort.dir;
+          else { selectorSort.col = k; selectorSort.dir = 1; }
+          buildSelectorItems();
+        });
+      });
+      // Row = toggle selection; star = set primary
+      table.querySelectorAll('tr.selector-row').forEach(tr => {
+        const it = filtered[+tr.dataset.idx];
+        tr.addEventListener('click', (e) => {
           if (e.target.closest('.si-star')) return;
           toggleSelection(it);
         });
-        // Click star = set primary
-        div.querySelector('.si-star').addEventListener('click', () => {
-          if (!isSelected) toggleSelection(it);
+        tr.querySelector('.si-star').addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!selectedWorkloads.some(s => getSelectionKey(s) === getSelectionKey(it))) toggleSelection(it);
           primaryWorkload = it;
           onSelectionChanged();
         });
-        list.appendChild(div);
-      }
+      });
+      list.appendChild(table);
     }
 
     function buildChips() {
