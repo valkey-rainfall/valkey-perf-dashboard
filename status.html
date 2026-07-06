@@ -15,6 +15,15 @@
         .status-dot.running { background: #3fb950; }
         .status-dot.stopped { background: #f85149; }
         .status-dot.unreachable { background: #6e7681; }
+        .status-dot.stale { background: #d29922; }
+        .host-card.alarm-warn { border-color: #d29922; }
+        .host-card.alarm-crit { border-color: #f85149; }
+        .card-banner { padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.8rem; margin-bottom: 0.75rem; font-weight: 600; }
+        .card-banner.warn { background: rgba(210,153,34,0.15); color: #d29922; border: 1px solid #d29922; }
+        .card-banner.crit { background: rgba(248,81,73,0.15); color: #f85149; border: 1px solid #f85149; }
+        .server-banner { padding: 0.6rem 0.9rem; border-radius: 8px; font-size: 0.9rem; margin-bottom: 1.5rem; font-weight: 600; display: none; }
+        .server-banner.warn { background: rgba(210,153,34,0.15); color: #d29922; border: 1px solid #d29922; display: block; }
+        .server-banner.crit { background: rgba(248,81,73,0.15); color: #f85149; border: 1px solid #f85149; display: block; }
         .meta { color: #8b949e; font-size: 0.8rem; margin-bottom: 1rem; }
         .section { margin-bottom: 1rem; }
         .section-title { font-size: 0.75rem; text-transform: uppercase; color: #8b949e; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
@@ -36,6 +45,7 @@
 <body>
     <div class="nav"><a href="index.html">← Performance Dashboard</a> <label style="float:right;font-size:0.8rem;cursor:pointer"><input type="checkbox" id="autoRefresh" checked> Auto-refresh (60s)</label></div>
     <h1>🎵 Conductress — Host Status</h1>
+    <div class="server-banner" id="serverBanner"></div>
     <div class="hosts" id="hosts"></div>
     <script>
 const HOSTS = [
@@ -71,8 +81,20 @@ function timeAgo(str) {
 }
 
 function renderHost(data, label, subtitle) {
-    const state = data.runner?.state || 'unreachable';
-    const stale = data.timestamp && (Date.now() - new Date(data.timestamp).getTime()) > 300000;
+    const reportedState = data.runner?.state || 'unreachable';
+    const ageSec = data.timestamp ? (Date.now() - new Date(data.timestamp).getTime()) / 1000 : Infinity;
+    // Tiered staleness: >5min = warn (missed ~5 pushes), >30min = critical.
+    const staleWarn = ageSec > 300 && ageSec <= 1800;
+    const staleCrit = ageSec > 1800;
+    const stale = staleWarn || staleCrit;
+    // When stale, the reported runner state is untrustworthy — override the dot.
+    const dotClass = staleCrit ? 'stopped' : staleWarn ? 'stale' : reportedState;
+    const cardClass = staleCrit ? 'host-card alarm-crit' : staleWarn ? 'host-card alarm-warn' : 'host-card';
+    let staleBanner = '';
+    if (stale) {
+        const cls = staleCrit ? 'crit' : 'warn';
+        staleBanner = `<div class="card-banner ${cls}">⚠ No update for ${timeAgo(data.timestamp).replace(' ago','')} — publishing may be broken (runner state unknown)</div>`;
+    }
 
     let taskHtml = '<div class="current-task">Idle</div>';
     if (data.current_task) {
@@ -101,12 +123,12 @@ function renderHost(data, label, subtitle) {
         resultsHtml = `<table class="results-table">${rows}</table>`;
     }
 
-    return `<div class="host-card">
-        <h2><span class="status-dot ${state}"></span>${label}</h2>
+    return `<div class="${cardClass}">
+        <h2><span class="status-dot ${dotClass}"></span>${label}</h2>
+        ${staleBanner}
         <div class="meta">
             <span style="color:#8b949e">${subtitle}</span><br>
             Updated ${timeAgo(data.timestamp)}
-            ${stale ? '<span class="stale-warning">⚠ stale</span>' : ''}
             ${data.eta_minutes > 0 ? `· <span class="eta">ETA ${data.eta_minutes}m</span>` : ''}
         </div>
         <div class="section"><div class="section-title">Current Task</div>${taskHtml}</div>
@@ -115,7 +137,40 @@ function renderHost(data, label, subtitle) {
     </div>`;
 }
 
+function fmtBytes(b) {
+    if (b >= 1e9) return (b / 1e9).toFixed(1) + ' GB';
+    if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB';
+    return b + ' B';
+}
+
+async function renderServerBanner() {
+    const el = document.getElementById('serverBanner');
+    el.className = 'server-banner';  // reset (hidden by default)
+    let d;
+    try {
+        const resp = await fetch(`${STATUS_BASE}/_server.json?t=${Date.now()}`);
+        if (!resp.ok) return;  // no disk writer deployed yet — degrade silently
+        d = await resp.json();
+    } catch { return; }
+    const freePct = d.free_pct != null ? d.free_pct
+        : (d.size_bytes ? Math.round(d.avail_bytes * 100 / d.size_bytes) : null);
+    if (freePct == null) return;
+    // If the disk reading itself is stale (>10min), the number can't be trusted.
+    const readingStale = d.timestamp && (Date.now() - new Date(d.timestamp).getTime()) > 600000;
+    if (freePct < 5) {
+        el.className = 'server-banner crit';
+        el.textContent = `🔴 Data server disk critically low: ${freePct}% free (${fmtBytes(d.avail_bytes)} of ${fmtBytes(d.size_bytes)}). Publishing will break when it fills — free space now.`;
+    } else if (freePct < 15) {
+        el.className = 'server-banner warn';
+        el.textContent = `⚠ Data server disk low: ${freePct}% free (${fmtBytes(d.avail_bytes)} of ${fmtBytes(d.size_bytes)}).`;
+    } else if (readingStale) {
+        el.className = 'server-banner warn';
+        el.textContent = `⚠ Data server disk reading is stale (last ${timeAgo(d.timestamp)}) — disk writer may be down.`;
+    }
+}
+
 async function loadStatus() {
+    renderServerBanner();
     const container = document.getElementById('hosts');
     const cards = [];
     for (const host of HOSTS) {
