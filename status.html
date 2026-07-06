@@ -89,12 +89,27 @@ function renderHost(data, label, subtitle) {
     const stale = staleWarn || staleCrit;
     // When stale, the reported runner state is untrustworthy — override the dot.
     const dotClass = staleCrit ? 'stopped' : staleWarn ? 'stale' : reportedState;
-    const cardClass = staleCrit ? 'host-card alarm-crit' : staleWarn ? 'host-card alarm-warn' : 'host-card';
     let staleBanner = '';
     if (stale) {
         const cls = staleCrit ? 'crit' : 'warn';
         staleBanner = `<div class="card-banner ${cls}">⚠ No update for ${timeAgo(data.timestamp).replace(' ago','')} — publishing may be broken (runner state unknown)</div>`;
     }
+
+    // Per-host local disk alarm (perf.data, build trees, stray RDBs can fill it).
+    const disk = data.disk || {};
+    const diskFree = disk.free_pct;
+    const diskCls = stale ? null : diskTier(diskFree);  // don't trust disk % from a stale payload
+    let diskBanner = '';
+    if (diskCls) {
+        const detail = disk.avail_bytes && disk.size_bytes ? ` (${fmtBytes(disk.avail_bytes)} of ${fmtBytes(disk.size_bytes)})` : '';
+        const icon = diskCls === 'crit' ? '🔴' : '⚠';
+        diskBanner = `<div class="card-banner ${diskCls}">${icon} Host disk ${diskCls === 'crit' ? 'critically ' : ''}low: ${diskFree}% free${detail}</div>`;
+    }
+    const diskMeta = diskFree != null && !stale ? ` · Disk ${diskFree}% free` : '';
+
+    // Card border reflects the worst of staleness / disk.
+    const worst = staleCrit || diskCls === 'crit' ? 'alarm-crit' : staleWarn || diskCls === 'warn' ? 'alarm-warn' : '';
+    const cardClass = worst ? `host-card ${worst}` : 'host-card';
 
     let taskHtml = '<div class="current-task">Idle</div>';
     if (data.current_task) {
@@ -126,9 +141,10 @@ function renderHost(data, label, subtitle) {
     return `<div class="${cardClass}">
         <h2><span class="status-dot ${dotClass}"></span>${label}</h2>
         ${staleBanner}
+        ${diskBanner}
         <div class="meta">
             <span style="color:#8b949e">${subtitle}</span><br>
-            Updated ${timeAgo(data.timestamp)}
+            Updated ${timeAgo(data.timestamp)}${diskMeta}
             ${data.eta_minutes > 0 ? `· <span class="eta">ETA ${data.eta_minutes}m</span>` : ''}
         </div>
         <div class="section"><div class="section-title">Current Task</div>${taskHtml}</div>
@@ -141,6 +157,14 @@ function fmtBytes(b) {
     if (b >= 1e9) return (b / 1e9).toFixed(1) + ' GB';
     if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB';
     return b + ' B';
+}
+
+// Disk alarm tier from free percent: 'crit' <5%, 'warn' <15%, else null (healthy).
+function diskTier(freePct) {
+    if (freePct == null) return null;
+    if (freePct < 5) return 'crit';
+    if (freePct < 15) return 'warn';
+    return null;
 }
 
 async function renderServerBanner() {
