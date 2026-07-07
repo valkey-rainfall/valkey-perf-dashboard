@@ -193,21 +193,31 @@ async function renderServerBanner() {
     }
 }
 
+// Last successfully-fetched payload per host. On a transient refresh failure we
+// re-render this instead of a blank placeholder, so a real alarm (disk/stale)
+// never flickers away. If the host stays unreachable, the retained timestamp
+// ages past the staleness threshold and escalates to the stale alarm on its own.
+const lastGood = {};
+
 async function loadStatus() {
     renderServerBanner();
     const container = document.getElementById('hosts');
     const cards = [];
     for (const host of HOSTS) {
+        let data = null;
         try {
             const resp = await fetch(`${STATUS_BASE}/${host.id}.json?t=${Date.now()}`);
-            if (resp.ok) {
-                cards.push(renderHost(await resp.json(), host.label, host.subtitle));
-            } else {
-                cards.push(renderHost({runner: {state: 'unreachable'}, timestamp: new Date().toISOString()}, host.label, host.subtitle));
-            }
-        } catch {
-            cards.push(renderHost({runner: {state: 'unreachable'}, timestamp: new Date().toISOString()}, host.label, host.subtitle));
+            if (resp.ok) data = await resp.json();
+        } catch { /* network blip — fall through to last-good */ }
+
+        if (data) {
+            lastGood[host.id] = data;
+        } else if (lastGood[host.id]) {
+            data = lastGood[host.id];  // retain last-known; keeps alarms visible, ages into stale if it stays down
+        } else {
+            data = {runner: {state: 'unreachable'}, timestamp: new Date().toISOString()};
         }
+        cards.push(renderHost(data, host.label, host.subtitle));
     }
     container.innerHTML = cards.join('');
 }
