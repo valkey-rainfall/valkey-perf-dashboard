@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notable Changes — Valkey Performance Dashboard</title>
+  <style>
+    :root {
+      --bg: #0f1117; --text: #e2e8f0; --card: #1a1d2e; --border: #2d3148;
+      --accent: #6366f1; --muted: #64748b; --ok: #22c55e; --warn: #eab308; --danger: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 1.5rem; }
+
+    header { position: sticky; top: 0; z-index: 100; background: var(--bg); padding: 0.75rem 1.5rem; margin: -1.5rem -1.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+    header a { color: var(--muted); font-size: 0.8rem; text-decoration: none; }
+    header a.primary-link { color: var(--accent); font-weight: 500; }
+
+    .chip-bar { display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+    .chip-group-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-right: 0.1rem; }
+    .chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; }
+    .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .chip:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+    .chip-sep { width: 1px; height: 16px; background: var(--border); margin: 0 0.35rem; }
+
+    .cards { display: grid; gap: 0.6rem; max-width: 1000px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem 1rem; scroll-margin-top: 70px; }
+    .card.good { border-left: 3px solid var(--ok); }
+    .card.bad { border-left: 3px solid var(--danger); }
+    .card.mixed { border-left: 3px solid var(--warn); }
+    .card:target { outline: 1px solid var(--accent); }
+    .card-head { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
+    .card-title { font-size: 0.9rem; font-weight: 600; flex: 1; min-width: 200px; }
+    .card-date { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+    .card-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+    .card-meta a { color: var(--accent); text-decoration: none; }
+    .card-meta a:hover { text-decoration: underline; }
+    .anchor-link { color: var(--border); text-decoration: none; font-size: 0.8rem; }
+    .anchor-link:hover { color: var(--accent); }
+
+    .delta-chips { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.55rem; }
+    .delta-chip { font-size: 0.74rem; padding: 3px 9px; border-radius: 5px; background: var(--bg); border: 1px solid var(--border); text-decoration: none; color: var(--text); display: inline-flex; gap: 0.45rem; align-items: baseline; }
+    .delta-chip:hover { border-color: var(--accent); }
+    .delta-chip .dc-scope { color: var(--muted); }
+    .delta-chip .dc-metric { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); }
+    .delta-chip .dc-delta { font-weight: 600; }
+    .delta-chip .dc-delta.pos { color: var(--ok); }
+    .delta-chip .dc-delta.neg { color: var(--danger); }
+
+    .empty-note { color: var(--muted); font-size: 0.85rem; padding: 2rem 0; }
+    .stale-note { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.75rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1 style="font-size:1.1rem;margin:0;">Notable Changes</h1>
+      <span style="color:var(--muted);font-size:0.85rem;">Pinpointed throughput &amp; memory changes across all platforms and workloads — newest first</span>
+    </div>
+    <a href="index.html" class="primary-link" style="margin-left:auto;">← Dashboard</a>
+    <a href="compare.html">Compare Engines</a>
+    <a href="status.html">Host Status ↗</a>
+  </header>
+
+  <div class="chip-bar" id="chipBar"></div>
+  <div class="stale-note" id="staleNote"></div>
+  <div class="cards" id="cards"><div class="empty-note">Loading…</div></div>
+
+  <script src="config.js"></script>
+  <script>
+    // Filter state
+    const filters = { platform: null, metric: null, direction: null };
+    let commitGroups = []; // [{commit, date, pr, pr_title, entries: [{platform, workload, metric, delta, good}]}]
+
+    // Human label for a workload id (throughput: get-k16-v16-t7-p10; memory: memory-set-k16-v64)
+    function workloadLabel(id) {
+      let m = id.match(/^(get|set)-k(\d+)-v(\d+)-t(\d+)-p(\d+)$/);
+      if (m) return `${m[1].toUpperCase()} K=${m[2]}B V=${m[3]}B T=${m[4]} P=${m[5]}`;
+      m = id.match(/^memory-(.+)$/);
+      if (m) return m[1].toUpperCase().replace(/-/g, ' ');
+      return id;
+    }
+
+    async function loadNotable() {
+      const results = await Promise.all(PLATFORMS.map(async p => {
+        try {
+          const r = await fetch(`${DATA_URL}/notable-${p}.json`);
+          if (!r.ok) return { platform: p, annotations: null };
+          const data = await r.json();
+          return { platform: p, annotations: data.annotations || [] };
+        } catch { return { platform: p, annotations: null }; }
+      }));
+
+      const missing = results.filter(r => r.annotations === null).map(r => PLATFORM_SHORT_LABELS[r.platform] || r.platform);
+      document.getElementById('staleNote').textContent =
+        missing.length ? `No notable-changes feed yet from: ${missing.join(', ')}` : '';
+
+      // Group by commit
+      const byCommit = {};
+      for (const { platform, annotations } of results) {
+        if (!annotations) continue;
+        for (const a of annotations) {
+          const g = byCommit[a.commit] ||= { commit: a.commit, date: a.date || '', entries: [] };
+          if (a.date && a.date > g.date) g.date = a.date; // same commit — dates should match; keep max
+          if (a.pr != null) g.pr = a.pr;
+          if (a.pr_title) g.pr_title = a.pr_title;
+          g.entries.push({ platform, workload: a.workload, metric: a.metric, delta: a.delta, good: a.good });
+        }
+      }
+      commitGroups = Object.values(byCommit).sort((x, y) =>
+        y.date === x.date ? (y.commit < x.commit ? -1 : 1) : (y.date < x.date ? -1 : 1));
+
+      renderChips();
+      render();
+      // Honor permalink anchor after render
+      if (location.hash) {
+        const el = document.getElementById(location.hash.slice(1));
+        if (el) el.scrollIntoView();
+      }
+    }
+
+    function chip(label, group, value) {
+      const active = filters[group] === value;
+      return `<span class="chip ${active ? 'active' : ''}" onclick="toggleFilter('${group}', '${value}')">${label}</span>`;
+    }
+
+    function toggleFilter(group, value) {
+      filters[group] = filters[group] === value ? null : value;
+      renderChips();
+      render();
+    }
+
+    function renderChips() {
+      const platforms = PLATFORMS.map(p => chip(PLATFORM_SHORT_LABELS[p] || p, 'platform', p)).join('');
+      document.getElementById('chipBar').innerHTML = `
+        <span class="chip-group-label">Platform</span>${platforms}
+        <span class="chip-sep"></span>
+        <span class="chip-group-label">Metric</span>
+        ${chip('Throughput', 'metric', 'throughput')}${chip('Memory', 'metric', 'memory')}
+        <span class="chip-sep"></span>
+        ${chip('Improvements', 'direction', 'good')}${chip('Regressions', 'direction', 'bad')}`;
+    }
+
+    function entryVisible(e) {
+      if (filters.platform && e.platform !== filters.platform) return false;
+      if (filters.metric && e.metric !== filters.metric) return false;
+      if (filters.direction === 'good' && !e.good) return false;
+      if (filters.direction === 'bad' && e.good) return false;
+      return true;
+    }
+
+    // Deep-link into the main dashboard with this platform+workload selected.
+    function dashLink(e) {
+      const metricParam = e.metric === 'memory' ? '&metric=memory' : '';
+      return `index.html?platform=${encodeURIComponent(e.platform)}&workload=${encodeURIComponent(e.workload)}${metricParam}`;
+    }
+
+    function deltaChip(e) {
+      const pct = (e.delta * 100).toFixed(1);
+      const sign = e.delta > 0 ? '+' : '';
+      return `<a class="delta-chip" href="${dashLink(e)}" title="Open on dashboard">
+        <span class="dc-scope">${PLATFORM_SHORT_LABELS[e.platform] || e.platform} · ${workloadLabel(e.workload)}</span>
+        <span class="dc-metric">${e.metric}</span>
+        <span class="dc-delta ${e.good ? 'pos' : 'neg'}">${sign}${pct}%</span>
+      </a>`;
+    }
+
+    function render() {
+      const el = document.getElementById('cards');
+      const cards = [];
+      for (const g of commitGroups) {
+        const entries = g.entries.filter(entryVisible);
+        if (!entries.length) continue;
+        const allGood = entries.every(e => e.good);
+        const allBad = entries.every(e => !e.good);
+        const cls = allGood ? 'good' : allBad ? 'bad' : 'mixed';
+        const short = g.commit.slice(0, 8);
+        cards.push(`
+          <div class="card ${cls}" id="${short}">
+            <div class="card-head">
+              <span class="card-title">${g.pr_title || short}</span>
+              <span class="card-date">${g.date || 'date unknown'}</span>
+              <a class="anchor-link" href="#${short}" title="Permalink">#</a>
+            </div>
+            <div class="card-meta">
+              <a href="https://github.com/valkey-io/valkey/commit/${g.commit}" target="_blank">${short}</a>${g.pr ? ` · <a href="https://github.com/valkey-io/valkey/pull/${g.pr}" target="_blank">PR #${g.pr}</a>` : ''}
+              · ${entries.length} sweep${entries.length > 1 ? 's' : ''}
+            </div>
+            <div class="delta-chips">${entries.map(deltaChip).join('')}</div>
+          </div>`);
+      }
+      el.innerHTML = cards.length ? cards.join('') :
+        '<div class="empty-note">No notable changes match the current filters.</div>';
+    }
+
+    loadNotable();
+  </script>
+</body>
+</html>
