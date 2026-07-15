@@ -149,10 +149,11 @@
       return true;
     }
 
-    // Deep-link into the main dashboard with this platform+workload selected.
+    // Deep-link into the main dashboard using its hash-state format.
+    // Memory workloads aren't selector entries — link platform-only (memory grid shows all).
     function dashLink(e) {
-      const metricParam = e.metric === 'memory' ? '&metric=memory' : '';
-      return `index.html?platform=${encodeURIComponent(e.platform)}&workload=${encodeURIComponent(e.workload)}${metricParam}`;
+      if (e.metric === 'memory') return `index.html#platform=${encodeURIComponent(e.platform)}`;
+      return `index.html#platform=${encodeURIComponent(e.platform)}&workload=${encodeURIComponent(e.workload)}`;
     }
 
     function deltaChip(e) {

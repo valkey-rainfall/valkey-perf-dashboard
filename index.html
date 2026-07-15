@@ -98,6 +98,7 @@
     .annotation { background: var(--card); border-radius: 6px; padding: 0.7rem 1rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
     .annotation.bad { border-left: 3px solid var(--danger); }
     .annotation.good { border-left: 3px solid var(--ok); }
+    .annotation.mixed { border-left: 3px solid var(--warn); }
     .annotation .delta { font-weight: 600; white-space: nowrap; }
     .annotation .delta.neg { color: var(--danger); }
     .annotation .delta.pos { color: var(--ok); }
@@ -241,7 +242,11 @@
   <div id="memoryInfo" class="info-row"></div>
 
   <!-- Annotations & Table -->
-  <h2 style="margin-bottom:0.75rem;">Notable Changes</h2>
+  <!-- Notable Changes teaser (combined across platforms/workloads; full feed on notable.html) -->
+  <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.75rem;">
+    <h2 style="margin:0;">Notable Changes</h2>
+    <a href="notable.html" style="color:var(--accent);font-size:0.8rem;text-decoration:none;">View all →</a>
+  </div>
   <div class="annotations" id="annotations"></div>
   <h2 style="margin:1.5rem 0 0.75rem;">Recent Data Points</h2>
   <div id="datapoints" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;max-height:400px;overflow-y:auto;"></div>
@@ -442,7 +447,6 @@
       document.getElementById('memoryChartsGrid').innerHTML = '';
       document.getElementById('perfCharts').innerHTML = '';
       document.getElementById('latencySection').style.display = 'none';
-      document.getElementById('annotations').innerHTML = '';
       document.getElementById('datapoints').innerHTML = '';
     }
 
@@ -649,6 +653,9 @@
       buildSelectorItems();
       updateSelectorSummary();
 
+      // Combined notable-changes teaser (selection-independent; don't block chart render)
+      loadNotableTeaser();
+
       // Render
       if (selectedWorkloads.length > 0) {
         await renderAll();
@@ -680,7 +687,6 @@
         document.getElementById('memoryChartsGrid').innerHTML = '';
         document.getElementById('perfCharts').innerHTML = '';
         document.getElementById('latencySection').style.display = 'none';
-        document.getElementById('annotations').innerHTML = '';
         document.getElementById('datapoints').innerHTML = '';
         currentData = null; currentPoints = null;
         return;
@@ -802,7 +808,6 @@
 
       // Sub-charts use primary workload only
       await Promise.all([renderMemory(platform, data), renderPerfCharts(platform), renderLatency(platform)]);
-      renderAnnotations(data);
       renderTable(points, workload);
     }
 
@@ -1141,17 +1146,55 @@
     // Annotations & Table
     // =========================================================================
 
-    function renderAnnotations(data) {
+    // Notable Changes teaser: combined feed across all platforms/workloads (throughput +
+    // memory, Valkey only), grouped by commit, newest first. Selection-independent —
+    // loaded once at init. Full feed with filters lives on notable.html.
+    const TEASER_LIMIT = 5;
+
+    async function loadNotableTeaser() {
       const el = document.getElementById('annotations');
-      const sorted = [...data.annotations].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
-      el.innerHTML = sorted.map(a => `
-        <div class="annotation ${a.good ? 'good' : 'bad'}">
+      const results = await Promise.all(PLATFORMS.map(async p => {
+        try {
+          const r = await fetch(`${DATA_URL}/notable-${p}.json`);
+          if (!r.ok) return null;
+          return { platform: p, annotations: (await r.json()).annotations || [] };
+        } catch { return null; }
+      }));
+      const byCommit = {};
+      for (const res of results) {
+        if (!res) continue;
+        for (const a of res.annotations) {
+          const g = byCommit[a.commit] ||= { commit: a.commit, date: a.date || '', entries: [] };
+          if (a.date && a.date > g.date) g.date = a.date;
+          if (a.pr != null) g.pr = a.pr;
+          if (a.pr_title) g.pr_title = a.pr_title;
+          g.entries.push({ platform: res.platform, workload: a.workload, metric: a.metric, delta: a.delta, good: a.good });
+        }
+      }
+      const groups = Object.values(byCommit).sort((x, y) => (y.date < x.date ? -1 : y.date > x.date ? 1 : 0));
+      if (!groups.length) {
+        el.innerHTML = '<div class="annotation"><span style="color:var(--muted)">No notable changes yet.</span></div>';
+        return;
+      }
+      el.innerHTML = groups.slice(0, TEASER_LIMIT).map(g => {
+        const allGood = g.entries.every(e => e.good);
+        const allBad = g.entries.every(e => !e.good);
+        const cls = allGood ? 'good' : allBad ? 'bad' : 'mixed';
+        const short = g.commit.slice(0, 8);
+        const shown = g.entries.slice(0, 3).map(e => {
+          const pct = (e.delta > 0 ? '+' : '') + (e.delta * 100).toFixed(1) + '%';
+          return `<span style="white-space:nowrap;">${PLATFORM_SHORT_LABELS[e.platform] || e.platform} ${e.metric === 'memory' ? 'mem' : e.workload.replace(/-k16|-v\d+/g, '')} <span class="delta ${e.good ? 'pos' : 'neg'}" style="font-weight:600;">${pct}</span></span>`;
+        }).join(' · ');
+        const more = g.entries.length > 3 ? ` · <a href="notable.html#${short}" style="color:var(--accent);">+${g.entries.length - 3} more</a>` : '';
+        return `
+        <div class="annotation ${cls}">
           <div>
-            <div><strong>${a.pr_title || a.commit.slice(0,8)}</strong></div>
-            <div class="meta"><a href="https://github.com/valkey-io/valkey/commit/${a.commit}" target="_blank">${a.commit.slice(0,8)}</a>${a.pr ? ` · <a href="https://github.com/valkey-io/valkey/pull/${a.pr}" target="_blank">PR #${a.pr}</a>` : ''}</div>
+            <div><strong>${g.pr_title || short}</strong></div>
+            <div class="meta"><a href="https://github.com/valkey-io/valkey/commit/${g.commit}" target="_blank">${short}</a>${g.pr ? ` · <a href="https://github.com/valkey-io/valkey/pull/${g.pr}" target="_blank">PR #${g.pr}</a>` : ''} · ${g.date} · ${shown}${more}</div>
           </div>
-          <div class="delta ${a.delta < 0 ? 'neg' : 'pos'}">${a.delta > 0 ? '+' : ''}${(a.delta*100).toFixed(1)}%</div>
-        </div>`).join('');
+          <a href="notable.html#${short}" style="color:var(--muted);font-size:0.75rem;text-decoration:none;white-space:nowrap;">details →</a>
+        </div>`;
+      }).join('');
     }
 
     function renderTable(points, workload) {
