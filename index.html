@@ -535,6 +535,7 @@
         workload: params.get('workload'),
         workloads: params.get('workloads')?.split(','),
         zoom: params.get('zoom')?.split(',').map(Number),
+        commit: params.get('commit'),
       };
     }
 
@@ -658,21 +659,28 @@
 
       // Render
       if (selectedWorkloads.length > 0) {
-        await renderAll();
+        // Pre-compute zoom bounds for instant rendering (no flash)
+        let initialZoom = null;
+        if (hashState.commit && !hashState.zoom) {
+          // Defer actual highlighting until after render; just record intent
+          initialZoom = hashState.commit;
+        }
+        await renderAll(initialZoom);
         if (hashState.zoom && hashState.zoom.length === 2) {
           const [min, max] = hashState.zoom;
           allCharts.forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
         }
+        if (hashState.commit) highlightCommit(hashState.commit);
       }
     }
 
-    async function renderAll() {
+    async function renderAll(initialCommit) {
       if (!primaryWorkload) return;
       const platform = primaryWorkload.platform;
-      await render(platform);
+      await render(platform, initialCommit);
     }
 
-    async function render(platform) {
+    async function render(platform, initialCommit) {
       // Fetch primary workload data (drives sub-charts + page title)
       const primaryFileId = getWorkloadId();
       const resp = await fetch(`${DATA_URL}/series-${platform}-${primaryFileId}-throughput.json`);
@@ -789,6 +797,18 @@
           showCommitPopup(point, prevPoint, workload, evt.native);
         }
       };
+
+      // If deep-linking to a specific commit, pre-zoom chart options so it renders
+      // in the zoomed state immediately (no flash of full-width then re-zoom).
+      if (initialCommit) {
+        const targetPt = points.find(p => p.commit.startsWith(initialCommit) || initialCommit.startsWith(p.commit));
+        if (targetPt) {
+          const ci = targetPt.commit_index;
+          opts.scales.x.min = Math.max(0, ci - 30);
+          opts.scales.x.max = Math.min(globalMaxCommits, ci + 30);
+        }
+        opts.animation = false; // no entrance animation for deep-linked views
+      }
 
       chart = new Chart(document.getElementById('chart').getContext('2d'), {
         type: 'line',
@@ -1197,6 +1217,30 @@
       }).join('');
     }
 
+    // =========================================================================
+    // Deep-link highlight: zoom chart to commit, show popup, scroll table row
+    // =========================================================================
+
+    function highlightCommit(commitSha) {
+      if (!currentData || !chart) return;
+      const points = currentData.points;
+      const idx = points.findIndex(p => p.commit.startsWith(commitSha) || commitSha.startsWith(p.commit));
+      if (idx < 0) return;
+      const point = points[idx];
+
+      // Highlight the point on the chart
+      const mainDsIdx = chart.data.datasets.findIndex(ds => ds.label && !['CV+','CV-'].includes(ds.label));
+      if (mainDsIdx >= 0) {
+        chart.setActiveElements([{ datasetIndex: mainDsIdx, index: idx }]);
+        chart.update('none');
+      }
+
+      // Open the commit detail popup positioned beside the chart
+      const prevPoint = findPrevPoint(points, idx);
+      const workload = currentData.workloads[0];
+      showCommitPopup(point, prevPoint, workload, null);
+    }
+
     function renderTable(points, workload) {
       const el = document.getElementById('datapoints'); if (!el) return;
       const rows = points.slice().reverse().map(p => {
@@ -1470,9 +1514,40 @@
       // Position near click but within viewport
       popup.style.display = 'block';
       const rect = popup.getBoundingClientRect();
-      let left = evt.clientX + 12;
-      let top = evt.clientY - 20;
-      if (left + rect.width > window.innerWidth - 16) left = evt.clientX - rect.width - 12;
+      let left, top;
+      if (evt) {
+        left = evt.clientX + 12; top = evt.clientY - 20;
+        if (left + rect.width > window.innerWidth - 16) left = evt.clientX - rect.width - 12;
+      } else {
+        // Programmatic open (deep link) — position relative to the highlighted point on the chart
+        let positioned = false;
+        if (chart) {
+          const mainDsIdx = chart.data.datasets.findIndex(ds => ds.label && !['CV+','CV-'].includes(ds.label));
+          const activeEls = chart.getActiveElements();
+          const el = activeEls.length ? activeEls[0] : (mainDsIdx >= 0 ? null : null);
+          if (el || mainDsIdx >= 0) {
+            const meta = chart.getDatasetMeta(el ? el.datasetIndex : mainDsIdx);
+            const ptIdx = el ? el.index : 0;
+            const ptEl = meta.data[ptIdx];
+            if (ptEl) {
+              const canvasRect = chart.canvas.getBoundingClientRect();
+              const ptX = canvasRect.left + ptEl.x;
+              const ptY = canvasRect.top + ptEl.y;
+              // Try to the right of the point
+              if (ptX + 20 + rect.width < window.innerWidth - 16) {
+                left = ptX + 20; top = ptY - rect.height / 2;
+              } else {
+                // To the left of the point
+                left = ptX - rect.width - 20; top = ptY - rect.height / 2;
+              }
+              positioned = true;
+            }
+          }
+        }
+        if (!positioned) {
+          left = Math.max(16, (window.innerWidth - rect.width) / 2); top = 80;
+        }
+      }
       if (top + rect.height > window.innerHeight - 16) top = window.innerHeight - rect.height - 16;
       if (top < 8) top = 8;
       popup.style.left = left + 'px';
