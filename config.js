@@ -78,7 +78,7 @@ const MEMORY_USER_DATA = {
 };
 
 const CATEGORY_COLORS = {
-  robj_embval: '#6366f1', robj_embkey: '#f472b6', sds: '#10b981', hashtable: '#f59e0b', hash_entry: '#fb923c', skiplist: '#ef4444',
+  robj_embval: '#6366f1', robj_embkey: '#f472b6', sds: '#10b981', hashtable: '#f59e0b', hash_entry: '#fb923c', skiplist: '#ef4444', fbtree: '#dc2626',
   robj: '#06b6d4', listpack: '#a855f7', dict: '#78716c', server_infra: '#84cc16', other: '#d97706',
   'tma-retiring-pct': '#22c55e', 'tma-fe-bound-pct': '#f59e0b', 'tma-be-bound-pct': '#ef4444', 'tma-bad-spec-pct': '#8b5cf6',
   // CPU profile categories (main + IO thread flamegraph breakdown)
@@ -176,7 +176,8 @@ const HELP_TEXT = {
         <li><strong>robj</strong> — Redis object headers (type, encoding, refcount, LRU)</li>
         <li><strong>robj_embval</strong> — EMBSTR objects with value stored inline (saves pointer indirection)</li>
         <li><strong>robj_embkey</strong> — robj with key SDS embedded into the struct (saves one allocation)</li>
-        <li><strong>skiplist</strong> — sorted set skip list nodes (zadd only)</li>
+        <li><strong>skiplist</strong> — sorted set skip list nodes (zadd only, pre-#4359 commits)</li>
+        <li><strong>fbtree</strong> — sorted set B+ tree nodes (zadd only, post-#4359; packed score+member items count under <code>sds</code>)</li>
         <li><strong>listpack</strong> — compact encoding for small collections</li>
         <li><strong>server_infra</strong> — fixed server overhead amortized per key (buffers, event loop, replication state)</li>
       </ul>
