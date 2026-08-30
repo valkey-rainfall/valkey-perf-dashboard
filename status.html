@@ -88,7 +88,7 @@
     <div class="hosts" id="hosts"></div>
     <script src="lib/status-helpers.js"></script>
     <script>
-const {formatScore, timeAgo, escapeHtml, renderFleetControl, shortSpecifier, formatDuration, queueSummary, taskDescription, renderRemoteTasks, renderLocalTasks, renderRecentResults, fmtBytes, diskTier} = StatusHelpers;
+const {formatScore, timeAgo, escapeHtml, renderFleetControl, shortSpecifier, formatDuration, queueSummary, taskDescription, renderRemoteTasks, renderLocalTasks, renderRecentResults, fmtBytes, diskTier, terminalRecheckQualifies, createRecheckScheduler} = StatusHelpers;
 
 const HOSTS = [
     {id: 'arm', runnerId: 'armbench', title: 'AWS Graviton 3', subtitle: 'c7g.metal · 64 cores'},
@@ -260,12 +260,59 @@ async function loadStatus() {
     renderCachedStatus();
 }
 
-loadStatus();
-let refreshTimer = setInterval(loadStatus, 60000);
+let autoRefreshEnabled = true;
+const recheckScheduler = createRecheckScheduler({
+    onRecheck(hostId) {
+        if (!autoRefreshEnabled) return;
+        // Single follow-up fetch for the specific host, then re-render.
+        const host = HOSTS.find(h => h.id === hostId);
+        if (!host) return;
+        fetch(`${STATUS_BASE}/${host.id}.json?t=${Date.now()}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => { if (data) { lastGood[host.id] = data; renderCachedStatus(); } })
+            .catch(() => {});
+        // Also refresh the control dashboard feed for updated remote mailbox state.
+        fetch(`${CONTROL_STATUS_URL}?t=${Date.now()}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(dashboardData => {
+                if (dashboardData) {
+                    lastRemoteByRunner = Object.fromEntries(dashboardData.runners.map(runner => [runner.runner_id, runner]));
+                    renderCachedStatus();
+                }
+            })
+            .catch(() => {});
+    },
+    delayMs: 5000,
+});
+
+function scheduleTerminalRechecks() {
+    for (const host of HOSTS) {
+        const data = lastGood[host.id];
+        const { qualify, boundaryKey } = terminalRecheckQualifies(data);
+        if (qualify) {
+            recheckScheduler.schedule(host.id, boundaryKey);
+        }
+    }
+}
+
+function refreshAndSchedule() {
+    return loadStatus().then(() => {
+        if (autoRefreshEnabled) scheduleTerminalRechecks();
+    });
+}
+
+let refreshTimer = setInterval(refreshAndSchedule, 60000);
+refreshAndSchedule();
 setInterval(renderCachedStatus, 1000);
 document.getElementById('autoRefresh').addEventListener('change', (e) => {
-    if (e.target.checked) { refreshTimer = setInterval(loadStatus, 60000); loadStatus(); }
-    else { clearInterval(refreshTimer); }
+    autoRefreshEnabled = e.target.checked;
+    if (autoRefreshEnabled) {
+        refreshTimer = setInterval(refreshAndSchedule, 60000);
+        refreshAndSchedule();
+    } else {
+        clearInterval(refreshTimer);
+        recheckScheduler.reset();
+    }
 });
     </script>
 </body>
