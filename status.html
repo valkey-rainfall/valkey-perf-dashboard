@@ -127,8 +127,17 @@ function renderHost(data, host, remoteTasks) {
             ? 'alarm-warn' : '';
     const cardClass = worst ? `host-card ${worst}` : 'host-card';
     const remoteItems = remoteTasks?.remote_tasks ?? remoteTasks;
-    const remoteCount = remoteItems?.length || 0;
-    const remoteExpected = remoteTasks?.expected_duration_sec || 0;
+    const remoteReturned = remoteItems?.length || 0;
+    const remoteCount = remoteTasks?.total_count ?? remoteReturned;
+    const remoteTruncated = remoteTasks?.truncated === true;
+    const remoteExpected = remoteTasks?.expected_duration_complete === false ? 0 : (remoteTasks?.expected_duration_sec || 0);
+    const remoteSummary = remoteTruncated
+        ? `${remoteCount} tasks · ${remoteReturned} shown`
+        : queueSummary(remoteCount, remoteExpected);
+    const remoteOmitted = Math.max(0, remoteCount - remoteReturned);
+    const remoteDisclosure = remoteOmitted
+        ? `<div class="item-meta task-snapshot-note">${remoteOmitted} additional task${remoteOmitted === 1 ? '' : 's'} not included in the public detail feed</div>`
+        : '';
     const localCount = data.queue?.depth || 0;
     const localExpected = data.queue?.expected_duration_sec || 0;
     const recentCount = data.recent_results?.length || 0;
@@ -138,7 +147,7 @@ function renderHost(data, host, remoteTasks) {
         ${staleBanner}${diskBanner}${fleetControl.banner}
         <div class="meta">${fleetControl.summary} · last boundary ${timeAgo(data.timestamp) || 'unknown'}${diskMeta}</div>
         <div class="task-flow">
-            <div class="section remote" aria-label="${escapeHtml(queueSummary(remoteCount, remoteExpected))} in remote mailbox"><div class="section-title"><span>Remote mailbox</span><span class="section-count">${escapeHtml(queueSummary(remoteCount, remoteExpected))}</span></div>${renderRemoteTasks(remoteItems)}</div>
+            <div class="section remote" aria-label="${escapeHtml(remoteSummary)} in remote mailbox"><div class="section-title"><span>Remote mailbox</span><span class="section-count">${escapeHtml(remoteSummary)}</span></div>${renderRemoteTasks(remoteItems)}${remoteDisclosure}</div>
             <div class="section local" aria-label="${escapeHtml(queueSummary(localCount, localExpected))} in local queue"><div class="section-title"><span>Local queue</span><span class="section-count">${escapeHtml(queueSummary(localCount, localExpected))}</span></div>${renderLocalTasks(data.queue, data.boundary)}</div>
             <div class="section results" aria-label="${recentCount} recent completion${recentCount === 1 ? '' : 's'}"><div class="section-title"><span>Recent completions</span><span class="section-count">${recentCount}</span></div>${renderRecentResults(data.recent_results)}</div>
         </div>
