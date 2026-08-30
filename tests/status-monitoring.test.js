@@ -154,6 +154,9 @@ assert(periodicHtml.includes('No update for'), '10m periodic publisher should st
 
 assert(html.includes('task-flow'), 'vertical task flow layout missing');
 assert(html.includes('grid-template-columns: repeat(auto-fit'), 'vertical host-card grid missing');
+assert(html.includes('@keyframes timeline-shimmer'), 'active ETA shimmer animation missing');
+assert(html.includes('animation: timeline-shimmer'), 'ETA fill must continuously shimmer');
+assert(html.includes('prefers-reduced-motion: reduce'), 'ETA animation must respect reduced-motion preference');
 assert(script.includes('setInterval(renderCachedStatus, 1000)'), 'client-side timeline must update once per second');
 assert(!html.includes('progress_pct'), 'host-reported progress percentage must not be rendered');
 assert(html.includes('ETA ${formatDuration(remaining)}'), 'explicit ETA timer rendering missing');
