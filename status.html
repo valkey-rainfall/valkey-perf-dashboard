@@ -156,16 +156,25 @@ function renderFleetControl(data) {
 function renderHost(data, label, subtitle) {
     const reportedState = data.runner?.state || 'unreachable';
     const ageSec = data.timestamp ? (Date.now() - new Date(data.timestamp).getTime()) / 1000 : Infinity;
-    // Tiered staleness: >5min = warn (missed ~5 pushes), >30min = critical.
-    const staleWarn = ageSec > 300 && ageSec <= 1800;
-    const staleCrit = ageSec > 1800;
+    const boundaryOnly = data.measurement_isolation?.boundary_publisher_active === true
+        && data.measurement_isolation?.status_timer_migration_required === false;
+    const boundaryTaskRunning = boundaryOnly && data.boundary?.state === 'starting';
+    // Periodic publishers warn at 5m/30m. Boundary-only runners update at task
+    // completion, so allow a long benchmark 2h before warning and 6h before critical.
+    const warnAfter = boundaryTaskRunning ? 7200 : 300;
+    const critAfter = boundaryTaskRunning ? 21600 : 1800;
+    const staleWarn = ageSec > warnAfter && ageSec <= critAfter;
+    const staleCrit = ageSec > critAfter;
     const stale = staleWarn || staleCrit;
     // When stale, the reported runner state is untrustworthy — override the dot.
     const dotClass = staleCrit ? 'stopped' : staleWarn ? 'stale' : reportedState;
     let staleBanner = '';
     if (stale) {
         const cls = staleCrit ? 'crit' : 'warn';
-        staleBanner = `<div class="card-banner ${cls}">⚠ No update for ${timeAgo(data.timestamp).replace(' ago','')} — publishing may be broken (runner state unknown)</div>`;
+        const reason = boundaryTaskRunning
+            ? 'no completion boundary received (task may be stuck)'
+            : 'publishing may be broken (runner state unknown)';
+        staleBanner = `<div class="card-banner ${cls}">⚠ No update for ${timeAgo(data.timestamp).replace(' ago','')} — ${reason}</div>`;
     }
 
     // Per-host local disk alarm (perf.data, build trees, stray RDBs can fill it).
@@ -223,6 +232,7 @@ function renderHost(data, label, subtitle) {
         <div class="meta">
             <span style="color:#8b949e">${subtitle}</span><br>
             Updated ${timeAgo(data.timestamp)}${diskMeta}
+            ${boundaryTaskRunning ? '· <span class="control-ok">Boundary-only: next update at completion</span>' : ''}
             ${data.eta_minutes > 0 ? `· <span class="eta">ETA ${data.eta_minutes}m</span>` : ''}
         </div>
         <div class="section"><div class="section-title">Current Task</div>${taskHtml}</div>

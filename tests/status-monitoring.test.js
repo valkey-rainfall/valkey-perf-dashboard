@@ -72,4 +72,27 @@ assert(!hostHtml.includes('<img onerror=1>'), 'current task fields must be escap
 assert(!hostHtml.includes('<script>bad</script>'), 'queue fields must be escaped');
 assert(!hostHtml.includes('<commit>'), 'result fields must be escaped');
 
+const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+const boundaryOnlyHtml = context.renderHost({
+    timestamp: tenMinutesAgo,
+    runner: {state: 'running'},
+    queue: {depth: 0, tasks: []},
+    recent_results: [],
+    disk: {},
+    fleet_control: {mode: 'shadow', control_reachable: true, pending_outcomes_count: 0},
+    measurement_isolation: {boundary_publisher_active: true, status_timer_migration_required: false},
+    boundary: {state: 'starting', task_id: 'long-task'},
+}, 'test', 'test');
+assert(!boundaryOnlyHtml.includes('No update for'), '10m boundary-only task must not look stale');
+assert(boundaryOnlyHtml.includes('next update at completion'), 'boundary-only explanation missing');
+
+const periodicHtml = context.renderHost({
+    timestamp: tenMinutesAgo,
+    runner: {state: 'running'},
+    queue: {depth: 0, tasks: []},
+    recent_results: [],
+    disk: {},
+}, 'test', 'test');
+assert(periodicHtml.includes('No update for'), '10m periodic publisher should still warn');
+
 console.log('status monitoring tests passed');
