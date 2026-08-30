@@ -348,11 +348,13 @@ describe('renderRemoteTasks', () => {
     assert.ok(html.includes('expected 5m 0s'));
   });
 
-  it('caps at 5 items and shows +N more', () => {
+  it('shows the first 5 and expands all remaining tasks', () => {
     const tasks = Array.from({ length: 8 }, (_, i) => ({ note: `task-${i}`, source: 'v' }));
     const html = status.renderRemoteTasks(tasks);
-    assert.ok(html.includes('+3 more'));
-    assert.ok(!html.includes('task-5')); // item 6-8 not rendered
+    assert.ok(html.includes('<details class="task-overflow">'));
+    assert.ok(html.includes('Show 3 more tasks'));
+    assert.ok(html.includes('task-5'));
+    assert.ok(html.includes('task-7'));
   });
 
   it('omits priority when null', () => {
@@ -380,12 +382,22 @@ describe('renderLocalTasks', () => {
     assert.ok(html.includes('deadbeef\u2026'));
   });
 
-  it('shows overflow count from depth, not tasks.length', () => {
+  it('expands all published overflow tasks', () => {
+    const html = status.renderLocalTasks({
+      depth: 8,
+      tasks: Array.from({ length: 8 }, (_, i) => ({ note: `task-${i}` })),
+    });
+    assert.ok(html.includes('<details class="task-overflow">'));
+    assert.ok(html.includes('Show 3 more tasks'));
+    assert.ok(html.includes('task-7'));
+  });
+
+  it('discloses tasks omitted from a truncated boundary snapshot', () => {
     const html = status.renderLocalTasks({
       depth: 7,
       tasks: Array.from({ length: 5 }, (_, i) => ({ note: `task-${i}` })),
     });
-    assert.ok(html.includes('+2 more'));
+    assert.ok(html.includes('2 additional tasks not included in this boundary snapshot'));
   });
 });
 
