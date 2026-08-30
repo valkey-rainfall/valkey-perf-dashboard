@@ -32,18 +32,11 @@ const pending = context.renderFleetControl({
         control_reachable: false,
         claim_failures_consecutive: 3,
         pending_outcomes_count: 1,
-        accepted_task_id: 'task<&',
-        active_stage: 'outcome_pending',
-        imported_count_total: 2,
-        last_error: 'bad <error>',
     },
     measurement_isolation: {status_timer_migration_required: true},
-    boundary: {state: 'failed', task_id: 'task<&'},
 });
 assert(pending.severity === 'crit', 'critical control outage must outrank pending outcome');
 assert(pending.banner.includes('pending') && pending.banner.includes('unreachable'), 'combined outage context missing');
-assert(pending.html.includes('task&lt;&amp;'), 'task ID must be escaped');
-assert(!pending.html.includes('bad <error>'), 'error text must be escaped');
 
 const unreachable = context.renderFleetControl({
     fleet_control: {
@@ -58,19 +51,58 @@ assert(unreachable.severity === 'crit', 'three control failures should be critic
 
 const off = context.renderFleetControl({});
 assert(off.severity === null, 'missing fleet data should not alarm');
-assert(off.html.includes('Not enabled'), 'disabled message missing');
+assert(off.summary.includes('not enabled'), 'disabled message missing');
 
+const host = {
+    runnerId: 'armbench',
+    title: 'AWS Graviton 3',
+    subtitle: 'c7g.metal · 64 cores',
+};
+const now = new Date().toISOString();
 const hostHtml = context.renderHost({
-    timestamp: new Date().toISOString(),
+    timestamp: now,
     runner: {state: 'running'},
-    current_task: {type: '<img onerror=1>', state: '<bad>', steps: '<1/2>', elapsed_sec: 1, progress_pct: 50},
-    queue: {depth: 1, tasks: [{type: '<queue>', note: '<script>bad</script>'}]},
-    recent_results: [{commit: '<commit>', method: '<method>', score: 1, completed: new Date().toISOString()}],
+    queue: {
+        depth: 1,
+        expected_duration_sec: 420,
+        tasks: [{type: '<queue>', note: '<script>local bad</script>', source: 'valkey', specifier: '<local-sha>', expected_duration_sec: 420}],
+    },
+    recent_results: [{
+        commit: '<commit>', method: '<method>', note: '<img onerror=1>', score: 1, completed: now,
+        observed_duration_sec: 375,
+    }],
     disk: {},
-}, 'test', 'test');
-assert(!hostHtml.includes('<img onerror=1>'), 'current task fields must be escaped');
-assert(!hostHtml.includes('<script>bad</script>'), 'queue fields must be escaped');
-assert(!hostHtml.includes('<commit>'), 'result fields must be escaped');
+    fleet_control: {mode: 'live', control_reachable: true, pending_outcomes_count: 0},
+    measurement_isolation: {boundary_publisher_active: true, status_timer_migration_required: false},
+    boundary: {state: 'starting', task_id: 'task-1'},
+}, host, {
+    expected_duration_sec: 300,
+    remote_tasks: [{
+        id: 'remote-1', type: '<remote>', note: '<script>remote bad</script>', source: 'valkey',
+        specifier: '<remote-sha>', state: 'queued', priority: 100, expected_duration_sec: 300,
+    }],
+});
+assert(hostHtml.includes('AWS Graviton 3'), 'hardware platform must be the primary title');
+assert(hostHtml.includes('armbench · c7g.metal · 64 cores'), 'SSH alias must be secondary metadata');
+assert(hostHtml.includes('Remote mailbox') && hostHtml.includes('Local queue') && hostHtml.includes('Recent completions'), 'three task sections missing');
+assert(!hostHtml.includes('<script>remote bad</script>'), 'remote task description must be escaped');
+assert(!hostHtml.includes('<script>local bad</script>'), 'local task description must be escaped');
+assert(!hostHtml.includes('<img onerror=1>'), 'result description must be escaped');
+assert(!hostHtml.includes('<commit>') && !hostHtml.includes('<method>'), 'result metadata must be escaped');
+assert(hostHtml.includes('&lt;script&gt;remote bad&lt;/script&gt;'), 'remote descriptive text must remain visible');
+assert(hostHtml.includes('&lt;script&gt;local bad&lt;/script&gt;'), 'local descriptive text must remain visible');
+assert(hostHtml.includes('&lt;img onerror=1&gt;'), 'completion descriptive text must remain visible');
+assert(hostHtml.includes('expected 5m 0s'), 'remote expected duration missing');
+assert(hostHtml.includes('expected 7m 0s'), 'local expected duration missing');
+assert(hostHtml.includes('observed 6m 15s'), 'observed completion duration missing');
+assert(hostHtml.includes('1 task · ~5m 0s total'), 'remote queue total missing');
+assert(hostHtml.includes('1 task · ~7m 0s total'), 'local queue total missing');
+assert(hostHtml.includes('aria-label="Status: running"'), 'status dot accessibility label missing');
+assert(!hostHtml.includes('priority undefined'), 'missing priority must not render undefined');
+assert(context.shortSpecifier('1234567890abcdef') === '12345678…', 'truncated SHA needs an ellipsis');
+
+const unavailable = context.renderRemoteTasks(null);
+assert(unavailable.includes('feed unavailable'), 'remote feed failure must not look like an empty mailbox');
 
 const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 const boundaryOnlyHtml = context.renderHost({
@@ -79,12 +111,11 @@ const boundaryOnlyHtml = context.renderHost({
     queue: {depth: 0, tasks: []},
     recent_results: [],
     disk: {},
-    fleet_control: {mode: 'shadow', control_reachable: true, pending_outcomes_count: 0},
+    fleet_control: {mode: 'live', control_reachable: true, pending_outcomes_count: 0},
     measurement_isolation: {boundary_publisher_active: true, status_timer_migration_required: false},
     boundary: {state: 'starting', task_id: 'long-task'},
-}, 'test', 'test');
+}, host, []);
 assert(!boundaryOnlyHtml.includes('No update for'), '10m boundary-only task must not look stale');
-assert(boundaryOnlyHtml.includes('next update at completion'), 'boundary-only explanation missing');
 
 const periodicHtml = context.renderHost({
     timestamp: tenMinutesAgo,
@@ -92,7 +123,12 @@ const periodicHtml = context.renderHost({
     queue: {depth: 0, tasks: []},
     recent_results: [],
     disk: {},
-}, 'test', 'test');
+}, host, []);
 assert(periodicHtml.includes('No update for'), '10m periodic publisher should still warn');
+
+assert(!html.includes('progress-bar'), 'progress bar must not be rendered from boundary-only snapshots');
+assert(!html.includes('progress_pct'), 'progress percentage must not be rendered');
+assert(!html.includes('ETA '), 'ETA must not be rendered');
+assert(!html.includes('Current Task'), 'separate current-task progress section must be removed');
 
 console.log('status monitoring tests passed');
