@@ -5,7 +5,8 @@ const fs = require('fs');
 const vm = require('vm');
 
 const html = fs.readFileSync('status.html', 'utf8');
-const script = html.split('<script>')[1].split('</script>')[0];
+const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+const statusHelpers = fs.readFileSync('lib/status-helpers.js', 'utf8');
 const context = {
     console,
     Date,
@@ -20,13 +21,14 @@ const context = {
     },
 };
 vm.createContext(context);
+vm.runInContext(statusHelpers, context);
 vm.runInContext(script, context);
 
 function assert(condition, message) {
     if (!condition) throw new Error(message);
 }
 
-const pending = context.renderFleetControl({
+const pending = context.StatusHelpers.renderFleetControl({
     fleet_control: {
         mode: 'live',
         control_reachable: false,
@@ -38,7 +40,7 @@ const pending = context.renderFleetControl({
 assert(pending.severity === 'crit', 'critical control outage must outrank pending outcome');
 assert(pending.banner.includes('pending') && pending.banner.includes('unreachable'), 'combined outage context missing');
 
-const unreachable = context.renderFleetControl({
+const unreachable = context.StatusHelpers.renderFleetControl({
     fleet_control: {
         mode: 'shadow',
         control_reachable: false,
@@ -49,7 +51,7 @@ const unreachable = context.renderFleetControl({
 });
 assert(unreachable.severity === 'crit', 'three control failures should be critical');
 
-const off = context.renderFleetControl({});
+const off = context.StatusHelpers.renderFleetControl({});
 assert(off.severity === null, 'missing fleet data should not alarm');
 assert(off.summary.includes('not enabled'), 'disabled message missing');
 
@@ -99,9 +101,9 @@ assert(hostHtml.includes('1 task · ~5m 0s total'), 'remote queue total missing'
 assert(hostHtml.includes('1 task · ~7m 0s total'), 'local queue total missing');
 assert(hostHtml.includes('aria-label="Status: running"'), 'status dot accessibility label missing');
 assert(!hostHtml.includes('priority undefined'), 'missing priority must not render undefined');
-assert(context.shortSpecifier('1234567890abcdef') === '12345678…', 'truncated SHA needs an ellipsis');
+assert(context.StatusHelpers.shortSpecifier('1234567890abcdef') === '12345678…', 'truncated SHA needs an ellipsis');
 
-const unavailable = context.renderRemoteTasks(null);
+const unavailable = context.StatusHelpers.renderRemoteTasks(null);
 assert(unavailable.includes('feed unavailable'), 'remote feed failure must not look like an empty mailbox');
 
 const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();

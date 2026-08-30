@@ -24,3 +24,14 @@ Each platform has its own `series-{platform}.json`:
 python3 -m http.server 8080 --bind 127.0.0.1
 # Open http://localhost:8080
 ```
+
+## Tests
+
+The test suite uses Node.js 22's built-in test runner and has no third-party dependencies:
+
+```bash
+node --test tests/unit.test.js
+node tests/status-monitoring.test.js
+```
+
+The unit suite covers status rendering and escaping, fleet-control severity, queue and duration formatting, statistical comparison helpers, workload parsing, page/module integration, HTML structure, and JSON fixtures. GitHub Actions runs these tests plus JavaScript syntax, JSON, HTML, and inclusive-language checks on pushes and pull requests.
