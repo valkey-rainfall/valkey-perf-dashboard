@@ -146,6 +146,21 @@ assert(truncatedMailboxHtml.includes('80 tasks · 1 shown'), 'authoritative remo
 assert(truncatedMailboxHtml.includes('79 additional tasks not included in the public detail feed'), 'truncation disclosure missing');
 assert(!truncatedMailboxHtml.includes('~1h 23m total'), 'partial expected duration must not be presented as complete');
 
+const fleetMetrics = context.fleetMetricsSnapshot({
+    arm: {runner: {state: 'running'}, boundary: {state: 'starting'}, queue: {depth: 2}},
+    graviton4: {runner: {state: 'running'}, boundary: {state: 'idle'}, queue: {depth: 1}},
+    x86: {runner: {state: 'stopped'}, boundary: {state: 'idle'}, queue: {depth: 0}},
+}, {
+    armbench: {total_count: 7},
+    g4bench: {total_count: 3},
+    bench: {total_count: 0},
+    intelbench: {total_count: 1},
+});
+assert(fleetMetrics.online === 2 && fleetMetrics.total === 4, 'fleet online metric incorrect');
+assert(fleetMetrics.active === 1, 'fleet active metric incorrect');
+assert(fleetMetrics.remote === 11, 'fleet remote queue metric must use authoritative counts');
+assert(fleetMetrics.local === 3, 'fleet local queue metric incorrect');
+
 const unavailable = context.StatusHelpers.renderRemoteTasks(null);
 assert(unavailable.includes('feed unavailable'), 'remote feed failure must not look like an empty mailbox');
 

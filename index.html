@@ -48,13 +48,20 @@
     .info-row .info-sep { color: var(--border); }
 
     /* Header */
-    header { position: sticky; top: 0; z-index: 100; background: var(--bg); padding: 0.75rem 1.5rem; margin: -1.5rem -1.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
-    .controls select, .controls button { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; cursor: pointer; }
+    header { position: sticky; top: 0; z-index: 100; background: var(--bg); padding: 0.55rem 1rem; margin: -1.5rem -1.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .header-title { display: flex; align-items: baseline; gap: 0.5rem; flex: 1 1 250px; min-width: 180px; overflow: hidden; }
+    .header-title h1 { flex: 0 0 auto; white-space: nowrap; }
+    .header-title #workload-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .zoom-controls, .header-links { display: flex; align-items: center; gap: 0.35rem; flex: 0 0 auto; white-space: nowrap; }
+    .header-links { margin-left: auto; gap: 0.7rem; }
+    .header-links a { color: var(--accent); font-size: 0.76rem; text-decoration: none; font-weight: 500; }
+    .header-links a:last-child { color: var(--muted); font-weight: 400; }
+    .controls select, .controls button { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 0.35rem 0.65rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
     .zoom-btn { font-size: 0.8rem; padding: 3px 10px; cursor: pointer; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px; }
     .zoom-btn:hover { background: var(--border); }
 
     /* Flat list selector */
-    .selector-toggle { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.85rem; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; }
+    .selector-toggle { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.8rem; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 0.35rem; flex: 0 0 auto; white-space: nowrap; }
     .selector-toggle:hover { border-color: var(--accent); }
     .selector-toggle .arrow { transition: transform 0.2s; }
     .selector-toggle.open .arrow { transform: rotate(180deg); }
@@ -187,23 +194,25 @@
 </head>
 <body>
   <header>
-    <div>
-      <h1 id="pageTitle" style="font-size:1.1rem;margin:0;">Valkey Unstable — Performance History</h1>
-      <span id="workload-label" style="color:var(--muted);font-size:0.85rem;"></span>
+    <div class="header-title">
+      <h1 id="pageTitle" style="font-size:1.05rem;margin:0;">Valkey Unstable — Performance History</h1>
+      <span id="workload-label" style="color:var(--muted);font-size:0.78rem;"></span>
     </div>
     <button class="selector-toggle" id="selectorToggle" onclick="toggleSelectorPanel()">
       <span id="selectorSummary">Loading...</span>
       <span class="arrow" style="font-size:0.7rem;">▼</span>
     </button>
-    <div style="display:flex;gap:0.4rem;">
+    <div class="zoom-controls">
       <button id="btn-prev-release" onclick="zoomAll('prevRelease')" class="zoom-btn">Since Previous Release</button>
       <button id="btn-last-release" onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
       <button onclick="zoomAll('last100')" class="zoom-btn">Last 100 Commits</button>
       <button onclick="zoomAll('reset')" class="zoom-btn">Reset Zoom</button>
     </div>
-    <a href="notable.html" style="margin-left:auto;color:var(--accent);font-size:0.8rem;text-decoration:none;font-weight:500;">Notable Changes</a>
-    <a href="compare.html" style="color:var(--accent);font-size:0.8rem;text-decoration:none;font-weight:500;">Compare Engines</a>
-    <a href="status.html" style="color:var(--muted);font-size:0.8rem;text-decoration:none;">Host Status ↗</a>
+    <nav class="header-links" aria-label="Dashboard pages">
+      <a href="notable.html">Notable Changes</a>
+      <a href="compare.html">Compare Engines</a>
+      <a href="status.html">Host Status ↗</a>
+    </nav>
   </header>
 
   <!-- Workload selector panel (inline, expands below header) -->

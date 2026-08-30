@@ -744,6 +744,22 @@ describe('HTML structural integrity', () => {
     assert.ok(html.includes('prefers-reduced-motion: reduce'), 'animation must respect reduced motion');
   });
 
+  it('status header keeps title, navigation, metrics, and refresh together', () => {
+    const html = fs.readFileSync(path.join(root, 'status.html'), 'utf8');
+    assert.ok(html.includes('class="status-header"'));
+    assert.ok(html.includes('id="fleetMetrics"'));
+    assert.ok(html.includes('class="refresh-toggle"'));
+    assert.ok(html.includes('fleetMetricsSnapshot'));
+  });
+
+  it('main dashboard header groups controls without shrinking them individually', () => {
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.ok(html.includes('class="header-title"'));
+    assert.ok(html.includes('class="zoom-controls"'));
+    assert.ok(html.includes('class="header-links"'));
+    assert.ok(html.includes('flex: 0 0 auto'));
+  });
+
   it('all HTML pages have lang attribute', () => {
     for (const file of ['index.html', 'status.html', 'notable.html', 'compare.html']) {
       const html = fs.readFileSync(path.join(root, file), 'utf8');
