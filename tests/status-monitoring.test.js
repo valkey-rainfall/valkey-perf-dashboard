@@ -5,7 +5,8 @@ const fs = require('fs');
 const vm = require('vm');
 
 const html = fs.readFileSync('status.html', 'utf8');
-const script = html.split('<script>')[1].split('</script>')[0];
+const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+const statusHelpers = fs.readFileSync('lib/status-helpers.js', 'utf8');
 const context = {
     console,
     Date,
@@ -20,13 +21,14 @@ const context = {
     },
 };
 vm.createContext(context);
+vm.runInContext(statusHelpers, context);
 vm.runInContext(script, context);
 
 function assert(condition, message) {
     if (!condition) throw new Error(message);
 }
 
-const pending = context.renderFleetControl({
+const pending = context.StatusHelpers.renderFleetControl({
     fleet_control: {
         mode: 'live',
         control_reachable: false,
@@ -38,7 +40,7 @@ const pending = context.renderFleetControl({
 assert(pending.severity === 'crit', 'critical control outage must outrank pending outcome');
 assert(pending.banner.includes('pending') && pending.banner.includes('unreachable'), 'combined outage context missing');
 
-const unreachable = context.renderFleetControl({
+const unreachable = context.StatusHelpers.renderFleetControl({
     fleet_control: {
         mode: 'shadow',
         control_reachable: false,
@@ -49,7 +51,7 @@ const unreachable = context.renderFleetControl({
 });
 assert(unreachable.severity === 'crit', 'three control failures should be critical');
 
-const off = context.renderFleetControl({});
+const off = context.StatusHelpers.renderFleetControl({});
 assert(off.severity === null, 'missing fleet data should not alarm');
 assert(off.summary.includes('not enabled'), 'disabled message missing');
 
@@ -102,32 +104,31 @@ assert(hostHtml.includes('1 task · ~5m 0s total'), 'remote queue total missing'
 assert(hostHtml.includes('1 task · ~7m 0s total'), 'local queue total missing');
 assert(hostHtml.includes('aria-label="Status: running"'), 'status dot accessibility label missing');
 assert(!hostHtml.includes('priority undefined'), 'missing priority must not render undefined');
-assert(context.shortSpecifier('1234567890abcdef') === '12345678…', 'truncated SHA needs an ellipsis');
-
+assert(context.StatusHelpers.shortSpecifier('1234567890abcdef') === '12345678…', 'truncated SHA needs an ellipsis');
 
 const timelineTask = {id: 'timeline-task', expected_duration_sec: 300};
 const timelineBoundary = {state: 'starting', task_id: 'timeline-task', timestamp: '2026-08-30T10:00:00Z'};
 const startMs = new Date(timelineBoundary.timestamp).getTime();
-const onTime = context.taskTimeline(timelineTask, timelineBoundary, startMs + 150000);
+const onTime = context.StatusHelpers.taskTimeline(timelineTask, timelineBoundary, startMs + 150000);
 assert(onTime.includes('ETA 2m 30s'), 'remaining ETA missing');
 assert(onTime.includes('Elapsed 2m 30s · expected 5m 0s'), 'elapsed-versus-expected label missing');
 assert(onTime.includes('width:50.0%'), 'ETA fill should track elapsed fraction');
 assert(onTime.includes('role="timer"'), 'ETA needs timer semantics');
 assert(!onTime.includes('50%'), 'ETA must not claim percentage completion');
 
-const late = context.taskTimeline(timelineTask, timelineBoundary, startMs + 375000);
+const late = context.StatusHelpers.taskTimeline(timelineTask, timelineBoundary, startMs + 375000);
 assert(late.includes('Overdue 1m 15s'), 'overdue timer label missing');
 assert(late.includes('timeline-state late'), 'late state styling missing');
 assert(late.includes('width:100.0%'), 'overdue timer must remain fully filled');
 assert(!late.includes('125%'), 'overdue timer must not show percentage progress');
 
-const veryLate = context.taskTimeline(timelineTask, timelineBoundary, startMs + 480000);
+const veryLate = context.StatusHelpers.taskTimeline(timelineTask, timelineBoundary, startMs + 480000);
 assert(veryLate.includes('Overdue 3m 0s'), 'very-late timer label missing');
 assert(veryLate.includes('very-late'), 'very-late styling missing');
 assert(!veryLate.includes('160%'), 'very-late timer must not show percentage progress');
-assert(context.taskTimeline(timelineTask, {...timelineBoundary, task_id: 'other'}, startMs + 1000) === '', 'non-current task must not get a timeline');
+assert(context.StatusHelpers.taskTimeline(timelineTask, {...timelineBoundary, task_id: 'other'}, startMs + 1000) === '', 'non-current task must not get a timeline');
 
-const unavailable = context.renderRemoteTasks(null);
+const unavailable = context.StatusHelpers.renderRemoteTasks(null);
 assert(unavailable.includes('feed unavailable'), 'remote feed failure must not look like an empty mailbox');
 
 const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -159,8 +160,6 @@ assert(html.includes('animation: timeline-shimmer'), 'ETA fill must continuously
 assert(html.includes('prefers-reduced-motion: reduce'), 'ETA animation must respect reduced-motion preference');
 assert(script.includes('setInterval(renderCachedStatus, 1000)'), 'client-side timeline must update once per second');
 assert(!html.includes('progress_pct'), 'host-reported progress percentage must not be rendered');
-assert(html.includes('ETA ${formatDuration(remaining)}'), 'explicit ETA timer rendering missing');
-assert(!html.includes('percentText'), 'percentage progress semantics must remain absent');
 assert(!html.includes('Current Task'), 'separate current-task progress section must be removed');
 
 console.log('status monitoring tests passed');

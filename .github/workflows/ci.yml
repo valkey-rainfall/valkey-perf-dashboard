@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run unit tests
+        run: node --test tests/unit.test.js
+
+  legacy-test:
+    name: Legacy Status Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run status monitoring tests
+        run: node tests/status-monitoring.test.js
+
+  lint:
+    name: Static Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON data files
+        run: |
+          echo "Validating JSON files..."
+          find data -name '*.json' -exec sh -c 'python3 -m json.tool "$1" > /dev/null' _ {} \;
+          echo "All JSON files valid."
+
+      - name: Check for non-inclusive language
+        run: |
+          echo "Checking for non-inclusive language..."
+          ! grep -rniE '\b(master|slave|whitelist|blacklist)\b' \
+            --include='*.js' --include='*.html' --include='*.json' --include='*.md' \
+            --exclude-dir=node_modules --exclude-dir=.git \
+            --exclude='*.bak' \
+            . || { echo "Non-inclusive language found (see above)."; exit 1; }
+          echo "No inclusive language violations found."
+
+      - name: Check HTML structure
+        run: |
+          echo "Checking HTML files for lang and viewport..."
+          for f in index.html status.html notable.html compare.html; do
+            [ -f "$f" ] || continue
+            grep -q 'lang=' "$f" || { echo "$f missing lang attribute"; exit 1; }
+            grep -q 'viewport' "$f" || { echo "$f missing viewport meta"; exit 1; }
+          done
+          echo "All HTML structural checks passed."

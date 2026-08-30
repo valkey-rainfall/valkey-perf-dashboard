@@ -28,6 +28,22 @@ let THROUGHPUT_WORKLOADS = [
   { id: 'set-k16-v16-t9-p50', label: 'SET K=16B V=16B T=9 P=50', platforms: ['arm64', 'graviton4'] },
 ];
 
+function isValidWorkloadId(id) {
+  return /^(get|set)-k\d+-v\d+-t\d+-p\d+$/.test(id);
+}
+
+function workloadIdToLabel(id) {
+  const m = id.match(/^(?:(redis)-)?(get|set)-k(\d+)-v(\d+)-t(\d+)-p(\d+)$/);
+  if (!m) return id;
+  const [, engine, cmd, k, v, t, p] = m;
+  const prefix = engine ? 'Redis ' : '';
+  return `${prefix}${cmd.toUpperCase()} K=${k}B V=${v}B T=${t} P=${p}`;
+}
+
+function isEnginePrefixed(workloadId, engines = ENGINES) {
+  return engines.some(engine => engine.id !== 'valkey' && workloadId.startsWith(`${engine.id}-`));
+}
+
 // Auto-discover workloads from per-platform manifests on data server.
 // Merges all platforms, infers platform restrictions.
 async function discoverWorkloads() {
@@ -49,24 +65,16 @@ async function discoverWorkloads() {
     if (!m || !m.throughput_workloads) continue;
     for (const wId of m.throughput_workloads) {
       // Skip engine-prefixed workloads (e.g. redis-get-*) -- engine prefix is added at fetch time
-      if (ENGINES.some(e => e.id !== 'valkey' && wId.startsWith(e.id + '-'))) continue;
+      if (isEnginePrefixed(wId)) continue;
       // Skip malformed IDs missing thread/pipeline suffix (stale pre-rename data)
-      if (!/^(get|set)-k\d+-v\d+-t\d+-p\d+$/.test(wId)) continue;
+      if (!isValidWorkloadId(wId)) continue;
       if (!platformWorkloads[wId]) platformWorkloads[wId] = new Set();
       platformWorkloads[wId].add(PLATFORMS[i]);
     }
   }
   if (Object.keys(platformWorkloads).length === 0) return; // Keep fallback
   THROUGHPUT_WORKLOADS = Object.entries(platformWorkloads).map(([id, plats]) => {
-    // Generate human label from ID: get-k16-v128-t7-p1 -> "GET k16 v128 P1"
-    const m = id.match(/^(?:(redis)-)?(get|set)-k(\d+)-v(\d+)-t(\d+)-p(\d+)$/);
-    let label = id;
-    if (m) {
-      const [, engine, cmd, k, v, t, p] = m;
-      label = `${cmd.toUpperCase()} K=${k}B V=${v}B T=${t} P=${p}`;
-      if (engine) label = `Redis ${label}`;
-    }
-    const entry = { id, label };
+    const entry = { id, label: workloadIdToLabel(id) };
     if (plats.size < PLATFORMS.length) entry.platforms = [...plats];
     return entry;
   });
@@ -201,3 +209,7 @@ function showHelp(sectionId) {
   modal.style.display = 'flex';
 }
 function closeHelp() { const m = document.getElementById('helpModal'); if (m) m.style.display = 'none'; }
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {isValidWorkloadId, workloadIdToLabel, isEnginePrefixed};
+}
