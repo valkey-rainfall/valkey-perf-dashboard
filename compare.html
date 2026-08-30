@@ -75,26 +75,11 @@
   <div id="content"><div class="loading">Loading comparison data...</div></div>
 
   <script src="config.js"></script>
+  <script src="lib/compare-helpers.js"></script>
   <script>
+    const {workloadLabel, ci95, welchPValue} = CompareHelpers;
     let COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms); // cross-platform only
     const COMPARE_MEMORY = MEMORY_WORKLOADS;
-
-    function workloadLabel(id) {
-      const raw = id.replace(/^memory-/, '');
-      const parts = raw.split('-');
-      const cmd = parts[0].toUpperCase();
-      const specs = parts.slice(1).map(p => {
-        if (p.startsWith('k')) return `K=${p.slice(1)}B`;
-        if (p.startsWith('v')) return `V=${p.slice(1)}B`;
-        if (p.startsWith('t')) return `T=${p.slice(1)}`;
-        if (p.startsWith('p')) return `P=${p.slice(1)}`;
-        if (p.startsWith('m')) return `M=${p.slice(1)}B`;
-        if (p.startsWith('f')) return `F=${p.slice(1)}`;
-        if (p === 'expire') return '+expire';
-        return p;
-      });
-      return `${cmd} ${specs.join(' ')}`;
-    }
 
     let activePlatform = PLATFORMS[0];
     let mode = 'release'; // 'release' or 'head'
@@ -338,50 +323,7 @@
       return `<div class="summary-card">${rows}</div>`;
     }
 
-    // --- Stats helpers ---
-    function ci95(value, cv, reps) {
-      // CI95 half-width from CV% and sample size (t ≈ 2 for small n)
-      if (!cv || !reps || reps < 2) return 0;
-      const se = (cv / 100) * value / Math.sqrt(reps);
-      return 1.96 * se;
-    }
-
-    function welchPValue(v1, cv1, n1, v2, cv2, n2) {
-      // Approximate Welch's t-test p-value from means, CVs, and sample sizes
-      if (!cv1 || !cv2 || n1 < 2 || n2 < 2) return null;
-      const s1 = (cv1 / 100) * v1; // std dev
-      const s2 = (cv2 / 100) * v2;
-      const se = Math.sqrt((s1 * s1) / n1 + (s2 * s2) / n2);
-      if (se === 0) return 0; // identical measurements
-      const t = Math.abs(v1 - v2) / se;
-      // Welch-Satterthwaite df
-      const a = (s1 * s1) / n1, b = (s2 * s2) / n2;
-      const df = ((a + b) ** 2) / (a * a / (n1 - 1) + b * b / (n2 - 1));
-      // Approximate p-value from t and df using regularized incomplete beta
-      return tDistPValue(t, df);
-    }
-
-    function tDistPValue(t, df) {
-      // Two-tailed p-value approximation using normal for large df, otherwise beta approx
-      if (df > 100) {
-        // Normal approximation
-        const z = t;
-        return 2 * (1 - normalCDF(z));
-      }
-      // Approximation via: p ≈ 2 * (1 - normalCDF(t * (1 - 1/(4*df))))
-      const adj = t * (1 - 1 / (4 * df));
-      return 2 * (1 - normalCDF(adj));
-    }
-
-    function normalCDF(x) {
-      // Abramowitz & Stegun approximation
-      if (x < 0) return 1 - normalCDF(-x);
-      const t = 1 / (1 + 0.2316419 * x);
-      const d = 0.3989422804014327; // 1/sqrt(2*pi)
-      const p = d * Math.exp(-x * x / 2) * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-      return 1 - p;
-    }
-
+    // --- Stats formatting ---
     function pValueLabel(p) {
       if (p === null) return '';
       if (p < 0.001) return '<span style="color:var(--ok);font-weight:600">p&lt;0.001</span>';
