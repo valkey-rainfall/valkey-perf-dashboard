@@ -10,6 +10,8 @@ const statusHelpers = fs.readFileSync('lib/status-helpers.js', 'utf8');
 const context = {
     console,
     Date,
+    setTimeout: () => 0,
+    clearTimeout: () => {},
     setInterval: () => 0,
     clearInterval: () => {},
     fetch: async () => ({ok: false}),
@@ -194,5 +196,13 @@ assert(html.includes('prefers-reduced-motion: reduce'), 'ETA animation must resp
 assert(script.includes('setInterval(renderCachedStatus, 1000)'), 'client-side timeline must update once per second');
 assert(!html.includes('progress_pct'), 'host-reported progress percentage must not be rendered');
 assert(!html.includes('Current Task'), 'separate current-task progress section must be removed');
+
+// Terminal-boundary recheck integration checks
+assert(script.includes('terminalRecheckQualifies'), 'terminal recheck qualification check must be wired in');
+assert(script.includes('createRecheckScheduler'), 'recheck scheduler must be instantiated');
+assert(script.includes('scheduleTerminalRechecks'), 'terminal rechecks must be scheduled after loadStatus');
+assert(script.includes('recheckScheduler.reset()'), 'auto-refresh toggle off must reset pending rechecks');
+assert(!script.includes('setInterval(loadStatus, 5'), 'must not create a 5-second global polling interval');
+assert(html.includes('terminalRecheckQualifies, createRecheckScheduler'), 'recheck helpers must be destructured from StatusHelpers');
 
 console.log('status monitoring tests passed');

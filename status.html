@@ -88,7 +88,7 @@
     <div class="hosts" id="hosts"></div>
     <script src="lib/status-helpers.js"></script>
     <script>
-const {formatScore, timeAgo, escapeHtml, renderFleetControl, shortSpecifier, formatDuration, queueSummary, taskDescription, renderRemoteTasks, renderLocalTasks, renderRecentResults, fmtBytes, diskTier} = StatusHelpers;
+const {formatScore, timeAgo, escapeHtml, renderFleetControl, shortSpecifier, formatDuration, queueSummary, taskDescription, renderRemoteTasks, renderLocalTasks, renderRecentResults, fmtBytes, diskTier, terminalRecheckQualifies, createRecheckScheduler} = StatusHelpers;
 
 const HOSTS = [
     {id: 'arm', runnerId: 'armbench', title: 'AWS Graviton 3', subtitle: 'c7g.metal · 64 cores'},
@@ -261,11 +261,44 @@ async function loadStatus() {
 }
 
 loadStatus();
-let refreshTimer = setInterval(loadStatus, 60000);
+const recheckScheduler = createRecheckScheduler({
+    onRecheck(hostId) {
+        // Single follow-up fetch for the specific host, then re-render.
+        const host = HOSTS.find(h => h.id === hostId);
+        if (!host) return;
+        fetch(`${STATUS_BASE}/${host.id}.json?t=${Date.now()}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => { if (data) { lastGood[host.id] = data; renderCachedStatus(); } })
+            .catch(() => {});
+        // Also refresh the control dashboard feed for updated remote mailbox state.
+        fetch(`${CONTROL_STATUS_URL}?t=${Date.now()}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(dashboardData => {
+                if (dashboardData) {
+                    lastRemoteByRunner = Object.fromEntries(dashboardData.runners.map(runner => [runner.runner_id, runner]));
+                    renderCachedStatus();
+                }
+            })
+            .catch(() => {});
+    },
+    delayMs: 5000,
+});
+
+function scheduleTerminalRechecks() {
+    for (const host of HOSTS) {
+        const data = lastGood[host.id];
+        const { qualify, boundaryKey } = terminalRecheckQualifies(data);
+        if (qualify) {
+            recheckScheduler.schedule(host.id, boundaryKey);
+        }
+    }
+}
+let refreshTimer = setInterval(() => { loadStatus().then(scheduleTerminalRechecks); }, 60000);
+loadStatus().then(scheduleTerminalRechecks);
 setInterval(renderCachedStatus, 1000);
 document.getElementById('autoRefresh').addEventListener('change', (e) => {
-    if (e.target.checked) { refreshTimer = setInterval(loadStatus, 60000); loadStatus(); }
-    else { clearInterval(refreshTimer); }
+    if (e.target.checked) { refreshTimer = setInterval(() => { loadStatus().then(scheduleTerminalRechecks); }, 60000); loadStatus().then(scheduleTerminalRechecks); }
+    else { clearInterval(refreshTimer); recheckScheduler.reset(); }
 });
     </script>
 </body>

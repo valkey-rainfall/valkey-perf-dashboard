@@ -586,6 +586,241 @@ describe('isEnginePrefixed', () => {
 
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Terminal-boundary recheck scheduling
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('terminalRecheckQualifies', () => {
+  it('qualifies: running + completed boundary + empty queue', () => {
+    const result = status.terminalRecheckQualifies({
+      runner: { state: 'running' },
+      boundary: { state: 'completed', task_id: 'task-1', timestamp: '2026-08-30T10:00:00Z' },
+      queue: { depth: 0 },
+    });
+    assert.equal(result.qualify, true);
+    assert.equal(result.boundaryKey, 'task-1:2026-08-30T10:00:00Z');
+  });
+
+  it('qualifies: running + failed boundary + empty queue', () => {
+    const result = status.terminalRecheckQualifies({
+      runner: { state: 'running' },
+      boundary: { state: 'failed', task_id: 'task-2', timestamp: '2026-08-30T11:00:00Z' },
+      queue: { depth: 0 },
+    });
+    assert.equal(result.qualify, true);
+    assert.equal(result.boundaryKey, 'task-2:2026-08-30T11:00:00Z');
+  });
+
+  it('does not qualify: boundary state is starting (in progress)', () => {
+    const result = status.terminalRecheckQualifies({
+      runner: { state: 'running' },
+      boundary: { state: 'starting', task_id: 'task-3', timestamp: '2026-08-30T10:00:00Z' },
+      queue: { depth: 0 },
+    });
+    assert.equal(result.qualify, false);
+  });
+
+  it('does not qualify: runner is stopped', () => {
+    const result = status.terminalRecheckQualifies({
+      runner: { state: 'stopped' },
+      boundary: { state: 'completed', task_id: 'task-4', timestamp: '2026-08-30T10:00:00Z' },
+      queue: { depth: 0 },
+    });
+    assert.equal(result.qualify, false);
+  });
+
+  it('does not qualify: runner is unreachable', () => {
+    const result = status.terminalRecheckQualifies({
+      runner: { state: 'unreachable' },
+      boundary: { state: 'completed', task_id: 'task-5', timestamp: '2026-08-30T10:00:00Z' },
+      queue: { depth: 0 },
+    });
+    assert.equal(result.qualify, false);
+  });
+
+  it('does not qualify: local queue is non-empty', () => {
+    const result = status.terminalRecheckQualifies({
+      runner: { state: 'running' },
+      boundary: { state: 'completed', task_id: 'task-6', timestamp: '2026-08-30T10:00:00Z' },
+      queue: { depth: 3 },
+    });
+    assert.equal(result.qualify, false);
+  });
+
+  it('does not qualify: no boundary at all (idle host)', () => {
+    const result = status.terminalRecheckQualifies({
+      runner: { state: 'running' },
+      queue: { depth: 0 },
+    });
+    assert.equal(result.qualify, false);
+  });
+
+  it('does not qualify: null data', () => {
+    const result = status.terminalRecheckQualifies(null);
+    assert.equal(result.qualify, false);
+  });
+
+  it('does not qualify: missing runner', () => {
+    const result = status.terminalRecheckQualifies({
+      boundary: { state: 'completed', task_id: 'x', timestamp: 'y' },
+      queue: { depth: 0 },
+    });
+    assert.equal(result.qualify, false);
+  });
+
+  it('does not qualify: boundary without task_id and timestamp', () => {
+    const result = status.terminalRecheckQualifies({
+      runner: { state: 'running' },
+      boundary: { state: 'completed' },
+      queue: { depth: 0 },
+    });
+    assert.equal(result.qualify, false);
+  });
+
+  it('qualifies with only task_id (no timestamp)', () => {
+    const result = status.terminalRecheckQualifies({
+      runner: { state: 'running' },
+      boundary: { state: 'completed', task_id: 'task-7' },
+      queue: { depth: 0 },
+    });
+    assert.equal(result.qualify, true);
+    assert.equal(result.boundaryKey, 'task-7:');
+  });
+
+  it('treats missing queue as depth 0', () => {
+    const result = status.terminalRecheckQualifies({
+      runner: { state: 'running' },
+      boundary: { state: 'completed', task_id: 'task-8', timestamp: 'ts' },
+    });
+    assert.equal(result.qualify, true);
+  });
+});
+
+describe('createRecheckScheduler', () => {
+  it('schedules a follow-up that fires the callback', () => {
+    const fired = [];
+    let timerId = 0;
+    const timers = {};
+    const scheduler = status.createRecheckScheduler({
+      onRecheck(hostId) { fired.push(hostId); },
+      delayMs: 5000,
+      setTimeoutFn(fn, ms) { const id = ++timerId; timers[id] = fn; return id; },
+      clearTimeoutFn(id) { delete timers[id]; },
+    });
+
+    const scheduled = scheduler.schedule('arm', 'task-1:ts1');
+    assert.equal(scheduled, true);
+    assert.equal(scheduler.pendingCount(), 1);
+
+    // Fire the timer
+    timers[1]();
+    assert.deepEqual(fired, ['arm']);
+    assert.equal(scheduler.pendingCount(), 0);
+  });
+
+  it('deduplicates: same boundary key is not scheduled twice', () => {
+    let timerId = 0;
+    const scheduler = status.createRecheckScheduler({
+      onRecheck() {},
+      setTimeoutFn(fn, ms) { return ++timerId; },
+      clearTimeoutFn() {},
+    });
+
+    assert.equal(scheduler.schedule('arm', 'task-1:ts1'), true);
+    assert.equal(scheduler.schedule('arm', 'task-1:ts1'), false);
+    assert.equal(scheduler.pendingCount(), 1);
+  });
+
+  it('different hosts with same boundary key are independent', () => {
+    let timerId = 0;
+    const scheduler = status.createRecheckScheduler({
+      onRecheck() {},
+      setTimeoutFn(fn, ms) { return ++timerId; },
+      clearTimeoutFn() {},
+    });
+
+    assert.equal(scheduler.schedule('arm', 'task-1:ts1'), true);
+    assert.equal(scheduler.schedule('x86', 'task-1:ts1'), true);
+    assert.equal(scheduler.pendingCount(), 2);
+  });
+
+  it('a new boundary key for the same host schedules a new follow-up', () => {
+    const fired = [];
+    let timerId = 0;
+    const timers = {};
+    const scheduler = status.createRecheckScheduler({
+      onRecheck(hostId) { fired.push(hostId); },
+      setTimeoutFn(fn, ms) { const id = ++timerId; timers[id] = fn; return id; },
+      clearTimeoutFn(id) { delete timers[id]; },
+    });
+
+    // First boundary
+    assert.equal(scheduler.schedule('arm', 'task-1:ts1'), true);
+    // Fire first timer
+    timers[1]();
+    assert.equal(scheduler.pendingCount(), 0);
+
+    // New boundary (different task or timestamp)
+    assert.equal(scheduler.schedule('arm', 'task-2:ts2'), true);
+    assert.equal(scheduler.pendingCount(), 1);
+    timers[2]();
+    assert.deepEqual(fired, ['arm', 'arm']);
+    assert.equal(scheduler.pendingCount(), 0);
+  });
+
+  it('reset cancels all pending timers', () => {
+    const cleared = [];
+    let timerId = 0;
+    const scheduler = status.createRecheckScheduler({
+      onRecheck() {},
+      setTimeoutFn(fn, ms) { return ++timerId; },
+      clearTimeoutFn(id) { cleared.push(id); },
+    });
+
+    scheduler.schedule('arm', 'task-1:ts1');
+    scheduler.schedule('x86', 'task-2:ts2');
+    assert.equal(scheduler.pendingCount(), 2);
+
+    scheduler.reset();
+    assert.equal(scheduler.pendingCount(), 0);
+    assert.equal(cleared.length, 2);
+  });
+
+  it('does not create indefinite polling: fired timer self-removes', () => {
+    const fired = [];
+    let timerId = 0;
+    const timers = {};
+    const scheduler = status.createRecheckScheduler({
+      onRecheck(hostId) { fired.push(hostId); },
+      setTimeoutFn(fn, ms) { const id = ++timerId; timers[id] = fn; return id; },
+      clearTimeoutFn(id) { delete timers[id]; },
+    });
+
+    scheduler.schedule('arm', 'task-1:ts1');
+    timers[1]();
+
+    // After firing, the same key should be schedulable again (for a new boundary)
+    // but the old timer is gone -- no indefinite loop.
+    assert.equal(scheduler.pendingCount(), 0);
+    assert.equal(fired.length, 1);
+  });
+
+  it('pendingKeys returns the composite keys', () => {
+    let timerId = 0;
+    const scheduler = status.createRecheckScheduler({
+      onRecheck() {},
+      setTimeoutFn(fn, ms) { return ++timerId; },
+      clearTimeoutFn() {},
+    });
+
+    scheduler.schedule('arm', 'task-1:ts1');
+    scheduler.schedule('x86', 'task-2:ts2');
+    const keys = scheduler.pendingKeys().sort();
+    assert.deepEqual(keys, ['arm::task-1:ts1', 'x86::task-2:ts2']);
+  });
+});
+
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Integration: existing status-monitoring.test.js coverage via VM
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -607,6 +842,8 @@ describe('status.html renderHost (via VM integration)', () => {
     const context = {
       console,
       Date,
+      setTimeout: () => 0,
+      clearTimeout: () => {},
       setInterval: () => 0,
       clearInterval: () => {},
       fetch: async () => ({ ok: false }),
