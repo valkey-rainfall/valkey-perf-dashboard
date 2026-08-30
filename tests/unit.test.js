@@ -785,7 +785,7 @@ describe('createRecheckScheduler', () => {
     assert.equal(cleared.length, 2);
   });
 
-  it('does not create indefinite polling: fired timer self-removes', () => {
+  it('does not reschedule the same boundary after its one-shot fires', () => {
     const fired = [];
     let timerId = 0;
     const timers = {};
@@ -795,13 +795,27 @@ describe('createRecheckScheduler', () => {
       clearTimeoutFn(id) { delete timers[id]; },
     });
 
-    scheduler.schedule('arm', 'task-1:ts1');
+    assert.equal(scheduler.schedule('arm', 'task-1:ts1'), true);
     timers[1]();
 
-    // After firing, the same key should be schedulable again (for a new boundary)
-    // but the old timer is gone -- no indefinite loop.
     assert.equal(scheduler.pendingCount(), 0);
     assert.equal(fired.length, 1);
+    // A later regular 60-second refresh seeing the same terminal snapshot
+    // must not create another follow-up.
+    assert.equal(scheduler.schedule('arm', 'task-1:ts1'), false);
+  });
+
+  it('reset forgets handled boundaries so re-enabling refresh can recheck', () => {
+    let timerId = 0;
+    const scheduler = status.createRecheckScheduler({
+      onRecheck() {},
+      setTimeoutFn() { return ++timerId; },
+      clearTimeoutFn() {},
+    });
+
+    assert.equal(scheduler.schedule('arm', 'task-1:ts1'), true);
+    scheduler.reset();
+    assert.equal(scheduler.schedule('arm', 'task-1:ts1'), true);
   });
 
   it('pendingKeys returns the composite keys', () => {

@@ -201,6 +201,9 @@ assert(!html.includes('Current Task'), 'separate current-task progress section m
 assert(script.includes('terminalRecheckQualifies'), 'terminal recheck qualification check must be wired in');
 assert(script.includes('createRecheckScheduler'), 'recheck scheduler must be instantiated');
 assert(script.includes('scheduleTerminalRechecks'), 'terminal rechecks must be scheduled after loadStatus');
+assert(script.includes('refreshAndSchedule();'), 'initial refresh must use the combined refresh-and-schedule path');
+assert(!script.includes('\nloadStatus();\n'), 'page load must not issue a duplicate bare status fetch');
+assert(script.includes('if (!autoRefreshEnabled) return;'), 'a fired recheck must stop after auto-refresh is disabled');
 assert(script.includes('recheckScheduler.reset()'), 'auto-refresh toggle off must reset pending rechecks');
 assert(!script.includes('setInterval(loadStatus, 5'), 'must not create a 5-second global polling interval');
 assert(html.includes('terminalRecheckQualifies, createRecheckScheduler'), 'recheck helpers must be destructured from StatusHelpers');

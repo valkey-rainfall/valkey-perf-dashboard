@@ -260,9 +260,10 @@ async function loadStatus() {
     renderCachedStatus();
 }
 
-loadStatus();
+let autoRefreshEnabled = true;
 const recheckScheduler = createRecheckScheduler({
     onRecheck(hostId) {
+        if (!autoRefreshEnabled) return;
         // Single follow-up fetch for the specific host, then re-render.
         const host = HOSTS.find(h => h.id === hostId);
         if (!host) return;
@@ -293,12 +294,25 @@ function scheduleTerminalRechecks() {
         }
     }
 }
-let refreshTimer = setInterval(() => { loadStatus().then(scheduleTerminalRechecks); }, 60000);
-loadStatus().then(scheduleTerminalRechecks);
+
+function refreshAndSchedule() {
+    return loadStatus().then(() => {
+        if (autoRefreshEnabled) scheduleTerminalRechecks();
+    });
+}
+
+let refreshTimer = setInterval(refreshAndSchedule, 60000);
+refreshAndSchedule();
 setInterval(renderCachedStatus, 1000);
 document.getElementById('autoRefresh').addEventListener('change', (e) => {
-    if (e.target.checked) { refreshTimer = setInterval(() => { loadStatus().then(scheduleTerminalRechecks); }, 60000); loadStatus().then(scheduleTerminalRechecks); }
-    else { clearInterval(refreshTimer); recheckScheduler.reset(); }
+    autoRefreshEnabled = e.target.checked;
+    if (autoRefreshEnabled) {
+        refreshTimer = setInterval(refreshAndSchedule, 60000);
+        refreshAndSchedule();
+    } else {
+        clearInterval(refreshTimer);
+        recheckScheduler.reset();
+    }
 });
     </script>
 </body>
