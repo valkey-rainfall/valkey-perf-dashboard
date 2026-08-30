@@ -8,8 +8,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; padding: 2rem; }
         h1 { color: #58a6ff; margin-bottom: 1.5rem; font-size: 1.5rem; }
-        .hosts { display: flex; flex-direction: column; gap: 0.85rem; max-width: 1500px; margin: 0 auto; }
-        .host-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.1rem; }
+        .hosts { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 1rem; max-width: 1600px; margin: 0 auto; align-items: start; }
+        .host-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem; min-width: 0; }
         .host-card h2 { font-size: 1.05rem; display: flex; align-items: flex-start; gap: 0.55rem; }
         .host-title { color: #f0f6fc; font-weight: 600; }
         .host-subtitle { display: block; color: #6e7681; font-size: 0.72rem; font-weight: 400; margin-top: 0.1rem; }
@@ -27,22 +27,38 @@
         .server-banner.warn { background: rgba(210,153,34,0.15); color: #d29922; border: 1px solid #d29922; display: block; }
         .server-banner.crit { background: rgba(248,81,73,0.15); color: #f85149; border: 1px solid #f85149; display: block; }
         .meta { color: #8b949e; font-size: 0.76rem; margin: 0.35rem 0 0 1.05rem; }
-        .task-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 0.8rem; }
-        .section { min-width: 0; }
-        .section-title { display: flex; justify-content: space-between; font-size: 0.7rem; text-transform: uppercase; color: #8b949e; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
-        .section-count { color: #6e7681; }
+        .task-flow { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.8rem; }
+        .section { min-width: 0; border-radius: 6px; padding: 0.55rem 0.65rem; border-left: 3px solid #30363d; background: #12171d; }
+        .section.remote { border-left-color: #58a6ff; background: rgba(88,166,255,0.055); }
+        .section.local { border-left-color: #a371f7; background: rgba(163,113,247,0.055); }
+        .section.results { border-left-color: #3fb950; background: rgba(63,185,80,0.045); }
+        .section-title { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.68rem; text-transform: uppercase; color: #8b949e; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .section.remote .section-title { color: #79c0ff; }
+        .section.local .section-title { color: #d2a8ff; }
+        .section.results .section-title { color: #56d364; }
+        .section-count { color: #6e7681; text-align: right; text-transform: none; letter-spacing: normal; }
         .item-list { list-style: none; font-size: 0.78rem; }
-        .item-list li { padding: 0.38rem 0; border-top: 1px solid #21262d; min-width: 0; }
+        .item-list li { padding: 0.42rem 0; border-top: 1px solid #21262d; min-width: 0; }
+        .item-list li.current-task { padding: 0.55rem 0; }
         .item-description { color: #c9d1d9; overflow-wrap: anywhere; line-height: 1.25; }
         .item-meta { color: #6e7681; font-size: 0.69rem; margin-top: 0.12rem; overflow-wrap: anywhere; }
         .empty-list { color: #6e7681; font-size: 0.76rem; padding: 0.38rem 0; border-top: 1px solid #21262d; }
         .score { color: #3fb950; font-weight: 600; }
+        .timeline { margin-top: 0.42rem; }
+        .timeline-label { display: flex; justify-content: space-between; gap: 0.5rem; color: #8b949e; font-size: 0.68rem; }
+        .timeline-state { color: #58a6ff; font-weight: 600; }
+        .timeline-state.late { color: #d29922; }
+        .timeline-state.very-late { color: #f85149; }
+        .timeline-track { position: relative; height: 7px; margin-top: 0.24rem; border-radius: 4px; background: #30363d; overflow: hidden; }
+        .timeline-fill { height: 100%; border-radius: 4px; background: #58a6ff; transition: width 1s linear, background 0.2s; }
+        .timeline-fill.late { background: #d29922; }
+        .timeline-fill.very-late { background: #f85149; }
         .control-ok { color: #3fb950; }
         .control-warn { color: #d29922; }
         .control-error { color: #f85149; }
         .control-off { color: #6e7681; }
         .control-error-text { margin-top: 0.45rem; color: #f85149; font-size: 0.75rem; overflow-wrap: anywhere; }
-        @media (max-width: 900px) { .task-columns { grid-template-columns: 1fr; gap: 0.7rem; } }
+        @media (max-width: 700px) { body { padding: 1rem; } .hosts { grid-template-columns: 1fr; } }
         a { color: #58a6ff; text-decoration: none; }
         a:hover { text-decoration: underline; }
         .nav { margin-bottom: 1.5rem; font-size: 0.85rem; }
@@ -163,14 +179,37 @@ function renderRemoteTasks(tasks) {
     }).join('')}</ul>${tasks.length > 5 ? `<div class="item-meta">+${tasks.length - 5} more</div>` : ''}`;
 }
 
-function renderLocalTasks(queue) {
+function taskTimeline(task, boundary, nowMs = Date.now()) {
+    if (boundary?.state !== 'starting' || boundary.task_id !== task.id || !task.expected_duration_sec) return '';
+    const started = new Date(boundary.timestamp).getTime();
+    if (!Number.isFinite(started)) return '';
+    const elapsed = Math.max(0, (nowMs - started) / 1000);
+    const expected = Number(task.expected_duration_sec);
+    if (!(expected > 0)) return '';
+    const remaining = expected - elapsed;
+    const severity = elapsed > expected * 1.5 ? 'very-late' : elapsed > expected ? 'late' : '';
+    const fillWidth = Math.min(100, (elapsed / expected) * 100);
+    const stateText = remaining >= 0
+        ? `ETA ${formatDuration(remaining)}`
+        : `Overdue ${formatDuration(-remaining)}`;
+    return `<div class="timeline" role="timer" aria-live="polite" aria-label="${escapeHtml(stateText)}">
+        <div class="timeline-label"><span>Elapsed ${escapeHtml(formatDuration(elapsed))} · expected ${escapeHtml(formatDuration(expected))}</span><span class="timeline-state ${severity}">${escapeHtml(stateText)}</span></div>
+        <div class="timeline-track" aria-hidden="true">
+            <div class="timeline-fill ${severity}" style="width:${fillWidth.toFixed(1)}%"></div>
+        </div>
+    </div>`;
+}
+
+function renderLocalTasks(queue, boundary) {
     const tasks = queue?.tasks || [];
     if (!tasks.length) return '<p class="empty-list">Empty</p>';
     return `<ul class="item-list">${tasks.slice(0, 5).map(task => {
         const source = task.source && task.specifier ? `${task.source}@${shortSpecifier(task.specifier)}` : task.source || shortSpecifier(task.specifier);
         const expected = task.expected_duration_sec != null ? `expected ${formatDuration(task.expected_duration_sec)}` : null;
         const meta = [task.type, source, expected].filter(Boolean).map(escapeHtml).join(' · ');
-        return `<li><div class="item-description">${taskDescription(task)}</div><div class="item-meta">${meta}</div></li>`;
+        const timeline = taskTimeline(task, boundary);
+        const currentClass = timeline ? ' class="current-task"' : '';
+        return `<li${currentClass}><div class="item-description">${taskDescription(task)}</div><div class="item-meta">${meta}</div>${timeline}</li>`;
     }).join('')}</ul>${queue.depth > 5 ? `<div class="item-meta">+${queue.depth - 5} more</div>` : ''}`;
 }
 
@@ -234,10 +273,10 @@ function renderHost(data, host, remoteTasks) {
         <h2><span class="status-dot ${dotClass}" role="img" aria-label="Status: ${escapeHtml(dotClass)}"></span><span class="host-title">${escapeHtml(host.title)}<span class="host-subtitle">${escapeHtml(host.runnerId)} · ${escapeHtml(host.subtitle)}</span></span></h2>
         ${staleBanner}${diskBanner}${fleetControl.banner}
         <div class="meta">${fleetControl.summary} · last boundary ${timeAgo(data.timestamp) || 'unknown'}${diskMeta}</div>
-        <div class="task-columns">
-            <div class="section" aria-label="${escapeHtml(queueSummary(remoteCount, remoteExpected))} in remote mailbox"><div class="section-title"><span>Remote mailbox</span><span class="section-count">${escapeHtml(queueSummary(remoteCount, remoteExpected))}</span></div>${renderRemoteTasks(remoteItems)}</div>
-            <div class="section" aria-label="${escapeHtml(queueSummary(localCount, localExpected))} in local queue"><div class="section-title"><span>Local queue</span><span class="section-count">${escapeHtml(queueSummary(localCount, localExpected))}</span></div>${renderLocalTasks(data.queue)}</div>
-            <div class="section" aria-label="${recentCount} recent completion${recentCount === 1 ? '' : 's'}"><div class="section-title"><span>Recent completions</span><span class="section-count">${recentCount}</span></div>${renderRecentResults(data.recent_results)}</div>
+        <div class="task-flow">
+            <div class="section remote" aria-label="${escapeHtml(queueSummary(remoteCount, remoteExpected))} in remote mailbox"><div class="section-title"><span>Remote mailbox</span><span class="section-count">${escapeHtml(queueSummary(remoteCount, remoteExpected))}</span></div>${renderRemoteTasks(remoteItems)}</div>
+            <div class="section local" aria-label="${escapeHtml(queueSummary(localCount, localExpected))} in local queue"><div class="section-title"><span>Local queue</span><span class="section-count">${escapeHtml(queueSummary(localCount, localExpected))}</span></div>${renderLocalTasks(data.queue, data.boundary)}</div>
+            <div class="section results" aria-label="${recentCount} recent completion${recentCount === 1 ? '' : 's'}"><div class="section-title"><span>Recent completions</span><span class="section-count">${recentCount}</span></div>${renderRecentResults(data.recent_results)}</div>
         </div>
     </div>`;
 }
@@ -287,17 +326,25 @@ async function renderServerBanner() {
 // never flickers away. If the host stays unreachable, the retained timestamp
 // ages past the staleness threshold and escalates to the stale alarm on its own.
 const lastGood = {};
+let lastRemoteByRunner = null;
+
+function renderCachedStatus() {
+    const container = document.getElementById('hosts');
+    const cards = HOSTS.map(host => {
+        const data = lastGood[host.id] || {runner: {state: 'unreachable'}, timestamp: new Date().toISOString()};
+        const remoteTasks = lastRemoteByRunner === null ? null : (lastRemoteByRunner[host.runnerId] || []);
+        return renderHost(data, host, remoteTasks);
+    });
+    container.innerHTML = cards.join('');
+}
 
 async function loadStatus() {
     renderServerBanner();
-    const container = document.getElementById('hosts');
-    const cards = [];
-    let remoteByRunner = null;
     try {
         const response = await fetch(`${CONTROL_STATUS_URL}?t=${Date.now()}`);
         if (response.ok) {
             const dashboardData = await response.json();
-            remoteByRunner = Object.fromEntries(dashboardData.runners.map(runner => [runner.runner_id, runner]));
+            lastRemoteByRunner = Object.fromEntries(dashboardData.runners.map(runner => [runner.runner_id, runner]));
         }
     } catch { /* feed unavailable — render an explicit unavailable state */ }
 
@@ -315,14 +362,13 @@ async function loadStatus() {
         } else {
             data = {runner: {state: 'unreachable'}, timestamp: new Date().toISOString()};
         }
-        const remoteTasks = remoteByRunner === null ? null : (remoteByRunner[host.runnerId] || []);
-        cards.push(renderHost(data, host, remoteTasks));
     }
-    container.innerHTML = cards.join('');
+    renderCachedStatus();
 }
 
 loadStatus();
 let refreshTimer = setInterval(loadStatus, 60000);
+setInterval(renderCachedStatus, 1000);
 document.getElementById('autoRefresh').addEventListener('change', (e) => {
     if (e.target.checked) { refreshTimer = setInterval(loadStatus, 60000); loadStatus(); }
     else { clearInterval(refreshTimer); }
