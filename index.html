@@ -335,7 +335,7 @@
           for (const wl of THROUGHPUT_WORKLOADS) {
             if (wl.platforms && !wl.platforms.includes(plat)) continue;
             // Parse command, value size, and pipelining from workload ID (e.g. "get-k16-v128-t7-p10")
-            const parts = wl.id.match(/^(get|set)-k\d+-v(\d+)-t(\d+)-p(\d+)/);
+            const parts = wl.id.match(/^(get|set|mixed-s\d+)-k\d+-v(\d+)-t(\d+)-p(\d+)/);
             const command = parts ? parts[1] : null;
             const valsize = parts ? parts[2] : null;
             const threads = parts ? parts[3] : null;

@@ -537,6 +537,7 @@ describe('isValidWorkloadId', () => {
     assert.ok(config.isValidWorkloadId('get-k16-v16-t7-p10'));
     assert.ok(config.isValidWorkloadId('set-k16-v128-t24-p100'));
     assert.ok(config.isValidWorkloadId('get-k16-v64-t9-p50'));
+    assert.ok(config.isValidWorkloadId('mixed-s20-k16-v16-t7-p10'));
   });
 
   it('rejects IDs without thread/pipeline suffix', () => {
@@ -562,6 +563,13 @@ describe('workloadIdToLabel', () => {
 
   it('converts redis-prefixed workload ID', () => {
     assert.equal(config.workloadIdToLabel('redis-set-k16-v16-t7-p10'), 'Redis SET K=16B V=16B T=7 P=10');
+  });
+
+  it('converts mixed workload ID', () => {
+    assert.equal(
+      config.workloadIdToLabel('mixed-s20-k16-v16-t7-p10'),
+      '80:20 GET/SET K=16B V=16B T=7 P=10'
+    );
   });
 
   it('returns ID unchanged if format unrecognized', () => {

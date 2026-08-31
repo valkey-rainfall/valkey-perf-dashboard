@@ -29,10 +29,15 @@ let THROUGHPUT_WORKLOADS = [
 ];
 
 function isValidWorkloadId(id) {
-  return /^(get|set)-k\d+-v\d+-t\d+-p\d+$/.test(id);
+  return /^(get|set|mixed-s\d+)-k\d+-v\d+-t\d+-p\d+$/.test(id);
 }
 
 function workloadIdToLabel(id) {
+  const mixed = id.match(/^mixed-s(\d+)-k(\d+)-v(\d+)-t(\d+)-p(\d+)$/);
+  if (mixed) {
+    const [, setPct, k, v, t, p] = mixed;
+    return `${100 - Number(setPct)}:${setPct} GET/SET K=${k}B V=${v}B T=${t} P=${p}`;
+  }
   const m = id.match(/^(?:(redis)-)?(get|set)-k(\d+)-v(\d+)-t(\d+)-p(\d+)$/);
   if (!m) return id;
   const [, engine, cmd, k, v, t, p] = m;
