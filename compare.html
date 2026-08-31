@@ -64,6 +64,7 @@
       <button class="mode-btn active" onclick="setMode('release')" id="mode-release">At Releases</button>
       <button class="mode-btn" onclick="setMode('head')" id="mode-head">Current HEAD</button>
     </div>
+    <span id="epochSelector" style="display:none;"></span>
     <a href="index.html">← Performance History</a>
   </header>
 
@@ -76,6 +77,7 @@
 
   <script src="config.js"></script>
   <script src="lib/compare-helpers.js"></script>
+  <script src="lib/epoch-helpers.js"></script>
   <script>
     const {workloadLabel, ci95, welchPValue} = CompareHelpers;
     let COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms); // cross-platform only
@@ -84,6 +86,24 @@
     let activePlatform = PLATFORMS[0];
     let mode = 'release'; // 'release' or 'head'
     let cache = {};
+    let epochList = [];
+    let activeEpoch = null;
+
+    function buildEpochSelector() {
+      const container = document.getElementById('epochSelector');
+      if (!container) return;
+      if (epochList.length <= 1) { container.style.display = 'none'; return; }
+      container.style.display = '';
+      container.innerHTML = `<select onchange="onEpochChange(this.value)" style="background:var(--card);color:var(--text);border:1px solid var(--border);padding:0.35rem 0.8rem;border-radius:4px;font-size:0.8rem;cursor:pointer;">
+        ${epochList.map(e => `<option value="${e.id}" ${e.id === (activeEpoch || epochList[0]?.id) ? 'selected' : ''}>${e.label}</option>`).join('')}
+      </select>`;
+    }
+
+    function onEpochChange(epochId) {
+      activeEpoch = epochId;
+      cache = {}; // clear cache on epoch switch
+      render();
+    }
 
     // --- Data fetching ---
     async function fetchSeries(engine, platform, workloadId, type) {
@@ -94,10 +114,12 @@
       } else {
         fileId = `${prefix}${workloadId}`;
       }
-      const key = `${platform}-${fileId}-${type}`;
+      const epochKey = activeEpoch || 'v1';
+      const key = `${epochKey}-${platform}-${fileId}-${type}`;
       if (cache[key]) return cache[key];
       try {
-        const r = await fetch(`${DATA_URL}/series-${platform}-${fileId}-${type}.json`);
+        const url = EpochHelpers.seriesUrl(DATA_URL, platform, fileId, type, activeEpoch);
+        const r = await fetch(url);
         if (!r.ok) return null;
         cache[key] = await r.json();
         return cache[key];
@@ -480,6 +502,11 @@
     (async () => {
       await discoverWorkloads();
       COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms);
+      // Discover epochs from manifests
+      epochList = EpochHelpers.availableEpochs(PLATFORM_MANIFESTS);
+      if (epochList.length === 1) activeEpoch = epochList[0].id;
+      else if (epochList.length > 0) activeEpoch = epochList[0].id;
+      buildEpochSelector();
       renderPlatformTabs();
       render();
     })();

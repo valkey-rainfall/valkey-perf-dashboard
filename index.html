@@ -202,6 +202,7 @@
       <span id="selectorSummary">Loading...</span>
       <span class="arrow" style="font-size:0.7rem;">▼</span>
     </button>
+    <span id="epochSelector" style="display:none;flex:0 0 auto;"></span>
     <div class="zoom-controls">
       <button id="btn-prev-release" onclick="zoomAll('prevRelease')" class="zoom-btn">Since Previous Release</button>
       <button id="btn-last-release" onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
@@ -261,10 +262,45 @@
   <div id="datapoints" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;max-height:400px;overflow-y:auto;"></div>
 
   <script src="config.js"></script>
+  <script src="lib/epoch-helpers.js"></script>
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
 
     let chart = null, currentData = null, allCharts = [], manifest = null, perfChartInstances = [], globalMaxCommits = 0;
+
+    // =========================================================================
+    // Epoch state
+    // =========================================================================
+    let epochList = [];       // [{id, label, generator}] — available epochs
+    let activeEpoch = null;   // current epoch id (null = legacy/v1)
+
+    function buildEpochSelector() {
+      const container = document.getElementById('epochSelector');
+      if (!container) return;
+      if (epochList.length <= 1) {
+        container.style.display = 'none';
+        return;
+      }
+      container.style.display = '';
+      const label = activeEpoch
+        ? (epochList.find(e => e.id === activeEpoch) || {}).label || activeEpoch
+        : (epochList[0] || {}).label || 'Default';
+      container.innerHTML = `<select id="epochSelect" onchange="onEpochChange(this.value)" style="background:var(--card);color:var(--text);border:1px solid var(--border);padding:0.35rem 0.65rem;border-radius:4px;font-size:0.8rem;cursor:pointer;">
+        ${epochList.map(e => `<option value="${e.id}" ${e.id === (activeEpoch || epochList[0]?.id) ? 'selected' : ''}>${e.label}</option>`).join('')}
+      </select>`;
+    }
+
+    function onEpochChange(epochId) {
+      activeEpoch = epochId;
+      updateHashState();
+      // Re-discover workloads for new epoch, then re-render
+      discoverWorkloadsForEpoch(activeEpoch).then(() => {
+        buildChips();
+        buildSelectorItems();
+        if (selectedWorkloads.length > 0) renderAll();
+        loadNotableTeaser();
+      });
+    }
 
     // =========================================================================
     // Multi-select state
@@ -545,6 +581,7 @@
         workloads: params.get('workloads')?.split(','),
         zoom: params.get('zoom')?.split(',').map(Number),
         commit: params.get('commit'),
+        epoch: EpochHelpers.parseEpochFromHash(params),
       };
     }
 
@@ -561,6 +598,7 @@
       } else if (selectedWorkloads.length > 1) {
         params.set('workloads', selectedWorkloads.map(s => s.workloadId).join(','));
       }
+      EpochHelpers.writeEpochToHash(params, activeEpoch);
       if (chart && chart.options.scales.x.min > 0) {
         const min = Math.round(chart.options.scales.x.min);
         const max = Math.round(chart.options.scales.x.max);
@@ -649,6 +687,22 @@
       await loadManifest();
       const hashState = parseHashState();
 
+      // Discover available epochs from platform manifests
+      epochList = EpochHelpers.availableEpochs(PLATFORM_MANIFESTS);
+      if (hashState.epoch && epochList.some(e => e.id === hashState.epoch)) {
+        activeEpoch = hashState.epoch;
+      } else if (epochList.length === 1) {
+        activeEpoch = epochList[0].id; // auto-select sole epoch
+      } else if (epochList.length > 0) {
+        activeEpoch = epochList[0].id; // default to first
+      }
+      buildEpochSelector();
+
+      // If epoch was restored from hash and differs from legacy, re-discover workloads
+      if (activeEpoch && activeEpoch !== 'v1') {
+        await discoverWorkloadsForEpoch(activeEpoch);
+      }
+
       // Restore selection from hash state
       const engine = hashState.engine || 'valkey';
       const platform = hashState.platform || DEFAULT_PLATFORM;
@@ -692,7 +746,7 @@
     async function render(platform, initialCommit) {
       // Fetch primary workload data (drives sub-charts + page title)
       const primaryFileId = getWorkloadId();
-      const resp = await fetch(`${DATA_URL}/series-${platform}-${primaryFileId}-throughput.json`);
+      const resp = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, primaryFileId, 'throughput', activeEpoch));
       if (!resp.ok) {
         // No data for this selection — clear all charts
         if (chart) { chart.destroy(); chart = null; }
@@ -757,7 +811,7 @@
           sData = data; sWorkload = workload; sPoints = points;
         } else {
           try {
-            const r2 = await fetch(`${DATA_URL}/series-${sel.platform}-${fileId}-throughput.json`);
+            const r2 = await fetch(EpochHelpers.seriesUrl(DATA_URL, sel.platform, fileId, 'throughput', activeEpoch));
             if (!r2.ok) continue;
             sData = await r2.json();
             sWorkload = sData.workloads[0];
@@ -853,7 +907,7 @@
       for (const workloadId of MEMORY_WORKLOADS) {
         try {
           const fileId = getEngine() === 'valkey' ? workloadId : workloadId.replace('memory-', `memory-${getEngine()}-`);
-          const r = await fetch(`${DATA_URL}/series-${platform}-${fileId}-memory.json`);
+          const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, fileId, 'memory', activeEpoch));
           if (!r.ok) continue;
           const memData = await r.json();
           const wk = memData.workloads[0];
@@ -953,7 +1007,7 @@
           // (category -> %). Render as a 100%-normalized stacked area (like memory).
           let cpuPts = null, categories = null;
           try {
-            const r = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-${group.id}.json`);
+            const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, workloadId, group.id, activeEpoch));
             if (r.ok) {
               const sd = await r.json();
               const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
@@ -985,7 +1039,7 @@
           const rawSeries = [];
           for (const metricId of group.series) {
             try {
-              const r = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-${metricId}.json`);
+              const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, workloadId, metricId, activeEpoch));
               if (!r.ok) continue;
               const sd = await r.json();
               const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
@@ -1013,7 +1067,7 @@
         } else {
         for (const metricId of group.series) {
           try {
-            const r = await fetch(`${DATA_URL}/series-${platform}-${workloadId}-${metricId}.json`);
+            const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, workloadId, metricId, activeEpoch));
             if (!r.ok) continue;
             const sd = await r.json();
             const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
@@ -1093,7 +1147,7 @@
       const engine = getEngine();
       const latencyFileId = engine === 'valkey' ? baseLatencyId : `${engine}-${baseLatencyId}`;
       let resp;
-      try { resp = await fetch(`${DATA_URL}/series-${platform}-${latencyFileId}-latency.json`); } catch { section.style.display = 'none'; return; }
+      try { resp = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, latencyFileId, 'latency', activeEpoch)); } catch { section.style.display = 'none'; return; }
       if (!resp.ok) { section.style.display = 'none'; return; }
       section.style.display = '';
       const engineLabel = ENGINES.find(e => e.id === engine)?.label || 'Valkey';
@@ -1184,7 +1238,7 @@
       const el = document.getElementById('annotations');
       const results = await Promise.all(PLATFORMS.map(async p => {
         try {
-          const r = await fetch(`${DATA_URL}/notable-${p}.json`);
+          const r = await fetch(EpochHelpers.notableUrl(DATA_URL, p, activeEpoch));
           if (!r.ok) return null;
           return { platform: p, annotations: (await r.json()).annotations || [] };
         } catch { return null; }
@@ -1262,6 +1316,45 @@
 
     async function loadManifest() { await discoverWorkloads(); }
 
+    // Epoch-aware workload discovery — fetches manifests for the given epoch.
+    async function discoverWorkloadsForEpoch(epochId) {
+      const manifests = await Promise.all(PLATFORMS.map(async p => {
+        try {
+          const url = EpochHelpers.manifestUrl(DATA_URL, p, epochId);
+          const r = await fetch(url);
+          if (!r.ok) {
+            // Fall back to legacy manifest for v1/null
+            if (epochId && epochId !== 'v1') return null;
+            const r2 = await fetch(`${DATA_URL}/manifest-${p}.json`);
+            if (!r2.ok) return null;
+            return await r2.json();
+          }
+          return await r.json();
+        } catch { return null; }
+      }));
+      const platformWorkloads = {};
+      PLATFORM_MANIFESTS = {};
+      for (let i = 0; i < PLATFORMS.length; i++) {
+        if (manifests[i]) PLATFORM_MANIFESTS[PLATFORMS[i]] = manifests[i];
+      }
+      for (let i = 0; i < PLATFORMS.length; i++) {
+        const m = manifests[i];
+        if (!m || !m.throughput_workloads) continue;
+        for (const wId of m.throughput_workloads) {
+          if (isEnginePrefixed(wId)) continue;
+          if (!isValidWorkloadId(wId)) continue;
+          if (!platformWorkloads[wId]) platformWorkloads[wId] = new Set();
+          platformWorkloads[wId].add(PLATFORMS[i]);
+        }
+      }
+      if (Object.keys(platformWorkloads).length === 0) return;
+      THROUGHPUT_WORKLOADS = Object.entries(platformWorkloads).map(([id, plats]) => {
+        const entry = { id, label: workloadIdToLabel(id) };
+        if (plats.size < PLATFORMS.length) entry.platforms = [...plats];
+        return entry;
+      });
+    }
+
     // =========================================================================
     // Commit detail popup
     // =========================================================================
@@ -1290,7 +1383,8 @@
     const rawStacksCache = new Map();
 
     async function fetchRawStacks(platform, workloadId, commit) {
-      const url = `${DATA_URL}/series-${platform}-${workloadId}-cpu-stacks-${commit}.json`;
+      const base = 'series-' + platform + '-' + workloadId + '-cpu-stacks-' + commit;
+      const url = DATA_URL + '/' + EpochHelpers.seriesFilename(base, activeEpoch);
       if (rawStacksCache.has(url)) return rawStacksCache.get(url);
       const promise = (async () => {
         const r = await fetch(url);

@@ -67,10 +67,13 @@
   <div class="cards" id="cards"><div class="empty-note">Loading…</div></div>
 
   <script src="config.js"></script>
+  <script src="lib/epoch-helpers.js"></script>
   <script>
     // Filter state
     const filters = { platform: null, metric: null, direction: null };
     let commitGroups = []; // [{commit, date, pr, pr_title, entries: [{platform, workload, metric, delta, good}]}]
+    let epochList = [];
+    let activeEpoch = null;
 
     // Human label for a workload id (throughput: get-k16-v16-t7-p10; memory: memory-set-k16-v64)
     function workloadLabel(id) {
@@ -84,7 +87,7 @@
     async function loadNotable() {
       const results = await Promise.all(PLATFORMS.map(async p => {
         try {
-          const r = await fetch(`${DATA_URL}/notable-${p}.json`);
+          const r = await fetch(EpochHelpers.notableUrl(DATA_URL, p, activeEpoch));
           if (!r.ok) return { platform: p, annotations: null };
           const data = await r.json();
           return { platform: p, annotations: data.annotations || [] };
@@ -194,7 +197,14 @@
         '<div class="empty-note">No notable changes match the current filters.</div>';
     }
 
-    loadNotable();
+    // Discover epochs and init
+    (async () => {
+      await discoverWorkloads();
+      epochList = EpochHelpers.availableEpochs(PLATFORM_MANIFESTS);
+      if (epochList.length === 1) activeEpoch = epochList[0].id;
+      else if (epochList.length > 0) activeEpoch = epochList[0].id;
+      loadNotable();
+    })();
   </script>
 </body>
 </html>
