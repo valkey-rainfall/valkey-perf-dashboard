@@ -11,6 +11,7 @@ const assert = require('node:assert/strict');
 const status = require('../lib/status-helpers.js');
 const compare = require('../lib/compare-helpers.js');
 const config = require('../config.js');
+const epochHelpers = require('../lib/epoch-helpers.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // status-helpers.js
@@ -536,6 +537,7 @@ describe('isValidWorkloadId', () => {
     assert.ok(config.isValidWorkloadId('get-k16-v16-t7-p10'));
     assert.ok(config.isValidWorkloadId('set-k16-v128-t24-p100'));
     assert.ok(config.isValidWorkloadId('get-k16-v64-t9-p50'));
+    assert.ok(config.isValidWorkloadId('mixed-s20-k16-v16-t7-p10'));
   });
 
   it('rejects IDs without thread/pipeline suffix', () => {
@@ -561,6 +563,13 @@ describe('workloadIdToLabel', () => {
 
   it('converts redis-prefixed workload ID', () => {
     assert.equal(config.workloadIdToLabel('redis-set-k16-v16-t7-p10'), 'Redis SET K=16B V=16B T=7 P=10');
+  });
+
+  it('converts mixed workload ID', () => {
+    assert.equal(
+      config.workloadIdToLabel('mixed-s20-k16-v16-t7-p10'),
+      '80:20 GET/SET K=16B V=16B T=7 P=10'
+    );
   });
 
   it('returns ID unchanged if format unrecognized', () => {
@@ -1054,11 +1063,58 @@ describe('HTML structural integrity', () => {
     // Build the pattern from parts to avoid the test file itself matching the CI grep.
     const terms = ['mas' + 'ter', 'sla' + 've', 'white' + 'list', 'black' + 'list'];
     const banned = new RegExp('\\b(' + terms.join('|') + ')\\b', 'i');
-    for (const file of ['config.js', 'lib/status-helpers.js', 'lib/compare-helpers.js']) {
+    for (const file of ['config.js', 'lib/status-helpers.js', 'lib/compare-helpers.js', 'lib/epoch-helpers.js']) {
       const fp = path.join(root, file);
       if (!fs.existsSync(fp)) continue;
       const content = fs.readFileSync(fp, 'utf8');
       assert.ok(!banned.test(content), `${file} contains non-inclusive language`);
     }
+  });
+
+  it('epoch-helpers.js is loaded by dashboard pages that need it', () => {
+    const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const compareHtml = fs.readFileSync(path.join(root, 'compare.html'), 'utf8');
+    const notableHtml = fs.readFileSync(path.join(root, 'notable.html'), 'utf8');
+    assert.ok(indexHtml.includes('<script src="lib/epoch-helpers.js"></script>'), 'index.html must load epoch-helpers.js');
+    assert.ok(compareHtml.includes('<script src="lib/epoch-helpers.js"></script>'), 'compare.html must load epoch-helpers.js');
+    assert.ok(notableHtml.includes('<script src="lib/epoch-helpers.js"></script>'), 'notable.html must load epoch-helpers.js');
+    // status.html must NOT load it (status page unaffected)
+    const statusHtml = fs.readFileSync(path.join(root, 'status.html'), 'utf8');
+    assert.ok(!statusHtml.includes('epoch-helpers'), 'status.html must not load epoch-helpers.js');
+  });
+
+  it('index.html has epoch selector element', () => {
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.ok(html.includes('id="epochSelector"'), 'index.html must have epochSelector element');
+    assert.ok(html.includes('buildEpochSelector'), 'index.html must call buildEpochSelector');
+    assert.ok(html.includes('onEpochChange'), 'index.html must have onEpochChange handler');
+  });
+
+  it('compare.html has epoch selector element', () => {
+    const html = fs.readFileSync(path.join(root, 'compare.html'), 'utf8');
+    assert.ok(html.includes('id="epochSelector"'), 'compare.html must have epochSelector element');
+  });
+
+  it('index.html persists epoch in URL hash', () => {
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.ok(html.includes('writeEpochToHash'), 'index.html must write epoch to hash');
+    assert.ok(html.includes('parseEpochFromHash') || html.includes('hashState.epoch'), 'index.html must parse epoch from hash');
+  });
+
+  it('index.html uses epoch-aware series URLs', () => {
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.ok(html.includes('EpochHelpers.seriesUrl'), 'index.html must use EpochHelpers.seriesUrl for data fetches');
+    assert.ok(html.includes('EpochHelpers.notableUrl'), 'index.html must use EpochHelpers.notableUrl');
+  });
+
+  it('compare.html uses epoch-aware series URLs', () => {
+    const html = fs.readFileSync(path.join(root, 'compare.html'), 'utf8');
+    assert.ok(html.includes('EpochHelpers.seriesUrl'), 'compare.html must use EpochHelpers.seriesUrl');
+  });
+
+  it('epoch-helpers.js can be required from Node', () => {
+    assert.ok(typeof epochHelpers.resolveEpochs === 'function');
+    assert.ok(typeof epochHelpers.seriesUrl === 'function');
+    assert.ok(typeof epochHelpers.parseEpochFromHash === 'function');
   });
 });
