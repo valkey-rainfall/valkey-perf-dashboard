@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conductress — Host Status</title>
+  <link rel="icon" href="brand/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; padding: 2rem; }
@@ -75,12 +78,17 @@
         @media (max-width: 700px) { body { padding: 1rem; } .hosts { grid-template-columns: 1fr; } }
         a { color: #58a6ff; text-decoration: none; }
         a:hover { text-decoration: underline; }
-    </style>
+      .brand-mark { width: 22px; height: 22px; vertical-align: -5px; margin-right: .4rem; }
+    .brand-footer { margin-top: 2.5rem; padding-top: .75rem; border-top: 1px solid #21262d; font-size: .75rem; color: #6e7681; }
+    .brand-footer a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; }
+    .brand-footer a:hover { color: #c9d1d9; }
+    .brand-footer img { width: 14px; height: 14px; }
+  </style>
 </head>
 <body>
     <header class="status-header">
         <a href="index.html">← Dashboard</a>
-        <h1>🎵 Conductress Host Status</h1>
+        <h1><img class="brand-mark" src="brand/conductress-mark.svg" alt="">Conductress Host Status</h1>
         <div class="fleet-metrics" id="fleetMetrics" aria-live="polite"></div>
         <label class="refresh-toggle"><input type="checkbox" id="autoRefresh" checked> Auto-refresh</label>
     </header>
@@ -315,5 +323,8 @@ document.getElementById('autoRefresh').addEventListener('change', (e) => {
     }
 });
     </script>
+  <footer class="brand-footer">
+    <a href="https://github.com/rainsupreme/valkey-conductress" target="_blank" rel="noopener noreferrer"><img src="brand/favicon.svg" alt="">Powered by Conductress</a>
+  </footer>
 </body>
 </html>

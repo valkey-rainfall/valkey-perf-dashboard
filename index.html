@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Valkey Performance Dashboard</title>
+  <link rel="icon" href="brand/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -190,12 +193,17 @@
     .fg-body .d3-flame-graph rect { stroke: var(--bg); }
     .fg-body .d3-flame-graph-label { color: #fff; font-size: 11px; }
     #fgState { font-size: 13px; color: var(--muted); padding: 24px; text-align: center; }
+    .brand-mark { width: 22px; height: 22px; vertical-align: -5px; margin-right: .4rem; }
+    .brand-footer { margin-top: 2.5rem; padding-top: .75rem; border-top: 1px solid var(--border); font-size: .75rem; color: var(--muted); }
+    .brand-footer a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; }
+    .brand-footer a:hover { color: var(--text); }
+    .brand-footer img { width: 14px; height: 14px; }
   </style>
 </head>
 <body>
   <header>
     <div class="header-title">
-      <h1 id="pageTitle" style="font-size:1.05rem;margin:0;">Valkey Unstable — Performance History</h1>
+      <h1 id="pageTitle" style="font-size:1.05rem;margin:0;"><img class="brand-mark" src="brand/conductress-mark.svg" alt="">Valkey Unstable — Performance History</h1>
       <span id="workload-label" style="color:var(--muted);font-size:0.78rem;"></span>
     </div>
     <button class="selector-toggle" id="selectorToggle" onclick="toggleSelectorPanel()">
@@ -1899,5 +1907,8 @@
       <div class="fg-footer"><span id="fgStatus"></span><span>Click a frame to zoom · Esc to close</span></div>
     </div>
   </div>
+  <footer class="brand-footer">
+    <a href="https://github.com/rainsupreme/valkey-conductress" target="_blank" rel="noopener noreferrer"><img src="brand/favicon.svg" alt="">Powered by Conductress</a>
+  </footer>
 </body>
 </html>
