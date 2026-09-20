@@ -256,6 +256,78 @@ describe('diskTier', () => {
   });
 });
 
+describe('computeHostLiveness', () => {
+  const NOW = Date.UTC(2026, 8, 20, 21, 20, 0);
+  const ago = (sec) => new Date(NOW - sec * 1000).toISOString();
+  const boundaryOnly = { boundary_publisher_active: true, status_timer_migration_required: false };
+
+  it('returns unreachable (grey) when there is no payload', () => {
+    assert.equal(status.computeHostLiveness(null, NOW).dotClass, 'unreachable');
+  });
+
+  it('is green for an active boundary-only host even when runner_state is stopped', () => {
+    // Live-fleet reality 2026-09-20: boundary-only publisher, runner sampled as
+    // "stopped" at the boundary while a task is starting with queued work.
+    const r = status.computeHostLiveness({
+      timestamp: ago(1116),
+      runner: { state: 'stopped' },
+      boundary: { state: 'starting' },
+      queue: { depth: 1 },
+      measurement_isolation: boundaryOnly,
+    }, NOW);
+    assert.equal(r.dotClass, 'running');
+    assert.equal(r.stale, false);
+    assert.equal(r.working, true);
+  });
+
+  it('is green for a healthy-idle boundary-only host (terminal boundary, empty queue, fresh)', () => {
+    const r = status.computeHostLiveness({
+      timestamp: ago(699),
+      runner: { state: 'stopped' },
+      boundary: { state: 'completed' },
+      queue: { depth: 0 },
+      measurement_isolation: boundaryOnly,
+    }, NOW);
+    assert.equal(r.dotClass, 'running');
+    assert.equal(r.stale, false);
+  });
+
+  it('goes amber for a boundary-only host silent for 2h–6h', () => {
+    const r = status.computeHostLiveness({
+      timestamp: ago(3 * 3600),
+      runner: { state: 'stopped' },
+      boundary: { state: 'completed' },
+      queue: { depth: 0 },
+      measurement_isolation: boundaryOnly,
+    }, NOW);
+    assert.equal(r.dotClass, 'stale');
+  });
+
+  it('goes red for a boundary-only host silent for over 6h', () => {
+    const r = status.computeHostLiveness({
+      timestamp: ago(7 * 3600),
+      runner: { state: 'stopped' },
+      boundary: { state: 'completed' },
+      queue: { depth: 0 },
+      measurement_isolation: boundaryOnly,
+    }, NOW);
+    assert.equal(r.dotClass, 'stopped');
+    assert.ok(r.staleReason.includes('no boundary update'));
+  });
+
+  it('trusts the reported state directly for a legacy periodic publisher', () => {
+    const running = status.computeHostLiveness({ timestamp: ago(120), runner: { state: 'running' } }, NOW);
+    assert.equal(running.dotClass, 'running');
+    const stopped = status.computeHostLiveness({ timestamp: ago(60), runner: { state: 'stopped' } }, NOW);
+    assert.equal(stopped.dotClass, 'stopped');
+  });
+
+  it('applies the narrow window to a legacy periodic publisher', () => {
+    const r = status.computeHostLiveness({ timestamp: ago(600), runner: { state: 'running' } }, NOW);
+    assert.equal(r.dotClass, 'stale');
+  });
+});
+
 describe('renderFleetControl', () => {
   it('returns null severity and disabled message when no fleet_control', () => {
     const result = status.renderFleetControl({});

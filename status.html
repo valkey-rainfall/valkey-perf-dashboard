@@ -96,7 +96,7 @@
     <div class="hosts" id="hosts"></div>
     <script src="lib/status-helpers.js"></script>
     <script>
-const {formatScore, timeAgo, escapeHtml, renderFleetControl, shortSpecifier, formatDuration, queueSummary, taskDescription, renderRemoteTasks, renderLocalTasks, renderRecentResults, fmtBytes, diskTier, terminalRecheckQualifies, createRecheckScheduler} = StatusHelpers;
+const {formatScore, timeAgo, escapeHtml, renderFleetControl, shortSpecifier, formatDuration, queueSummary, taskDescription, renderRemoteTasks, renderLocalTasks, renderRecentResults, fmtBytes, diskTier, computeHostLiveness, terminalRecheckQualifies, createRecheckScheduler} = StatusHelpers;
 
 const HOSTS = [
     {id: 'arm', runnerId: 'armbench', title: 'AWS Graviton 3', subtitle: 'c7g.metal · 64 cores'},
@@ -108,24 +108,15 @@ const STATUS_BASE = 'https://data.conductress.rainsupreme.net/status';
 const CONTROL_STATUS_URL = 'https://data.conductress.rainsupreme.net/api/v1/public/dashboard';
 
 function renderHost(data, host, remoteTasks) {
-    const reportedState = data.runner?.state || 'unreachable';
-    const ageSec = data.timestamp ? (Date.now() - new Date(data.timestamp).getTime()) / 1000 : Infinity;
-    const boundaryOnly = data.measurement_isolation?.boundary_publisher_active === true
-        && data.measurement_isolation?.status_timer_migration_required === false;
-    const boundaryTaskRunning = boundaryOnly && data.boundary?.state === 'starting';
-    const warnAfter = boundaryTaskRunning ? 7200 : 300;
-    const critAfter = boundaryTaskRunning ? 21600 : 1800;
-    const staleWarn = ageSec > warnAfter && ageSec <= critAfter;
-    const staleCrit = ageSec > critAfter;
-    const stale = staleWarn || staleCrit;
-    const dotClass = staleCrit ? 'stopped' : staleWarn ? 'stale' : reportedState;
+    const liveness = computeHostLiveness(data);
+    const dotClass = liveness.dotClass;
+    const staleWarn = liveness.staleWarn;
+    const staleCrit = liveness.staleCrit;
+    const stale = liveness.stale;
     let staleBanner = '';
     if (stale) {
         const cls = staleCrit ? 'crit' : 'warn';
-        const reason = boundaryTaskRunning
-            ? 'no completion boundary received (task may be stuck)'
-            : 'publishing may be broken (runner state unknown)';
-        staleBanner = `<div class="card-banner ${cls}">⚠ No update for ${timeAgo(data.timestamp).replace(' ago','')} — ${reason}</div>`;
+        staleBanner = `<div class="card-banner ${cls}">⚠ No update for ${timeAgo(data.timestamp).replace(' ago','')} — ${liveness.staleReason}</div>`;
     }
 
     const disk = data.disk || {};
@@ -208,7 +199,7 @@ let lastRemoteByRunner = null;
 function fleetMetricsSnapshot(statusByHost = lastGood, remoteByRunner = lastRemoteByRunner) {
     const statuses = HOSTS.map(host => statusByHost[host.id]).filter(Boolean);
     return {
-        online: statuses.filter(data => data.runner?.state === 'running').length,
+        online: statuses.filter(data => computeHostLiveness(data).dotClass === 'running').length,
         total: HOSTS.length,
         active: statuses.filter(data => data.boundary?.state === 'starting').length,
         remote: remoteByRunner === null ? null : HOSTS.reduce((sum, host) => {
