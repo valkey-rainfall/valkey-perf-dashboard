@@ -148,10 +148,11 @@ assert(truncatedMailboxHtml.includes('80 tasks · 1 shown'), 'authoritative remo
 assert(truncatedMailboxHtml.includes('79 additional tasks not included in the public detail feed'), 'truncation disclosure missing');
 assert(!truncatedMailboxHtml.includes('~1h 23m total'), 'partial expected duration must not be presented as complete');
 
+const fleetNow = new Date().toISOString();
 const fleetMetrics = context.fleetMetricsSnapshot({
-    arm: {runner: {state: 'running'}, boundary: {state: 'starting'}, queue: {depth: 2}},
-    graviton4: {runner: {state: 'running'}, boundary: {state: 'idle'}, queue: {depth: 1}},
-    x86: {runner: {state: 'stopped'}, boundary: {state: 'idle'}, queue: {depth: 0}},
+    arm: {timestamp: fleetNow, runner: {state: 'running'}, boundary: {state: 'starting'}, queue: {depth: 2}},
+    graviton4: {timestamp: fleetNow, runner: {state: 'running'}, boundary: {state: 'idle'}, queue: {depth: 1}},
+    x86: {timestamp: fleetNow, runner: {state: 'stopped'}, boundary: {state: 'idle'}, queue: {depth: 0}},
 }, {
     armbench: {total_count: 7},
     g4bench: {total_count: 3},
@@ -207,5 +208,96 @@ assert(script.includes('if (!autoRefreshEnabled) return;'), 'a fired recheck mus
 assert(script.includes('recheckScheduler.reset()'), 'auto-refresh toggle off must reset pending rechecks');
 assert(!script.includes('setInterval(loadStatus, 5'), 'must not create a 5-second global polling interval');
 assert(html.includes('terminalRecheckQualifies, createRecheckScheduler'), 'recheck helpers must be destructured from StatusHelpers');
+
+// ---------------------------------------------------------------------------
+// Host liveness / status-dot classification (computeHostLiveness)
+// ---------------------------------------------------------------------------
+const liveness = context.StatusHelpers.computeHostLiveness;
+const nowMs = Date.now();
+const iso = (ts) => new Date(nowMs - ts * 1000).toISOString();
+const boundaryOnlyIso = {boundary_publisher_active: true, status_timer_migration_required: false};
+
+// No payload -> unreachable (grey).
+assert(liveness(null, nowMs).dotClass === 'unreachable', 'missing payload must be unreachable');
+
+// Live-fleet reality captured 2026-09-20: boundary-only publisher, runner
+// service sampled as "stopped" at the boundary, but a task is actively starting
+// with queued work and the snapshot is fresh. This MUST be green, not red.
+const activeStopped = liveness({
+    timestamp: iso(1116),
+    runner: {state: 'stopped'},
+    boundary: {state: 'starting'},
+    queue: {depth: 1},
+    measurement_isolation: boundaryOnlyIso,
+}, nowMs);
+assert(activeStopped.dotClass === 'running', 'active boundary-only host must be green despite stopped runner_state');
+assert(activeStopped.stale === false, 'a 19m-old boundary-only snapshot must not be stale');
+assert(activeStopped.working === true, 'boundary starting + queued work counts as working');
+
+// Healthy idle: boundary completed, empty queue, fresh-ish (12m). The old
+// narrow window would have painted this amber/red; boundary-only widens it.
+const healthyIdle = liveness({
+    timestamp: iso(699),
+    runner: {state: 'stopped'},
+    boundary: {state: 'completed'},
+    queue: {depth: 0},
+    measurement_isolation: boundaryOnlyIso,
+}, nowMs);
+assert(healthyIdle.dotClass === 'running', 'idle boundary-only host with a fresh terminal boundary must be green');
+assert(healthyIdle.stale === false, 'a 12m-old idle boundary-only snapshot must not be stale');
+
+// Boundary-only host that has genuinely gone dark: > 6h with no update -> red.
+const trulyDark = liveness({
+    timestamp: iso(7 * 3600),
+    runner: {state: 'stopped'},
+    boundary: {state: 'completed'},
+    queue: {depth: 0},
+    measurement_isolation: boundaryOnlyIso,
+}, nowMs);
+assert(trulyDark.dotClass === 'stopped', 'boundary-only host silent > 6h must go red');
+assert(trulyDark.staleReason.includes('no boundary update'), 'dark boundary-only host needs a boundary-update reason');
+
+// Boundary-only host stale in the 2h–6h window -> amber.
+const dimming = liveness({
+    timestamp: iso(3 * 3600),
+    runner: {state: 'stopped'},
+    boundary: {state: 'completed'},
+    queue: {depth: 0},
+    measurement_isolation: boundaryOnlyIso,
+}, nowMs);
+assert(dimming.dotClass === 'stale', 'boundary-only host silent 2h–6h must be amber');
+
+// Legacy periodic publisher: narrow window, reported state trusted directly.
+const periodicRunning = liveness({
+    timestamp: iso(120),
+    runner: {state: 'running'},
+}, nowMs);
+assert(periodicRunning.dotClass === 'running', 'fresh periodic running host must be green');
+
+const periodicStale = liveness({
+    timestamp: iso(600),
+    runner: {state: 'running'},
+}, nowMs);
+assert(periodicStale.dotClass === 'stale', 'periodic host silent 10m must be amber under the narrow window');
+
+const periodicStopped = liveness({
+    timestamp: iso(60),
+    runner: {state: 'stopped'},
+}, nowMs);
+assert(periodicStopped.dotClass === 'stopped', 'periodic publisher must trust a reported stopped state');
+
+// A live-reality active-stopped host must NOT render the stale banner.
+const activeHost = {runnerId: 'armbench', title: 'AWS Graviton 3', subtitle: 'c7g.metal · 64 cores'};
+const activeStoppedHtml = context.renderHost({
+    timestamp: iso(1116),
+    runner: {state: 'stopped'},
+    boundary: {state: 'starting', task_id: 't1'},
+    queue: {depth: 1, tasks: []},
+    recent_results: [],
+    disk: {},
+    measurement_isolation: boundaryOnlyIso,
+}, activeHost, []);
+assert(activeStoppedHtml.includes('status-dot running'), 'active boundary-only card must render a green dot');
+assert(!activeStoppedHtml.includes('No update for'), 'active boundary-only card must not show a stale banner');
 
 console.log('status monitoring tests passed');
