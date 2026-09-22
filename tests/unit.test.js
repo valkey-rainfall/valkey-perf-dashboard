@@ -14,6 +14,7 @@ const config = require('../config.js');
 const epochHelpers = require('../lib/epoch-helpers.js');
 const pointHelpers = require('../lib/point-helpers.js');
 const compareManifest = require('../lib/compare-manifest.js');
+const perfGroups = require('../lib/perf-groups.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // status-helpers.js
@@ -1635,5 +1636,94 @@ describe('compare.html manifest wiring', () => {
 
   it('keeps the client-saturated caveat glyph', () => {
     assert.ok(html.includes('saturated'), 'compare.html must keep the client-saturated caveat');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// perf-groups.js — perf/CPU chart group filtering + ordering
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('orderPerfGroups', () => {
+  const g = id => ({ id });
+  // A manifest in production order: throughput/memory, process-wide base groups,
+  // then kernel, cpu profiles, then the per-thread variants.
+  const manifest = [
+    'throughput', 'memory',
+    'efficiency', 'cache', 'pipeline', 'tma', 'branching',
+    'kernel', 'cpu-main', 'cpu-io',
+    'efficiency-main', 'efficiency-io',
+    'cache-main', 'cache-io',
+    'pipeline-main', 'pipeline-io',
+    'tma-main', 'tma-io',
+    'branching-main', 'branching-io',
+    'syscalls-main', 'syscalls-io',
+    'context-switches-main', 'context-switches-io',
+  ].map(g);
+
+  it('hides the process-wide base groups and the combined kernel group', () => {
+    const ids = perfGroups.orderPerfGroups(manifest).map(x => x.id);
+    for (const hidden of ['throughput', 'memory', 'efficiency', 'cache',
+      'pipeline', 'tma', 'branching', 'kernel', 'syscalls', 'context-switches']) {
+      assert.ok(!ids.includes(hidden), `${hidden} must be hidden`);
+    }
+  });
+
+  it('leads with execution efficiency, then the CPU profile', () => {
+    const ids = perfGroups.orderPerfGroups(manifest).map(x => x.id);
+    assert.deepEqual(ids.slice(0, 4),
+      ['efficiency-main', 'efficiency-io', 'cpu-main', 'cpu-io']);
+  });
+
+  it('keeps every metric main immediately before its io twin', () => {
+    const ids = perfGroups.orderPerfGroups(manifest).map(x => x.id);
+    for (const base of ['efficiency', 'cache', 'pipeline', 'tma', 'branching',
+      'syscalls', 'context-switches']) {
+      const mi = ids.indexOf(`${base}-main`);
+      const io = ids.indexOf(`${base}-io`);
+      assert.ok(mi !== -1 && io === mi + 1, `${base}: io must follow main (got main@${mi} io@${io})`);
+    }
+    // cpu profile pair too
+    assert.equal(ids.indexOf('cpu-io'), ids.indexOf('cpu-main') + 1);
+  });
+
+  it('puts syscalls and context-switches last, syscalls before context-switches', () => {
+    const ids = perfGroups.orderPerfGroups(manifest).map(x => x.id);
+    assert.deepEqual(ids.slice(-4),
+      ['syscalls-main', 'syscalls-io', 'context-switches-main', 'context-switches-io']);
+  });
+
+  it('sorts unknown/future groups to the end without dropping them', () => {
+    const ids = perfGroups.orderPerfGroups([...manifest, g('newthing-main'), g('newthing-io')]).map(x => x.id);
+    assert.ok(ids.includes('newthing-main'), 'unknown group must survive');
+    assert.equal(ids.at(-1), 'newthing-io');
+  });
+
+  it('renders legacy pre-split kernel-main/-io when a cached manifest still has them', () => {
+    const legacy = ['efficiency-main', 'efficiency-io', 'kernel-main', 'kernel-io'].map(g);
+    const ids = perfGroups.orderPerfGroups(legacy).map(x => x.id);
+    assert.deepEqual(ids, ['efficiency-main', 'efficiency-io', 'kernel-main', 'kernel-io']);
+  });
+
+  it('does not mutate the caller array and tolerates junk input', () => {
+    const input = [g('cpu-io'), g('cpu-main')];
+    const before = input.map(x => x.id);
+    perfGroups.orderPerfGroups(input);
+    assert.deepEqual(input.map(x => x.id), before, 'input array must be untouched');
+    assert.deepEqual(perfGroups.orderPerfGroups(null), []);
+    assert.deepEqual(perfGroups.orderPerfGroups(undefined), []);
+  });
+});
+
+describe('index.html perf-group wiring', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  it('loads lib/perf-groups.js', () => {
+    assert.ok(html.includes('lib/perf-groups.js'), 'index.html must include the perf-groups script');
+  });
+
+  it('orders perf groups via the helper rather than inline', () => {
+    assert.ok(html.includes('PerfGroups.orderPerfGroups'), 'must call PerfGroups.orderPerfGroups');
   });
 });
