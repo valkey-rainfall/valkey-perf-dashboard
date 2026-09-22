@@ -45,6 +45,21 @@ function workloadIdToLabel(id) {
   return `${prefix}${cmd.toUpperCase()} K=${k}B V=${v}B T=${t} P=${p}`;
 }
 
+// Latency series ids are a throughput id plus a held request rate, e.g.
+// "get-k16-v16-t7-p1-r100k" (100k requests/sec). The throughput validator
+// deliberately rejects them so a latency id never lands in a throughput list.
+function isValidLatencyWorkloadId(id) {
+  return /^(get|set|mixed-s\d+)-k\d+-v\d+-t\d+-p\d+-r\d+k?$/.test(id);
+}
+
+function latencyWorkloadIdToLabel(id) {
+  const m = id.match(/^(.*)-r(\d+)(k?)$/);
+  if (!m) return id;
+  const [, base, rate, k] = m;
+  const rateLabel = k ? `${rate}k` : rate;
+  return `${workloadIdToLabel(base)} @ ${rateLabel} req/s`;
+}
+
 function isEnginePrefixed(workloadId, engines = ENGINES) {
   return engines.some(engine => engine.id !== 'valkey' && workloadId.startsWith(`${engine.id}-`));
 }
@@ -216,5 +231,5 @@ function showHelp(sectionId) {
 function closeHelp() { const m = document.getElementById('helpModal'); if (m) m.style.display = 'none'; }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {isValidWorkloadId, workloadIdToLabel, isEnginePrefixed};
+  module.exports = {isValidWorkloadId, workloadIdToLabel, isValidLatencyWorkloadId, latencyWorkloadIdToLabel, isEnginePrefixed};
 }
