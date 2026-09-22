@@ -274,6 +274,7 @@
   <script src="config.js"></script>
   <script src="lib/epoch-helpers.js"></script>
   <script src="lib/point-helpers.js"></script>
+  <script src="lib/perf-groups.js"></script>
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
 
@@ -1030,8 +1031,9 @@
       if (!platformManifest || !platformManifest.groups) return;
       const container = document.getElementById('perfCharts'); container.innerHTML = '';
       const workloadId = getWorkloadId();
-      const HIDE_GROUPS = ['throughput', 'memory', 'efficiency', 'cache', 'pipeline', 'tma', 'branching'];
-      const perfGroups = platformManifest.groups.filter(g => !HIDE_GROUPS.includes(g.id));
+      // Filter + order the perf/CPU chart groups (decision-first, main/io pairs
+      // adjacent). Logic lives in lib/perf-groups.js so it is unit-tested.
+      const perfGroups = PerfGroups.orderPerfGroups(platformManifest.groups);
       let hasAny = false;
 
       for (const group of perfGroups) {
