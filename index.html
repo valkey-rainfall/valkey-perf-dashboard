@@ -273,6 +273,7 @@
 
   <script src="config.js"></script>
   <script src="lib/epoch-helpers.js"></script>
+  <script src="lib/point-helpers.js"></script>
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
 
@@ -841,22 +842,47 @@
             { label: 'CV+', data: cvUpper, borderColor: 'transparent', backgroundColor: color + '20', fill: '+1', pointRadius: 0, tension: 0 },
             { label: 'CV-', data: cvLower, borderColor: 'transparent', fill: false, pointRadius: 0, tension: 0 },
           );
+
+          // Score min/max range band (v3 only) — distinct from the CV band.
+          // Drawn as dashed whisker-style edges so a mode split (wide range,
+          // small CV) is visible. Points without score_min/max leave a gap.
+          const hasRange = sPoints.some(p => PointHelpers.scoreRange(p.results[sWorkload]).known);
+          if (hasRange) {
+            const rangeUpper = sPoints.map(p => { const sr = PointHelpers.scoreRange(p.results[sWorkload]); return { x: p.commit_index, y: sr.known ? sr.max : NaN }; });
+            const rangeLower = sPoints.map(p => { const sr = PointHelpers.scoreRange(p.results[sWorkload]); return { x: p.commit_index, y: sr.known ? sr.min : NaN }; });
+            allDatasets.push(
+              { label: 'range+', data: rangeUpper, borderColor: color + '66', borderDash: [3, 3], backgroundColor: 'transparent', fill: false, pointRadius: 0, borderWidth: 1, tension: 0, spanGaps: false },
+              { label: 'range-', data: rangeLower, borderColor: color + '66', borderDash: [3, 3], backgroundColor: 'transparent', fill: false, pointRadius: 0, borderWidth: 1, tension: 0, spanGaps: false },
+            );
+          }
         }
 
         // Main line
         const ptColors = sPoints.map(p => { const a = annMap[p.commit]; return a ? (a.good ? '#22c55e' : '#ef4444') : color; });
         const ptRadii = sPoints.map(p => annMap[p.commit] ? 5 : 2.5);
+        // Client-saturated points get a distinct hollow warning-colored marker:
+        // the number is the load generator's ceiling, not the server's.
+        const warnColor = getComputedStyle(document.documentElement).getPropertyValue('--warn').trim() || '#eab308';
+        const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0f1117';
+        const satFlags = sPoints.map(p => PointHelpers.clientState(p.results[sWorkload]).saturated === true);
+        const singleSel = selectedWorkloads.length === 1;
+        const ptBg = sPoints.map((p, i) => satFlags[i] ? bgColor : (singleSel ? ptColors[i] : color));
+        const ptBorder = sPoints.map((p, i) => satFlags[i] ? warnColor : (singleSel ? ptColors[i] : color));
+        const ptStyle = sPoints.map((p, i) => satFlags[i] ? 'rectRot' : 'circle');
         allDatasets.push({
           label: wlLabel, data: sPoints.map(p => ({x: p.commit_index, y: p.results[sWorkload].rps})),
           borderColor: color, backgroundColor: 'transparent',
-          pointBackgroundColor: selectedWorkloads.length === 1 ? ptColors : color,
-          pointRadius: selectedWorkloads.length === 1 ? ptRadii : 2,
+          pointBackgroundColor: ptBg,
+          pointBorderColor: ptBorder,
+          pointBorderWidth: sPoints.map((p, i) => satFlags[i] ? 2 : 1),
+          pointStyle: ptStyle,
+          pointRadius: singleSel ? sPoints.map((p, i) => satFlags[i] ? Math.max(ptRadii[i], 4) : ptRadii[i]) : sPoints.map((p, i) => satFlags[i] ? 3.5 : 2),
           borderWidth: si === 0 ? 2 : 1.5, tension: 0,
         });
       }
 
       const opts = baseChartOpts(globalMaxCommits, data.landmarks);
-      opts.plugins.legend = { display: selectedWorkloads.length > 1, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, color: '#94a3b8', filter: item => !['CV+','CV-'].includes(item.text) } };
+      opts.plugins.legend = { display: selectedWorkloads.length > 1, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, color: '#94a3b8', filter: item => !['CV+','CV-','range+','range-'].includes(item.text) } };
       opts.scales.y = { title: { display: true, text: 'M ops/sec', color: '#64748b' }, ticks: { color: '#64748b', callback: v => (v/1e6).toFixed(1)+'M' }, grid: { color: 'var(--border)' } };
       opts.onClick = (evt, els) => {
         if (mouseDownPos && (Math.abs(evt.native.clientX - mouseDownPos.x) > 5 || Math.abs(evt.native.clientY - mouseDownPos.y) > 5)) return;
@@ -891,7 +917,13 @@
             if (idx >= sd.points.length) return '';
             const p = sd.points[idx], r = p.results[sd.workload];
             const prefix = selectedWorkloads.length > 1 ? `<span style="color:${sd.color}">●</span> ${sd.label}: ` : '';
-            return `${prefix}${infoItem('', (r.rps/1e6).toFixed(3)+'M')} ${infoItem('CV', r.cv.toFixed(2)+'%')}`;
+            let extra = '';
+            const sr = PointHelpers.scoreRange(r);
+            if (sr.known) extra += ' ' + infoItem('range', (sr.min/1e6).toFixed(3)+'–'+(sr.max/1e6).toFixed(3)+'M');
+            const cs = PointHelpers.clientState(r);
+            if (cs.known && cs.saturated) extra += ' <span class="info-val" style="color:var(--warn)">⬥ client saturated</span>';
+            else if (cs.known && typeof cs.utilization === 'number') extra += ' ' + infoItem('client util', cs.utilization.toFixed(2));
+            return `${prefix}${infoItem('', (r.rps/1e6).toFixed(3)+'M')} ${infoItem('CV', r.cv.toFixed(2)+'%')}${extra}`;
           }).filter(Boolean).join('<span class="info-sep"> · </span>');
         }, defaultInfo)],
         data: { datasets: allDatasets },
@@ -1316,12 +1348,28 @@
 
     function renderTable(points, workload) {
       const el = document.getElementById('datapoints'); if (!el) return;
+      const anyRange = points.some(p => PointHelpers.scoreRange(p.results[workload]).known);
+      const anyClient = points.some(p => PointHelpers.clientState(p.results[workload]).known);
       const rows = points.slice().reverse().map(p => {
         const r = p.results[workload];
         const link = p.pr ? `<a href="https://github.com/valkey-io/valkey/pull/${p.pr}" target="_blank">#${p.pr}</a>` : p.commit.slice(0,8);
-        return `<tr id="row-${p.commit.slice(0,10)}"><td>${p.date}</td><td>${link}</td><td style="color:var(--text)">${(p.pr_title||'').slice(0,50)}</td><td>${(r.rps/1000).toFixed(0)}K</td><td>${(r.cv||0).toFixed(2)}%</td></tr>`;
+        let rangeCell = '';
+        if (anyRange) {
+          const sr = PointHelpers.scoreRange(r);
+          rangeCell = `<td>${sr.known ? (sr.min/1000).toFixed(0)+'–'+(sr.max/1000).toFixed(0)+'K' : '-'}</td>`;
+        }
+        let clientCell = '';
+        if (anyClient) {
+          const cs = PointHelpers.clientState(r);
+          if (!cs.known) clientCell = '<td>-</td>';
+          else if (cs.saturated) clientCell = `<td style="color:var(--warn)">⬥ sat ${typeof cs.utilization==='number'?cs.utilization.toFixed(2):'?'}</td>`;
+          else clientCell = `<td>${typeof cs.utilization==='number'?cs.utilization.toFixed(2):'-'}</td>`;
+        }
+        return `<tr id="row-${p.commit.slice(0,10)}"><td>${p.date}</td><td>${link}</td><td style="color:var(--text)">${(p.pr_title||'').slice(0,50)}</td><td>${(r.rps/1000).toFixed(0)}K</td><td>${(r.cv||0).toFixed(2)}%</td>${rangeCell}${clientCell}</tr>`;
       }).join('');
-      el.innerHTML = `<table style="width:100%;font-size:0.8rem;border-collapse:collapse;"><thead><tr style="color:var(--muted);text-align:left;"><th>Date</th><th>PR</th><th>Title</th><th>RPS</th><th>CV</th></tr></thead><tbody>${rows}</tbody></table>`;
+      const rangeHead = anyRange ? '<th>Range</th>' : '';
+      const clientHead = anyClient ? '<th>Client</th>' : '';
+      el.innerHTML = `<table style="width:100%;font-size:0.8rem;border-collapse:collapse;"><thead><tr style="color:var(--muted);text-align:left;"><th>Date</th><th>PR</th><th>Title</th><th>RPS</th><th>CV</th>${rangeHead}${clientHead}</tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     async function loadManifest() { await discoverWorkloads(); }
@@ -1574,6 +1622,21 @@
         deltaHtml = `<div class="cpop-delta ${cls}"><span>${arrow} ${sign}${delta.toFixed(1)}% ±${unc.toFixed(1)}%</span><span class="cpop-badge ${badgeCls}">${badgeText}</span><span style="color:var(--muted);font-weight:400;font-size:12px">${gapText}</span></div>`;
       }
 
+      // Score range + client saturation (v3)
+      let rangeHtml = '';
+      const sr = PointHelpers.scoreRange(r);
+      if (sr.known) {
+        const aggNote = sr.aggregate ? ` (${sr.aggregate})` : '';
+        rangeHtml += `<div class="cpop-cv">range ${formatRpsPrecision(sr.min, r.cv||0)} – ${formatRpsPrecision(sr.max, r.cv||0)}${aggNote}</div>`;
+      }
+      const cs = PointHelpers.clientState(r);
+      const csLine = PointHelpers.clientTooltipLine(cs);
+      if (csLine) {
+        const csColor = cs.saturated ? 'var(--warn)' : 'var(--muted)';
+        const glyph = cs.saturated ? '⬥ ' : '';
+        rangeHtml += `<div class="cpop-cv" style="color:${csColor}">${glyph}${csLine}</div>`;
+      }
+
       // Perf counters (from loaded data)
       let perfHtml = '';
       const perfMetrics = Object.keys(popupPerfData);
@@ -1619,6 +1682,7 @@
         <hr class="cpop-sep">
         <div class="cpop-rps">${rpsStr} <span class="cpop-rps-unit">rps</span></div>
         <div class="cpop-cv">${r.reps || '?'} reps · CV ${(r.cv||0).toFixed(2)}%</div>
+        ${rangeHtml}
         ${deltaHtml}
         ${perfHtml ? '<hr class="cpop-sep">' + perfHtml : ''}
         <div class="cpop-footer"><span>Esc to dismiss</span><span>${platLabel}</span></div>

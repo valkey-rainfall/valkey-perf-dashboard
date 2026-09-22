@@ -35,3 +35,16 @@ node tests/status-monitoring.test.js
 ```
 
 The unit suite covers status rendering and escaping, fleet-control severity, queue and duration formatting, statistical comparison helpers, workload parsing, page/module integration, HTML structure, and JSON fixtures. GitHub Actions runs these tests plus JavaScript syntax, JSON, HTML, and inclusive-language checks on pushes and pull requests.
+
+## Score range and client-saturated points
+
+Conductress v3 points carry extra per-result metadata. When a point reports
+`score_min`/`score_max`, the series chart draws a dashed **range band** around the
+line (distinct from the shaded CV band): a wide range with a small CV usually means
+the per-rep scores split into two modes. When a point reports client (load
+generator) telemetry, a **saturated marker** (a hollow diamond in the warning color)
+flags points where `client_saturated` is true — the load generator was at or over
+its core budget, so the number is the *client's* ceiling, not the server's. Hover a
+point (or open the commit popup / compare tooltip) to see the exact range, client
+utilization, and a caveat when the point is saturated. Older points and v1 series
+omit these keys and render as "unknown" rather than as a false or zero value.

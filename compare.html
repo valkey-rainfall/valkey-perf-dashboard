@@ -86,6 +86,7 @@
   <script src="config.js"></script>
   <script src="lib/compare-helpers.js"></script>
   <script src="lib/epoch-helpers.js"></script>
+  <script src="lib/point-helpers.js"></script>
   <script>
     const {workloadLabel, ci95, welchPValue} = CompareHelpers;
     let COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms); // cross-platform only
@@ -160,7 +161,8 @@
         || best.results[workloadId.replace('memory-', 'memory-redis-')];
       if (!result) return null;
       const value = best.breakdown ? Object.values(best.breakdown).reduce((s,v)=>s+v,0) : result.rps + (MEMORY_USER_DATA[workloadId] || 0);
-      return { value, cv: result.cv, reps: result.reps || 3, date: best.date, commit: best.commit, breakdown: best.breakdown };
+      return { value, cv: result.cv, reps: result.reps || 3, date: best.date, commit: best.commit, breakdown: best.breakdown,
+        range: PointHelpers.scoreRange(result), client: PointHelpers.clientState(result) };
     }
 
     function getLatestValue(data, workloadId) {
@@ -180,7 +182,9 @@
       // Pooled CV: RMS of individual CVs
       const pooledCv = Math.sqrt(entries.reduce((s, e) => s + e.cv * e.cv, 0) / entries.length);
       const last = recent[recent.length - 1];
-      return { value: median, cv: pooledCv, reps: totalReps, n: entries.length, date: last.date, commit: last.commit, breakdown: last.breakdown };
+      const lastResult = last.results[workloadId] || last.results[`redis-${workloadId}`] || last.results[workloadId.replace('memory-', 'memory-redis-')];
+      return { value: median, cv: pooledCv, reps: totalReps, n: entries.length, date: last.date, commit: last.commit, breakdown: last.breakdown,
+        range: PointHelpers.scoreRange(lastResult), client: PointHelpers.clientState(lastResult) };
     }
 
     // --- Rendering ---
@@ -376,6 +380,7 @@
       const workloads = type === 'throughput' ? COMPARE_WORKLOADS : COMPARE_MEMORY;
       const labels = workloads.map(w => type === 'throughput' ? workloadLabel(w.id) : workloadLabel(w));
       const valkeyVals = [], redisVals = [], valkeyErr = [], redisErr = [];
+      const valkeyClient = [], redisClient = [], valkeyRange = [], redisRange = [];
 
       const valkeySource = Object.values(data.valkey).find(d => d);
       const redisSource = Object.values(data.redis).find(d => d);
@@ -398,6 +403,10 @@
         redisVals.push(r ? r.value : null);
         valkeyErr.push(v ? ci95(v.value, v.cv, v.reps) : 0);
         redisErr.push(r ? ci95(r.value, r.cv, r.reps) : 0);
+        valkeyClient.push(v ? v.client : null);
+        redisClient.push(r ? r.client : null);
+        valkeyRange.push(v ? v.range : null);
+        redisRange.push(r ? r.range : null);
       }
 
       // Error bar plugin (draws CI95 whiskers)
@@ -430,19 +439,33 @@
             } else {
               const meta = chart.getDatasetMeta(dsIdx);
               const errs = dsIdx === 0 ? valkeyErr : redisErr;
+              const clients = dsIdx === 0 ? valkeyClient : redisClient;
+              const warnColor = getComputedStyle(document.documentElement).getPropertyValue('--warn').trim() || '#eab308';
               meta.data.forEach((bar, i) => {
                 const err = errs[i];
-                if (!err || !ds.data[i]) return;
-                const scale = chart.scales.x;
-                const xMin = scale.getPixelForValue(ds.data[i] - err);
-                const xMax = scale.getPixelForValue(ds.data[i] + err);
-                const y = bar.y;
-                ctx.save(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(xMin, y); ctx.lineTo(xMax, y);
-                ctx.moveTo(xMin, y - 4); ctx.lineTo(xMin, y + 4);
-                ctx.moveTo(xMax, y - 4); ctx.lineTo(xMax, y + 4);
-                ctx.stroke(); ctx.restore();
+                if (err && ds.data[i]) {
+                  const scale = chart.scales.x;
+                  const xMin = scale.getPixelForValue(ds.data[i] - err);
+                  const xMax = scale.getPixelForValue(ds.data[i] + err);
+                  const y = bar.y;
+                  ctx.save(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.5;
+                  ctx.beginPath();
+                  ctx.moveTo(xMin, y); ctx.lineTo(xMax, y);
+                  ctx.moveTo(xMin, y - 4); ctx.lineTo(xMin, y + 4);
+                  ctx.moveTo(xMax, y - 4); ctx.lineTo(xMax, y + 4);
+                  ctx.stroke(); ctx.restore();
+                }
+                // Client-saturated bar gets a warning caveat glyph — the number
+                // is the load generator's ceiling, not the server's.
+                const cs = clients[i];
+                if (cs && cs.saturated && ds.data[i]) {
+                  ctx.save();
+                  ctx.fillStyle = warnColor;
+                  ctx.font = 'bold 12px system-ui, sans-serif';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillText('⬥', bar.x + 6, bar.y);
+                  ctx.restore();
+                }
               });
             }
           });
@@ -488,6 +511,17 @@
                 return ctx.raw !== null ? `${ctx.dataset.label.replace(' Overhead', '')}: ${ctx.raw.toFixed(1)} B overhead ±${err.toFixed(1)}` : 'No data';
               }
               return ctx.raw !== null ? `${ctx.dataset.label}: ${fmtRps(ctx.raw)} ±${fmtRps(ctx.datasetIndex === 0 ? valkeyErr[ctx.dataIndex] : redisErr[ctx.dataIndex])}` : 'No data';
+            },
+            afterLabel: ctx => {
+              if (type === 'memory' || ctx.raw === null) return '';
+              const client = ctx.datasetIndex === 0 ? valkeyClient[ctx.dataIndex] : redisClient[ctx.dataIndex];
+              const range = ctx.datasetIndex === 0 ? valkeyRange[ctx.dataIndex] : redisRange[ctx.dataIndex];
+              const lines = [];
+              if (range && range.known) lines.push(`range ${fmtRps(range.min)}–${fmtRps(range.max)}`);
+              const csLine = PointHelpers.clientTooltipLine(client);
+              if (csLine) lines.push((client && client.saturated ? '⬥ ' : '') + csLine);
+              if (client && client.saturated) lines.push('⬥ saturated: understates the server');
+              return lines;
             } } }
           },
           scales: {
