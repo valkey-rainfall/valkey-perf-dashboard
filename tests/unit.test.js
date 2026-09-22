@@ -13,6 +13,7 @@ const compare = require('../lib/compare-helpers.js');
 const config = require('../config.js');
 const epochHelpers = require('../lib/epoch-helpers.js');
 const pointHelpers = require('../lib/point-helpers.js');
+const compareManifest = require('../lib/compare-manifest.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // status-helpers.js
@@ -590,6 +591,10 @@ describe('workloadLabel (compare)', () => {
     assert.equal(compare.workloadLabel('memory-set-k16-v64-expire'), 'SET K=16B V=64B +expire');
   });
 
+  it('formats a latency series id with its held rate', () => {
+    assert.equal(compare.workloadLabel('get-k16-v16-t7-p1-r100k'), 'GET K=16B V=16B T=7 P=1 @ 100k req/s');
+  });
+
   it('handles member/field size specs', () => {
     assert.equal(compare.workloadLabel('memory-zadd-m20'), 'ZADD M=20B');
     assert.equal(compare.workloadLabel('memory-hset-f64-v64'), 'HSET F=64 V=64B');
@@ -626,6 +631,25 @@ describe('isValidWorkloadId', () => {
 
   it('rejects IDs with engine prefix', () => {
     assert.ok(!config.isValidWorkloadId('redis-get-k16-v16-t7-p10'));
+  });
+});
+
+describe('isValidLatencyWorkloadId / latencyWorkloadIdToLabel', () => {
+  it('accepts the fleet latency id shape and rejects throughput ids', () => {
+    assert.equal(config.isValidLatencyWorkloadId('get-k16-v16-t7-p1-r100k'), true);
+    assert.equal(config.isValidLatencyWorkloadId('mixed-s20-k16-v16-t7-p10-r50000'), true);
+    assert.equal(config.isValidLatencyWorkloadId('get-k16-v16-t7-p1'), false);
+    assert.equal(config.isValidLatencyWorkloadId('redis-get-k16-v16-t7-p1-r100k'), false);
+  });
+
+  it('the throughput validator still rejects latency ids', () => {
+    assert.equal(config.isValidWorkloadId('get-k16-v16-t7-p1-r100k'), false);
+  });
+
+  it('labels the base workload plus the held rate', () => {
+    assert.equal(config.latencyWorkloadIdToLabel('get-k16-v16-t7-p1-r100k'), 'GET K=16B V=16B T=7 P=1 @ 100k req/s');
+    assert.equal(config.latencyWorkloadIdToLabel('set-k16-v16-t7-p1-r5000'), 'SET K=16B V=16B T=7 P=1 @ 5000 req/s');
+    assert.equal(config.latencyWorkloadIdToLabel('not-a-latency-id'), 'not-a-latency-id');
   });
 });
 
@@ -1391,5 +1415,225 @@ describe('epoch default + archived labelling', () => {
       const html = fs.readFileSync(path.join(root, f), 'utf8');
       assert.ok(html.includes('EpochHelpers.epochOptionLabel(e)'), `${f} must render option text via epochOptionLabel`);
     }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// compare-manifest.js — manifest-driven engine and workload discovery
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('compare-manifest.js', () => {
+  const ENGINES = [
+    { id: 'valkey', label: 'Valkey' },
+    { id: 'redis', label: 'Redis' },
+  ];
+  const PLATFORMS = ['amd64', 'arm64', 'graviton4', 'intel'];
+  const cfg = {
+    isValidWorkloadId: config.isValidWorkloadId,
+    workloadIdToLabel: config.workloadIdToLabel,
+  };
+  const latencyCfg = {
+    isValidWorkloadId: config.isValidLatencyWorkloadId,
+    workloadIdToLabel: config.latencyWorkloadIdToLabel,
+  };
+
+  // A v3-shaped manifest: throughput + memory with redis-prefixed siblings,
+  // a latency list, and epoch metadata.
+  function v3Manifest(extra) {
+    return Object.assign({
+      throughput_workloads: [
+        'get-k16-v16-t7-p10', 'set-k16-v16-t7-p10',
+        'get-k16-v16-t7-p1', 'get-k16-v1024-t7-p10',
+        'redis-get-k16-v16-t7-p10', 'redis-set-k16-v16-t7-p10',
+      ],
+      memory_workloads: [
+        'memory-set-k16-v64', 'memory-zadd-m20',
+        'memory-redis-set-k16-v64', 'memory-redis-zadd-m20',
+      ],
+      // Real fleet shape: a throughput id plus the held request rate.
+      latency_workloads: ['get-k16-v16-t7-p1-r100k', 'redis-get-k16-v16-t7-p1-r100k', 'set-k16-v16-t7-p1-r100k'],
+      epochs: [{ id: 'v3', label: 'Cachecannon v3', generator: 'cachecannon' }],
+      groups: [],
+    }, extra || {});
+  }
+
+  // A v1-shaped manifest: no epochs, no latency, unprefixed only.
+  function v1Manifest(extra) {
+    return Object.assign({
+      throughput_workloads: ['get-k16-v16-t7-p10', 'set-k16-v16-t7-p10'],
+      memory_workloads: ['memory-set-k16-v64'],
+      groups: [],
+    }, extra || {});
+  }
+
+  describe('engineIdsFromManifests', () => {
+    it('reports valkey and redis for a v3 manifest with prefixed siblings', () => {
+      const engines = compareManifest.engineIdsFromManifests([v3Manifest()], ENGINES);
+      assert.deepEqual(engines.map(e => e.id), ['valkey', 'redis']);
+    });
+
+    it('reports only valkey when no engine-prefixed workloads exist', () => {
+      const engines = compareManifest.engineIdsFromManifests([v1Manifest()], ENGINES);
+      assert.deepEqual(engines.map(e => e.id), ['valkey']);
+    });
+
+    it('detects redis from a memory prefix even without a throughput prefix', () => {
+      const m = v1Manifest({ memory_workloads: ['memory-set-k16-v64', 'memory-redis-set-k16-v64'] });
+      const engines = compareManifest.engineIdsFromManifests([m], ENGINES);
+      assert.deepEqual(engines.map(e => e.id), ['valkey', 'redis']);
+    });
+
+    it('preserves ENGINES order', () => {
+      const three = [
+        { id: 'valkey', label: 'Valkey' },
+        { id: 'keydb', label: 'KeyDB' },
+        { id: 'redis', label: 'Redis' },
+      ];
+      const m = v3Manifest({
+        throughput_workloads: ['get-k16-v16-t7-p10', 'redis-get-k16-v16-t7-p10', 'keydb-get-k16-v16-t7-p10'],
+      });
+      const engines = compareManifest.engineIdsFromManifests([m], three);
+      assert.deepEqual(engines.map(e => e.id), ['valkey', 'keydb', 'redis']);
+    });
+
+    it('returns empty for empty inputs', () => {
+      assert.deepEqual(compareManifest.engineIdsFromManifests([], ENGINES), []);
+      assert.deepEqual(compareManifest.engineIdsFromManifests([null], ENGINES), []);
+    });
+  });
+
+  describe('compareThroughputWorkloads', () => {
+    it('returns unprefixed valid ids in first-manifest order', () => {
+      const w = compareManifest.compareThroughputWorkloads([v3Manifest()], PLATFORMS, cfg);
+      assert.deepEqual(w.map(x => x.id), [
+        'get-k16-v16-t7-p10', 'set-k16-v16-t7-p10', 'get-k16-v16-t7-p1', 'get-k16-v1024-t7-p10',
+      ]);
+      assert.equal(w[0].label, config.workloadIdToLabel('get-k16-v16-t7-p10'));
+    });
+
+    it('excludes an id missing from one platform (cross-platform only)', () => {
+      const full = v3Manifest();
+      const partial = v3Manifest({
+        throughput_workloads: ['get-k16-v16-t7-p10', 'set-k16-v16-t7-p10', 'get-k16-v16-t7-p1'],
+      }); // missing get-k16-v1024-t7-p10
+      const w = compareManifest.compareThroughputWorkloads([full, partial], PLATFORMS, cfg);
+      assert.ok(!w.some(x => x.id === 'get-k16-v1024-t7-p10'));
+      assert.ok(w.some(x => x.id === 'get-k16-v16-t7-p10'));
+    });
+
+    it('drops engine-prefixed and malformed ids via isValidWorkloadId', () => {
+      const w = compareManifest.compareThroughputWorkloads([v3Manifest()], PLATFORMS, cfg);
+      assert.ok(!w.some(x => x.id.startsWith('redis-')));
+    });
+
+    it('returns empty when no manifest is present', () => {
+      assert.deepEqual(compareManifest.compareThroughputWorkloads([null, null], PLATFORMS, cfg), []);
+    });
+  });
+
+  describe('compareMemoryWorkloads', () => {
+    const MEMORY_FALLBACK = config.MEMORY_WORKLOADS || ['memory-set-k16-v64'];
+
+    it('returns unprefixed memory ids from the manifest', () => {
+      const w = compareManifest.compareMemoryWorkloads([v3Manifest()], MEMORY_FALLBACK, ENGINES);
+      assert.deepEqual(w, ['memory-set-k16-v64', 'memory-zadd-m20']);
+    });
+
+    it('excludes an id missing from one declaring manifest', () => {
+      const full = v3Manifest();
+      const partial = v3Manifest({
+        memory_workloads: ['memory-set-k16-v64', 'memory-redis-set-k16-v64'],
+      }); // missing memory-zadd-m20
+      const w = compareManifest.compareMemoryWorkloads([full, partial], MEMORY_FALLBACK, ENGINES);
+      assert.deepEqual(w, ['memory-set-k16-v64']);
+    });
+
+    it('falls back to the legacy list when NO manifest declares memory_workloads', () => {
+      const noMem = { throughput_workloads: ['get-k16-v16-t7-p10'] };
+      const w = compareManifest.compareMemoryWorkloads([noMem, noMem], MEMORY_FALLBACK, ENGINES);
+      assert.deepEqual(w, MEMORY_FALLBACK);
+    });
+  });
+
+  describe('compareLatencyWorkloads', () => {
+    it('returns unprefixed, rate-suffixed latency ids for v3 with the latency predicates', () => {
+      const w = compareManifest.compareLatencyWorkloads([v3Manifest()], latencyCfg, ENGINES);
+      assert.deepEqual(w.map(x => x.id), ['get-k16-v16-t7-p1-r100k', 'set-k16-v16-t7-p1-r100k']);
+      assert.equal(w[0].label, 'GET K=16B V=16B T=7 P=1 @ 100k req/s');
+    });
+
+    it('drops the redis-prefixed latency id', () => {
+      const w = compareManifest.compareLatencyWorkloads([v3Manifest()], latencyCfg, ENGINES);
+      assert.ok(!w.some(x => x.id.startsWith('redis-')));
+    });
+
+    it('yields nothing when handed the THROUGHPUT predicates (the fleet id shape is -r<rate>)', () => {
+      // This is the defect a fixture without the rate suffix cannot catch:
+      // isValidWorkloadId rejects every real latency id, so the page's
+      // latency table silently never rendered.
+      assert.deepEqual(compareManifest.compareLatencyWorkloads([v3Manifest()], cfg, ENGINES), []);
+    });
+
+    it('is empty for v1 manifests without latency_workloads', () => {
+      assert.deepEqual(compareManifest.compareLatencyWorkloads([v1Manifest()], latencyCfg, ENGINES), []);
+    });
+
+    it('excludes a latency id missing from one declaring manifest', () => {
+      const full = v3Manifest();
+      const partial = v3Manifest({ latency_workloads: ['get-k16-v16-t7-p1-r100k'] });
+      const w = compareManifest.compareLatencyWorkloads([full, partial], latencyCfg, ENGINES);
+      assert.deepEqual(w.map(x => x.id), ['get-k16-v16-t7-p1-r100k']);
+    });
+  });
+
+  it('is requirable and exports the four helpers', () => {
+    assert.equal(typeof compareManifest.engineIdsFromManifests, 'function');
+    assert.equal(typeof compareManifest.compareThroughputWorkloads, 'function');
+    assert.equal(typeof compareManifest.compareMemoryWorkloads, 'function');
+    assert.equal(typeof compareManifest.compareLatencyWorkloads, 'function');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// compare.html — manifest-driven wiring (page-source assertions)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('compare.html manifest wiring', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const html = fs.readFileSync(path.join(root, 'compare.html'), 'utf8');
+
+  it('loads lib/compare-manifest.js', () => {
+    assert.ok(html.includes('<script src="lib/compare-manifest.js"></script>'));
+  });
+
+  it('passes the latency predicates (not the throughput ones) to compareLatencyWorkloads', () => {
+    assert.ok(/compareLatencyWorkloads\(manifests,\s*latencyConfig,/.test(html), 'compare.html must call compareLatencyWorkloads with latencyConfig');
+    assert.ok(html.includes('isValidWorkloadId: isValidLatencyWorkloadId'), 'latencyConfig must use isValidLatencyWorkloadId');
+  });
+
+  it('no longer hardcodes the engine pair ["valkey","redis"]', () => {
+    assert.ok(!/\[\s*'valkey'\s*,\s*'redis'\s*\]/.test(html), "compare.html must not contain ['valkey', 'redis']");
+  });
+
+  it('no longer assigns COMPARE_MEMORY = MEMORY_WORKLOADS directly', () => {
+    assert.ok(!/COMPARE_MEMORY\s*=\s*MEMORY_WORKLOADS\s*;/.test(html), 'compare.html must not assign COMPARE_MEMORY = MEMORY_WORKLOADS');
+  });
+
+  it('rebuilds compare lists from the active epoch manifests', () => {
+    assert.ok(html.includes('discoverCompareForEpoch'), 'must define/call discoverCompareForEpoch');
+    assert.ok(html.includes('CompareManifest.engineIdsFromManifests'));
+    assert.ok(html.includes('CompareManifest.compareThroughputWorkloads'));
+    assert.ok(html.includes('CompareManifest.compareMemoryWorkloads'));
+    assert.ok(html.includes('CompareManifest.compareLatencyWorkloads'));
+  });
+
+  it('discovers workloads on epoch change', () => {
+    assert.ok(/onEpochChange[\s\S]{0,120}discoverCompareForEpoch/.test(html), 'onEpochChange must re-discover for the new epoch');
+  });
+
+  it('keeps the client-saturated caveat glyph', () => {
+    assert.ok(html.includes('saturated'), 'compare.html must keep the client-saturated caveat');
   });
 });

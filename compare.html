@@ -86,17 +86,38 @@
   <script src="config.js"></script>
   <script src="lib/compare-helpers.js"></script>
   <script src="lib/epoch-helpers.js"></script>
+  <script src="lib/compare-manifest.js"></script>
   <script src="lib/point-helpers.js"></script>
   <script>
     const {workloadLabel, ci95, welchPValue} = CompareHelpers;
+    // Engine and workload lists are rebuilt from the active epoch's manifests
+    // (see discoverCompareForEpoch). These seed sensible defaults before the
+    // first manifest load and the fallback when a fetch fails.
+    let COMPARE_ENGINES = ENGINES.slice();
     let COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms); // cross-platform only
-    const COMPARE_MEMORY = MEMORY_WORKLOADS;
+    let COMPARE_MEMORY = MEMORY_WORKLOADS.slice();
+    let COMPARE_LATENCY = [];
 
     let activePlatform = PLATFORMS[0];
     let mode = 'release'; // 'release' or 'head'
     let cache = {};
     let epochList = [];
     let activeEpoch = null;
+
+    // The two engines the two-column tables/charts compare: the primary
+    // (Valkey when present, else the first discovered engine) and the first
+    // other discovered engine. Labels come from the discovered ENGINES entry.
+    function primaryEngine() {
+      return COMPARE_ENGINES.find(e => e.id === 'valkey') || COMPARE_ENGINES[0] || ENGINES[0];
+    }
+    function comparisonEngine() {
+      const primary = primaryEngine();
+      return COMPARE_ENGINES.find(e => e.id !== (primary && primary.id)) || null;
+    }
+    function engineLabel(id) {
+      const e = ENGINES.find(x => x.id === id) || COMPARE_ENGINES.find(x => x.id === id);
+      return e ? e.label : id;
+    }
 
     function buildEpochSelector() {
       const container = document.getElementById('epochSelector');
@@ -109,9 +130,40 @@
       </select>`;
     }
 
-    function onEpochChange(epochId) {
+    // Epoch-aware discovery for the comparison page. Mirrors index.html's
+    // discoverWorkloadsForEpoch: fetch each platform's manifest for the epoch
+    // (falling back to the legacy manifest for v1/null), then rebuild the
+    // engine list and the throughput / memory / latency workload lists from
+    // the manifests via the pure CompareManifest helpers. Clears the series
+    // cache so a switch never mixes epochs.
+    async function discoverCompareForEpoch(epochId) {
+      const manifests = await Promise.all(PLATFORMS.map(async p => {
+        try {
+          const url = EpochHelpers.manifestUrl(DATA_URL, p, epochId);
+          const r = await fetch(url);
+          if (!r.ok) {
+            if (epochId && epochId !== 'v1') return null;
+            const r2 = await fetch(EpochHelpers.manifestUrl(DATA_URL, p, null));
+            if (!r2.ok) return null;
+            return await r2.json();
+          }
+          return await r.json();
+        } catch { return null; }
+      }));
+      const config = { isValidWorkloadId, workloadIdToLabel };
+      const latencyConfig = { isValidWorkloadId: isValidLatencyWorkloadId, workloadIdToLabel: latencyWorkloadIdToLabel };
+      COMPARE_ENGINES = CompareManifest.engineIdsFromManifests(manifests, ENGINES);
+      if (COMPARE_ENGINES.length === 0) COMPARE_ENGINES = ENGINES.slice();
+      const throughput = CompareManifest.compareThroughputWorkloads(manifests, PLATFORMS, config);
+      if (throughput.length > 0) COMPARE_WORKLOADS = throughput;
+      COMPARE_MEMORY = CompareManifest.compareMemoryWorkloads(manifests, MEMORY_WORKLOADS, ENGINES);
+      COMPARE_LATENCY = CompareManifest.compareLatencyWorkloads(manifests, latencyConfig, ENGINES);
+      cache = {}; // never mix epochs in the series cache
+    }
+
+    async function onEpochChange(epochId) {
       activeEpoch = epochId;
-      cache = {}; // clear cache on epoch switch
+      await discoverCompareForEpoch(epochId);
       render();
     }
 
@@ -188,6 +240,40 @@
         range: PointHelpers.scoreRange(lastResult), client: PointHelpers.clientState(lastResult) };
     }
 
+    // --- Latency (p99, microseconds; lower is better) ---
+    // A latency point carries per-percentile values in `histogram` (index 7 is
+    // p99) with `p99_us` as a fallback field. Absent -> null so the row shows
+    // no data rather than a fabricated value.
+    function p99FromPoint(point) {
+      if (!point) return null;
+      const h = point.histogram;
+      if (Array.isArray(h) && h[7] && typeof h[7][1] === 'number' && isFinite(h[7][1])) return h[7][1];
+      if (typeof point.p99_us === 'number' && isFinite(point.p99_us)) return point.p99_us;
+      return null;
+    }
+
+    function getLatencyAtCommitIndex(data, commitIndex) {
+      if (!data || !data.points) return null;
+      let best = null, bestDist = Infinity;
+      for (const p of data.points) {
+        const dist = Math.abs(p.commit_index - commitIndex);
+        if (dist < bestDist) { bestDist = dist; best = p; }
+      }
+      const p99 = p99FromPoint(best);
+      if (p99 === null) return null;
+      return { value: p99, date: best.date, commit: best.commit };
+    }
+
+    function getLatencyLatest(data) {
+      if (!data || !data.points || data.points.length === 0) return null;
+      const recent = data.points.slice(-5);
+      const values = recent.map(p99Sorted => p99FromPoint(p99Sorted)).filter(v => v !== null).sort((a, b) => a - b);
+      if (values.length === 0) return null;
+      const median = values[Math.floor(values.length / 2)];
+      const last = recent[recent.length - 1];
+      return { value: median, date: last.date, commit: last.commit };
+    }
+
     // --- Rendering ---
     function renderPlatformTabs() {
       const el = document.getElementById('platformTabs');
@@ -208,26 +294,31 @@
       const content = document.getElementById('content');
       content.innerHTML = '<div class="loading">Loading...</div>';
 
-      // Fetch all data for current platform
+      // Fetch all data for current platform, keyed by discovered engine id.
       const throughputData = {};
       const memoryData = {};
-      for (const engine of ['valkey', 'redis']) {
-        throughputData[engine] = {};
+      const latencyData = {};
+      for (const engine of COMPARE_ENGINES) {
+        throughputData[engine.id] = {};
         for (const w of COMPARE_WORKLOADS) {
-          throughputData[engine][w.id] = await fetchSeries(engine, activePlatform, w.id, 'throughput');
+          throughputData[engine.id][w.id] = await fetchSeries(engine.id, activePlatform, w.id, 'throughput');
         }
-        memoryData[engine] = {};
+        memoryData[engine.id] = {};
         for (const w of COMPARE_MEMORY) {
-          memoryData[engine][w] = await fetchSeries(engine, activePlatform, w, 'memory');
+          memoryData[engine.id][w] = await fetchSeries(engine.id, activePlatform, w, 'memory');
+        }
+        latencyData[engine.id] = {};
+        for (const w of COMPARE_LATENCY) {
+          latencyData[engine.id][w.id] = await fetchSeries(engine.id, activePlatform, w.id, 'latency');
         }
       }
 
       let html = '';
 
       if (mode === 'release') {
-        html += renderReleaseComparison(throughputData, memoryData);
+        html += renderReleaseComparison(throughputData, memoryData, latencyData);
       } else {
-        html += renderHeadComparison(throughputData, memoryData);
+        html += renderHeadComparison(throughputData, memoryData, latencyData);
       }
 
       content.innerHTML = html;
@@ -235,7 +326,7 @@
       requestAnimationFrame(() => renderCharts(throughputData, memoryData));
     }
 
-    function renderReleaseComparison(throughputData, memoryData) {
+    function renderReleaseComparison(throughputData, memoryData, latencyData) {
       // Find the latest release for each engine
       const valkeyReleases = getReleasesFromLandmarks(Object.values(throughputData.valkey).find(d => d));
       const redisReleases = getReleasesFromLandmarks(Object.values(throughputData.redis).find(d => d));
@@ -249,8 +340,8 @@
 
       let html = `<div class="summary-card">
         <div class="summary-row"><span class="summary-label">Comparing</span>
-          <span>Valkey <strong>${latestValkey.label}</strong> <span class="badge badge-release">${latestValkey.date}</span>
-          vs Redis <strong>${latestRedis.label}</strong> <span class="badge badge-release">${latestRedis.date}</span></span></div>
+          <span>${engineLabel(primaryEngine().id)} <strong>${latestValkey.label}</strong> <span class="badge badge-release">${latestValkey.date}</span>
+          vs ${engineLabel(comparisonEngine() ? comparisonEngine().id : '')} <strong>${latestRedis.label}</strong> <span class="badge badge-release">${latestRedis.date}</span></span></div>
       </div>`;
 
       html += '<div class="section"><h2>Throughput (requests/sec)</h2>';
@@ -267,14 +358,20 @@
       html += renderMemoryTable(memoryData, latestValkey, latestRedis);
       html += '</div>';
 
+      if (COMPARE_LATENCY.length > 0) {
+        html += '<div class="section"><h2>Latency p99 by Workload (µs, lower is better)</h2>';
+        html += renderLatencyTable(latencyData, latestValkey, latestRedis);
+        html += '</div>';
+      }
+
       return html;
     }
 
-    function renderHeadComparison(throughputData, memoryData) {
+    function renderHeadComparison(throughputData, memoryData, latencyData) {
       let html = `<div class="summary-card">
         <div class="summary-row"><span class="summary-label">Comparing</span>
-          <span>Valkey <strong>HEAD</strong> <span class="badge badge-head">unstable</span>
-          vs Redis <strong>HEAD</strong> <span class="badge badge-head">unstable</span>
+          <span>${engineLabel(primaryEngine().id)} <strong>HEAD</strong> <span class="badge badge-head">unstable</span>
+          vs ${engineLabel(comparisonEngine() ? comparisonEngine().id : '')} <strong>HEAD</strong> <span class="badge badge-head">unstable</span>
           — median of last 5 data points</span></div>
       </div>`;
 
@@ -292,11 +389,17 @@
       html += renderMemoryTableHead(memoryData);
       html += '</div>';
 
+      if (COMPARE_LATENCY.length > 0) {
+        html += '<div class="section"><h2>Latency p99 by Workload (µs, lower is better)</h2>';
+        html += renderLatencyTableHead(latencyData);
+        html += '</div>';
+      }
+
       return html;
     }
 
     function renderThroughputTable(data, vRelease, rRelease) {
-      let rows = '<div class="summary-header"><span>Workload</span><span>Valkey</span><span>Redis</span><span>Δ</span><span>Verdict</span></div>';
+      let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primaryEngine().id)}</span><span>${engineLabel(comparisonEngine() ? comparisonEngine().id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
       for (const w of COMPARE_WORKLOADS) {
         const v = getValueAtCommitIndex(data.valkey[w.id], vRelease.commit_index, w.id);
         const r = getValueAtCommitIndex(data.redis[w.id], rRelease.commit_index, w.id);
@@ -313,7 +416,7 @@
     }
 
     function renderThroughputTableHead(data) {
-      let rows = '<div class="summary-header"><span>Workload</span><span>Valkey</span><span>Redis</span><span>Δ</span><span>Verdict</span></div>';
+      let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primaryEngine().id)}</span><span>${engineLabel(comparisonEngine() ? comparisonEngine().id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
       for (const w of COMPARE_WORKLOADS) {
         const v = getLatestValue(data.valkey[w.id], w.id);
         const r = getLatestValue(data.redis[w.id], w.id);
@@ -329,7 +432,7 @@
     }
 
     function renderMemoryTable(data, vRelease, rRelease) {
-      let rows = '<div class="summary-header"><span>Workload</span><span>Valkey</span><span>Redis</span><span>Δ</span><span>Verdict</span></div>';
+      let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primaryEngine().id)}</span><span>${engineLabel(comparisonEngine() ? comparisonEngine().id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
       for (const w of COMPARE_MEMORY) {
         const v = getValueAtCommitIndex(data.valkey[w], vRelease.commit_index, w);
         const r = getValueAtCommitIndex(data.redis[w], rRelease.commit_index, w);
@@ -344,7 +447,7 @@
     }
 
     function renderMemoryTableHead(data) {
-      let rows = '<div class="summary-header"><span>Workload</span><span>Valkey</span><span>Redis</span><span>Δ</span><span>Verdict</span></div>';
+      let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primaryEngine().id)}</span><span>${engineLabel(comparisonEngine() ? comparisonEngine().id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
       for (const w of COMPARE_MEMORY) {
         const v = getLatestValue(data.valkey[w], w);
         const r = getLatestValue(data.redis[w], w);
@@ -354,6 +457,43 @@
         const verdict = pct < -1 ? `${Math.abs(pct).toFixed(1)}% less` : pct > 1 ? `${pct.toFixed(1)}% more` : 'Equal';
         const diff = (v.value - r.value).toFixed(1);
         rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w)}</span><span class="summary-num">${v.value.toFixed(1)} B</span><span class="summary-num">${r.value.toFixed(1)} B</span><span class="summary-num ${cls}">${diff > 0 ? '+' : ''}${diff} B</span><span class="summary-val ${cls}">${verdict}</span></div>`;
+      }
+      return `<div class="summary-card">${rows}</div>`;
+    }
+
+    // Latency p99 tables: lower is better, so a lower primary value is the
+    // favourable ("faster") verdict — the sign convention is flipped relative
+    // to throughput. Values are microseconds.
+    function fmtUs(v) { return v.toFixed(0) + 'µs'; }
+
+    function renderLatencyRow(label, v, r) {
+      if (!v || !r) {
+        return `<div class="summary-row"><span class="summary-label">${label}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">— (insufficient data)</span></div>`;
+      }
+      const pct = ((v.value - r.value) / r.value * 100); // negative => primary lower => faster
+      const cls = pct < -1 ? 'positive' : pct > 1 ? 'negative' : 'neutral';
+      const verdict = pct < -1 ? `${Math.abs(pct).toFixed(1)}% faster` : pct > 1 ? `${pct.toFixed(1)}% slower` : 'Equal';
+      return `<div class="summary-row"><span class="summary-label">${label}</span><span class="summary-num">${fmtUs(v.value)}</span><span class="summary-num">${fmtUs(r.value)}</span><span class="summary-num ${cls}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span><span class="summary-val ${cls}">${verdict}</span></div>`;
+    }
+
+    function renderLatencyTable(data, vRelease, rRelease) {
+      const primary = primaryEngine(), comparison = comparisonEngine();
+      let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primary.id)}</span><span>${engineLabel(comparison ? comparison.id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
+      for (const w of COMPARE_LATENCY) {
+        const v = getLatencyAtCommitIndex(data[primary.id] ? data[primary.id][w.id] : null, vRelease.commit_index);
+        const r = comparison ? getLatencyAtCommitIndex(data[comparison.id] ? data[comparison.id][w.id] : null, rRelease.commit_index) : null;
+        rows += renderLatencyRow(workloadLabel(w.id), v, r);
+      }
+      return `<div class="summary-card">${rows}</div>`;
+    }
+
+    function renderLatencyTableHead(data) {
+      const primary = primaryEngine(), comparison = comparisonEngine();
+      let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primary.id)}</span><span>${engineLabel(comparison ? comparison.id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
+      for (const w of COMPARE_LATENCY) {
+        const v = getLatencyLatest(data[primary.id] ? data[primary.id][w.id] : null);
+        const r = comparison ? getLatencyLatest(data[comparison.id] ? data[comparison.id][w.id] : null) : null;
+        rows += renderLatencyRow(workloadLabel(w.id), v, r);
       }
       return `<div class="summary-card">${rows}</div>`;
     }
@@ -543,11 +683,13 @@
 
     // --- Init ---
     (async () => {
+      // Discover epochs from the legacy/default manifests first, choose the
+      // active epoch, then rebuild engines + workload lists from that epoch's
+      // manifests (mirrors index.html's discover-then-epoch flow).
       await discoverWorkloads();
-      COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms);
-      // Discover epochs from manifests
       epochList = EpochHelpers.availableEpochs(PLATFORM_MANIFESTS);
       if (epochList.length > 0) activeEpoch = EpochHelpers.defaultEpochId(epochList);
+      await discoverCompareForEpoch(activeEpoch);
       buildEpochSelector();
       renderPlatformTabs();
       render();

@@ -34,6 +34,10 @@ hash still wins, and manifests that predate the flag fall back to the first list
 epoch), and archived epochs stay selectable but are labelled "(archived)" in the
 muted color.
 
+The comparison page reads its engines and its throughput, memory, and latency
+workloads from the selected epoch's per-platform manifests, so it compares only the
+engines and workloads that epoch actually measured.
+
 ## Tests
 
 The test suite uses Node.js 22's built-in test runner and has no third-party dependencies:
