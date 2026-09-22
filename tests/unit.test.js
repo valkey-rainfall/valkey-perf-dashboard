@@ -2299,3 +2299,123 @@ describe('index.html cross-platform selection wiring', () => {
     assert.ok(!html.includes("params.get('workloads')?.split(',')"));
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// axis-ticks.js — release-marked x axis
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('axis-ticks.js', () => {
+  const axis = require('../lib/axis-ticks.js');
+  // Live graviton4 landmarks as of 9.2 (total_commits 2278).
+  const LANDMARKS = [
+    { label: 'First benchmarkable', commit_index: 105 },
+    { label: '7.2.4', commit_index: 163 },
+    { label: '8.0', commit_index: 645 },
+    { label: '8.1', commit_index: 1093 },
+    { label: '9.0', commit_index: 1425 },
+    { label: '9.1', commit_index: 1837 },
+    { label: '9.2', commit_index: 2261 },
+  ];
+
+  describe('releaseLandmarks', () => {
+    it('keeps only version-labelled landmarks, sorted ascending', () => {
+      assert.deepEqual(axis.releaseLandmarks(LANDMARKS).map(l => l.label), ['7.2.4', '8.0', '8.1', '9.0', '9.1', '9.2']);
+    });
+    it('drops entries without a finite commit_index and de-duplicates by label', () => {
+      const out = axis.releaseLandmarks([
+        { label: '8.0', commit_index: 645 }, { label: '8.0', commit_index: 646 },
+        { label: '9.0', commit_index: null }, null, { label: 7 },
+      ]);
+      assert.deepEqual(out, [{ label: '8.0', commit_index: 645 }]);
+    });
+    it('handles missing input', () => {
+      assert.deepEqual(axis.releaseLandmarks(undefined), []);
+    });
+  });
+
+  describe('releaseTicks', () => {
+    it('full range: one tick per release, no numeric ticks, "First benchmarkable" skipped', () => {
+      const r = axis.releaseTicks(LANDMARKS, 0, 2279);
+      assert.equal(r.mode, 'releases');
+      assert.deepEqual(r.ticks.map(t => t.label), ['7.2.4', '8.0', '8.1', '9.0', '9.1', '9.2']);
+      assert.deepEqual(r.ticks.map(t => t.value), [163, 645, 1093, 1425, 1837, 2261]);
+    });
+    it('"Since Previous Release" (9.1..HEAD) still has two releases in view', () => {
+      const r = axis.releaseTicks(LANDMARKS, 1837, 2279);
+      assert.equal(r.mode, 'releases');
+      assert.deepEqual(r.ticks.map(t => t.label), ['9.1', '9.2']);
+    });
+    it('"Since Last Release" (9.2..HEAD) falls back to commit-index ticks with 9.2 labelled', () => {
+      const r = axis.releaseTicks(LANDMARKS, 2261, 2279);
+      assert.equal(r.mode, 'index');
+      const labels = r.ticks.map(t => t.label);
+      assert.ok(labels.includes('9.2'), labels.join(','));
+      assert.ok(labels.some(l => /^\d+$/.test(l)), 'needs numeric scale ticks');
+      const values = r.ticks.map(t => t.value);
+      assert.deepEqual([...values].sort((a, b) => a - b), values, 'ascending');
+      assert.equal(new Set(values).size, values.length, 'no duplicate values');
+      assert.ok(values.every(v => v >= 2261 && v <= 2279));
+    });
+    it('"Last 100 Commits" with no release in view: numeric ticks only', () => {
+      const r = axis.releaseTicks(LANDMARKS, 1900, 2000);
+      assert.equal(r.mode, 'index');
+      assert.ok(r.ticks.length >= 3 && r.ticks.length <= 8, `got ${r.ticks.length}`);
+      assert.ok(r.ticks.every(t => /^\d+$/.test(t.label)));
+    });
+    it('a numeric tick that would collide with a release label is dropped', () => {
+      // Last 100 at HEAD 2279: step 20 gives 2260, one index from 9.2 @ 2261.
+      const r = axis.releaseTicks(LANDMARKS, 2178, 2279);
+      assert.deepEqual(r.ticks.map(t => t.label), ['2180', '2200', '2220', '2240', '9.2']);
+    });
+    it('a release exactly on the window edge is in view', () => {
+      const r = axis.releaseTicks(LANDMARKS, 645, 1093);
+      assert.deepEqual(r.ticks.map(t => t.label), ['8.0', '8.1']);
+    });
+    it('tolerates swapped bounds and empty landmarks', () => {
+      assert.equal(axis.releaseTicks(LANDMARKS, 2279, 0).mode, 'releases');
+      const r = axis.releaseTicks([], 0, 2279);
+      assert.equal(r.mode, 'index');
+      assert.ok(r.ticks.length > 0);
+    });
+  });
+
+  describe('indexTicks / niceStep', () => {
+    it('nice steps are 1/2/5 x 10^n and never below 1', () => {
+      assert.equal(axis.niceStep(0.3), 1);
+      assert.equal(axis.niceStep(3), 5);
+      assert.equal(axis.niceStep(17), 20);
+      assert.equal(axis.niceStep(380), 500);
+      assert.equal(axis.niceStep(0), 1);
+    });
+    it('ticks land on multiples of the step inside the window', () => {
+      assert.deepEqual(axis.indexTicks(2261, 2279, 6), [2265, 2270, 2275]);
+      assert.deepEqual(axis.indexTicks(0, 2279, 6), [0, 500, 1000, 1500, 2000]);
+      assert.deepEqual(axis.indexTicks(5, 5, 6), []);
+    });
+  });
+
+  describe('formatRange', () => {
+    it('rounds and uses an en dash', () => {
+      assert.equal(axis.formatRange(1424.6, 2279), '1425\u20132279');
+      assert.equal(axis.formatRange(undefined, 3), '');
+    });
+  });
+});
+
+describe('index.html release-marked axis wiring', () => {
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+  it('loads the helper and every x axis goes through xAxisOpts', () => {
+    assert.ok(html.includes('lib/axis-ticks.js'));
+    assert.ok(html.includes('AxisTicks.releaseTicks('));
+    // No chart builds its own linear x scale with maxTicksLimit any more.
+    assert.ok(!/x: \{ type: 'linear'[^\n]*maxTicksLimit/.test(html), 'stray hand-built x scale');
+    assert.ok((html.match(/xAxisOpts\(/g) || []).length >= 3, 'definition + baseChartOpts + perf charts');
+  });
+  it('landmark lines no longer carry top labels (ticks carry the release names)', () => {
+    assert.ok(!/content: lm\.label/.test(html));
+  });
+  it('the visible commit window is shown next to the zoom buttons', () => {
+    assert.ok(html.includes('id="visibleRange"'));
+    assert.ok((html.match(/updateVisibleRange\(\)/g) || []).length >= 4, 'definition + hash update + initial render + hash restore');
+  });
+});
