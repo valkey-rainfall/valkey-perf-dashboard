@@ -1,10 +1,20 @@
 // Dashboard configuration: constants, colors, and help text.
 
 const DATA_URL = 'https://data.conductress.rainsupreme.net';
+// `history: true` marks an engine whose sweeps cover the full commit history
+// (landmarks + bisection + backfill) and so has a per-commit line to show on
+// the Performance History page. A release-and-tip engine (latest release plus
+// a daily tip, no bisection) only appears on the engine-comparison page.
 const ENGINES = [
-  { id: 'valkey', label: 'Valkey' },
-  { id: 'redis', label: 'Redis' },
+  { id: 'valkey', label: 'Valkey', history: true },
+  { id: 'redis', label: 'Redis', history: false },
 ];
+
+// Engines eligible for the Performance History page. Absent flag => history,
+// so an engine added without the flag keeps its previous behaviour.
+function historyEngines(engines = ENGINES) {
+  return engines.filter(e => e && e.history !== false);
+}
 const PLATFORMS = ['amd64', 'arm64', 'graviton4', 'intel'];
 const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', graviton4: 'ARM (Graviton 4)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
 // Short labels for filter chips / compact displays (distinct per ARM generation).
@@ -231,5 +241,5 @@ function showHelp(sectionId) {
 function closeHelp() { const m = document.getElementById('helpModal'); if (m) m.style.display = 'none'; }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {isValidWorkloadId, workloadIdToLabel, isValidLatencyWorkloadId, latencyWorkloadIdToLabel, isEnginePrefixed};
+  module.exports = {isValidWorkloadId, workloadIdToLabel, isValidLatencyWorkloadId, latencyWorkloadIdToLabel, isEnginePrefixed, historyEngines, ENGINES};
 }

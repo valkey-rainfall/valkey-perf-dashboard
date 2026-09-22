@@ -340,7 +340,9 @@
       const list = document.getElementById('selectorList');
       list.innerHTML = '';
       const items = [];
-      for (const eng of ENGINES) {
+      // Only history-scope engines have a per-commit line to show here; a
+      // release-and-tip engine (Redis) lives on the comparison page.
+      for (const eng of historyEngines()) {
         for (const plat of PLATFORMS) {
           for (const wl of THROUGHPUT_WORKLOADS) {
             if (wl.platforms && !wl.platforms.includes(plat)) continue;
@@ -440,7 +442,7 @@
       const pipelines = [...new Set(THROUGHPUT_WORKLOADS.map(wl => wl.id.match(/p(\d+)$/)?.[1]).filter(Boolean))];
 
       const groups = [
-        { key: 'engine', values: ENGINES.map(e => ({ id: e.id, label: e.label })) },
+        { key: 'engine', values: historyEngines().map(e => ({ id: e.id, label: e.label })) },
         { key: 'platform', values: PLATFORMS.map(p => ({ id: p, label: PLATFORM_SHORT_LABELS[p] || (PLATFORM_LABELS[p] || p).split(' ')[0] })) },
         { key: 'command', values: commands.map(c => ({ id: c, label: c.toUpperCase() })) },
         { key: 'valsize', values: valsizes.map(v => ({ id: v, label: 'v' + v })) },
@@ -711,8 +713,9 @@
         await discoverWorkloadsForEpoch(activeEpoch);
       }
 
-      // Restore selection from hash state
-      const engine = hashState.engine || 'valkey';
+      // Restore selection from hash state. An old bookmark naming an engine
+      // that no longer has a history line here (redis) falls back to Valkey.
+      const engine = historyEngines().some(e => e.id === hashState.engine) ? hashState.engine : 'valkey';
       const platform = hashState.platform || DEFAULT_PLATFORM;
       const workloadIds = hashState.workloads || [hashState.workload || DEFAULT_WORKLOAD];
       for (const wlId of workloadIds) {
