@@ -344,23 +344,31 @@
       content.innerHTML = '<div class="loading">Loading...</div>';
 
       // Fetch all data for current platform, keyed by discovered engine id.
+      // Every (engine, sweep, type) file is independent, so issue the whole
+      // set at once and wait for all of them; a sequential loop over ~40
+      // files took 30-40 s on a cold cache before the page rendered.
       const throughputData = {};
       const memoryData = {};
       const latencyData = {};
+      const jobs = [];
       for (const engine of COMPARE_ENGINES) {
         throughputData[engine.id] = {};
-        for (const w of COMPARE_WORKLOADS) {
-          throughputData[engine.id][w.id] = await fetchSeries(engine.id, activePlatform, w.id, 'throughput');
-        }
         memoryData[engine.id] = {};
-        for (const w of COMPARE_MEMORY) {
-          memoryData[engine.id][w] = await fetchSeries(engine.id, activePlatform, w, 'memory');
-        }
         latencyData[engine.id] = {};
+        for (const w of COMPARE_WORKLOADS) {
+          jobs.push(fetchSeries(engine.id, activePlatform, w.id, 'throughput')
+            .then(s => { throughputData[engine.id][w.id] = s; }));
+        }
+        for (const w of COMPARE_MEMORY) {
+          jobs.push(fetchSeries(engine.id, activePlatform, w, 'memory')
+            .then(s => { memoryData[engine.id][w] = s; }));
+        }
         for (const w of COMPARE_LATENCY) {
-          latencyData[engine.id][w.id] = await fetchSeries(engine.id, activePlatform, w.id, 'latency');
+          jobs.push(fetchSeries(engine.id, activePlatform, w.id, 'latency')
+            .then(s => { latencyData[engine.id][w.id] = s; }));
         }
       }
+      await Promise.all(jobs);
 
       // Per-engine sweep scope (from the series' own metadata) and the
       // freshness of its release / HEAD anchors across every sweep fetched.

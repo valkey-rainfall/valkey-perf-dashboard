@@ -1634,6 +1634,15 @@ describe('compare.html manifest wiring', () => {
     assert.ok(/onEpochChange[\s\S]{0,120}discoverCompareForEpoch/.test(html), 'onEpochChange must re-discover for the new epoch');
   });
 
+  it('render() fetches all series concurrently, not one await per file', () => {
+    const start = html.indexOf('async function render()');
+    assert.ok(start > 0, 'compare.html must define render()');
+    const body = html.slice(start, html.indexOf('ENGINE_SCOPE = {};', start));
+    assert.ok(!/await\s+fetchSeries\(/.test(body), 'render() must not await fetchSeries inside the per-file loops');
+    assert.ok(/await\s+Promise\.all\(jobs\)/.test(body), 'render() must gather the fetches with Promise.all');
+    assert.strictEqual((body.match(/fetchSeries\(/g) || []).length, 3, 'one fetchSeries call per series type (throughput, memory, latency)');
+  });
+
   it('keeps the client-saturated caveat glyph', () => {
     assert.ok(html.includes('saturated'), 'compare.html must keep the client-saturated caveat');
   });
