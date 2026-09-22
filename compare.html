@@ -57,6 +57,27 @@
     .badge { font-size: 0.7rem; padding: 1px 6px; border-radius: 3px; margin-left: 0.5rem; }
     .badge-head { background: var(--warn); color: #000; }
     .badge-release { background: var(--accent); color: #fff; }
+
+    /* Freshness strip: which commit each engine's numbers come from, how old
+       that commit is, and whether every sweep agrees on it. */
+    .fresh-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 1.5rem; margin-bottom: 1rem; }
+    .fresh-header { display: grid; grid-template-columns: 1.2fr 3fr 3fr; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 2px solid var(--border); font-size: 0.75rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+    .fresh-row { display: grid; grid-template-columns: 1.2fr 3fr 3fr; gap: 0.5rem; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .fresh-row:last-child { border-bottom: none; }
+    .fresh-engine { font-weight: 600; }
+    .fresh-scope { display: block; font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+    .fresh-col { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .fresh-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; }
+    .fresh-sha { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; color: var(--text); }
+    .fresh-age { color: var(--text); font-variant-numeric: tabular-nums; }
+    .fresh-meta { color: var(--muted); font-size: 0.75rem; }
+    .fresh-count { color: var(--muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+    .fresh-col details { display: inline; }
+    .fresh-col summary { cursor: pointer; color: var(--muted); font-size: 0.75rem; list-style: none; }
+    .fresh-col summary::-webkit-details-marker { display: none; }
+    .fresh-items { margin: 0.3rem 0 0; padding: 0; list-style: none; font-size: 0.75rem; color: var(--muted); width: 100%; }
+    .fresh-items li { display: flex; gap: 0.6rem; padding: 0.1rem 0; }
+    .fresh-items .fresh-sha { font-size: 0.72rem; }
     .brand-mark { width: 22px; height: 22px; vertical-align: -5px; margin-right: .4rem; }
     .brand-footer { margin-top: 2.5rem; padding-top: .75rem; border-top: 1px solid var(--border); font-size: .75rem; color: var(--muted); }
     .brand-footer a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; }
@@ -88,6 +109,7 @@
   <script src="lib/epoch-helpers.js"></script>
   <script src="lib/compare-manifest.js"></script>
   <script src="lib/point-helpers.js"></script>
+  <script src="lib/freshness-helpers.js"></script>
   <script>
     const {workloadLabel, ci95, welchPValue} = CompareHelpers;
     // Engine and workload lists are rebuilt from the active epoch's manifests
@@ -103,6 +125,9 @@
     let cache = {};
     let epochList = [];
     let activeEpoch = null;
+    // engine id -> sweep scope ("history" | "release-and-tip" | null), read
+    // from series metadata on each render. Drives how HEAD is derived.
+    let ENGINE_SCOPE = {};
 
     // The two engines the two-column tables/charts compare: the primary
     // (Valkey when present, else the first discovered engine) and the first
@@ -218,12 +243,30 @@
         range: PointHelpers.scoreRange(result), client: PointHelpers.clientState(result) };
     }
 
-    function getLatestValue(data, workloadId) {
+    function resultFor(point, workloadId) {
+      if (!point || !point.results) return null;
+      return point.results[workloadId] || point.results[`redis-${workloadId}`] || point.results[workloadId.replace('memory-', 'memory-redis-')] || null;
+    }
+
+    // "Current HEAD" for one series. A history-scope engine (Valkey) has a
+    // point per merge commit, so the median of the last five smooths
+    // commit-to-commit noise. A release-and-tip engine gets one tip a day
+    // at most and its release landmark sits among the last five, so the
+    // median would mix releases into HEAD: use the newest tip point alone.
+    function getLatestValue(data, workloadId, scope) {
       if (!data || !data.points || data.points.length === 0) return null;
+      if (scope === 'release-and-tip') {
+        const tip = FreshnessHelpers.headPoint(data);
+        const r = tip ? resultFor(tip.point, workloadId) : null;
+        if (!r) return null;
+        const val = tip.point.breakdown ? Object.values(tip.point.breakdown).reduce((s,v)=>s+v,0) : r.rps + (MEMORY_USER_DATA[workloadId] || 0);
+        return { value: val, cv: r.cv, reps: r.reps || 3, n: 1, date: tip.point.date, commit: tip.point.commit, breakdown: tip.point.breakdown,
+          range: PointHelpers.scoreRange(r), client: PointHelpers.clientState(r) };
+      }
       // Use last 5 points: median value, pooled CV, total reps
       const recent = data.points.slice(-5);
       const entries = recent.map(p => {
-        const r = p.results[workloadId] || p.results[`redis-${workloadId}`] || p.results[workloadId.replace('memory-', 'memory-redis-')];
+        const r = resultFor(p, workloadId);
         if (!r) return null;
         const val = p.breakdown ? Object.values(p.breakdown).reduce((s,v)=>s+v,0) : r.rps + (MEMORY_USER_DATA[workloadId] || 0);
         return { rps: val, cv: r.cv, reps: r.reps || 3 };
@@ -235,7 +278,7 @@
       // Pooled CV: RMS of individual CVs
       const pooledCv = Math.sqrt(entries.reduce((s, e) => s + e.cv * e.cv, 0) / entries.length);
       const last = recent[recent.length - 1];
-      const lastResult = last.results[workloadId] || last.results[`redis-${workloadId}`] || last.results[workloadId.replace('memory-', 'memory-redis-')];
+      const lastResult = resultFor(last, workloadId);
       return { value: median, cv: pooledCv, reps: totalReps, n: entries.length, date: last.date, commit: last.commit, breakdown: last.breakdown,
         range: PointHelpers.scoreRange(lastResult), client: PointHelpers.clientState(lastResult) };
     }
@@ -264,8 +307,14 @@
       return { value: p99, date: best.date, commit: best.commit };
     }
 
-    function getLatencyLatest(data) {
+    function getLatencyLatest(data, scope) {
       if (!data || !data.points || data.points.length === 0) return null;
+      if (scope === 'release-and-tip') {
+        const tip = FreshnessHelpers.headPoint(data);
+        const p99 = tip ? p99FromPoint(tip.point) : null;
+        if (p99 === null) return null;
+        return { value: p99, date: tip.point.date, commit: tip.point.commit };
+      }
       const recent = data.points.slice(-5);
       const values = recent.map(p99Sorted => p99FromPoint(p99Sorted)).filter(v => v !== null).sort((a, b) => a - b);
       if (values.length === 0) return null;
@@ -313,7 +362,20 @@
         }
       }
 
-      let html = '';
+      // Per-engine sweep scope (from the series' own metadata) and the
+      // freshness of its release / HEAD anchors across every sweep fetched.
+      ENGINE_SCOPE = {};
+      const freshness = {};
+      for (const engine of COMPARE_ENGINES) {
+        const roster = [];
+        for (const w of COMPARE_WORKLOADS) roster.push({ id: w.id, series: throughputData[engine.id][w.id] });
+        for (const w of COMPARE_MEMORY) roster.push({ id: w, series: memoryData[engine.id][w] });
+        for (const w of COMPARE_LATENCY) roster.push({ id: w.id, series: latencyData[engine.id][w.id] });
+        ENGINE_SCOPE[engine.id] = FreshnessHelpers.engineScope(roster.map(r => r.series));
+        freshness[engine.id] = FreshnessHelpers.engineFreshness(roster, Date.now());
+      }
+
+      let html = renderFreshnessStrip(freshness);
 
       if (mode === 'release') {
         html += renderReleaseComparison(throughputData, memoryData, latencyData);
@@ -324,6 +386,45 @@
       content.innerHTML = html;
       // Render charts after DOM is ready
       requestAnimationFrame(() => renderCharts(throughputData, memoryData));
+    }
+
+    // --- Freshness strip ---
+    // One row per engine, two columns: the release the "At Releases" numbers
+    // come from and the HEAD the "Current HEAD" numbers come from. Each
+    // column shows the newest anchor commit (release label when known, short
+    // SHA, commit date, commit age) and a dot for whether every sweep in the
+    // roster sits on that same commit. Expanding a column lists each sweep.
+    function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+    function renderFreshnessColumn(col, kind) {
+      const F = FreshnessHelpers;
+      const s = F.columnSummary(col);
+      const dot = `<span class="fresh-dot" style="background:${F.stateColor(col.state)}" title="${esc(F.stateText(col.state))}"></span>`;
+      if (!col.newest) {
+        return `<div class="fresh-col">${dot}<span class="fresh-meta">no ${kind} point</span><span class="fresh-count">${esc(s.count)}</span></div>`;
+      }
+      const label = s.label ? `<strong>${esc(s.label)}</strong>` : '';
+      const span = col.state === 'partial' && col.spanDays !== null && col.spanDays > 0 ? ` · ${col.commits.length} commits over ${col.spanDays} d` : '';
+      const items = col.items.map(i => {
+        const c = i.present ? `<span class="fresh-sha">${esc(F.shortSha(i.commit))}</span><span>${esc(i.date || '')}</span>${i.label ? `<span>${esc(i.label)}</span>` : ''}` : `<span style="color:var(--danger)">no ${esc(kind)} point</span>`;
+        return `<li><span style="min-width:14rem">${esc(workloadLabel(i.id))}</span>${c}</li>`;
+      }).join('');
+      return `<div class="fresh-col">${dot}${label}<span class="fresh-sha">${esc(s.sha)}</span><span class="fresh-meta">${esc(s.date)}</span><span class="fresh-age">${esc(s.age)}</span>
+        <details><summary>${esc(s.count)} sweeps${span} ▾</summary><ul class="fresh-items">${items}</ul></details></div>`;
+    }
+
+    function renderFreshnessStrip(freshness) {
+      if (!COMPARE_ENGINES.length) return '';
+      let rows = '<div class="fresh-header"><span>Engine</span><span>Latest release measured</span><span>HEAD measured</span></div>';
+      for (const engine of COMPARE_ENGINES) {
+        const f = freshness[engine.id];
+        if (!f) continue;
+        const scope = ENGINE_SCOPE[engine.id];
+        const scopeText = scope === 'release-and-tip' ? 'release + daily tip' : scope === 'history' ? 'full history' : '';
+        rows += `<div class="fresh-row"><span class="fresh-engine">${esc(engineLabel(engine.id))}${scopeText ? `<span class="fresh-scope">${esc(scopeText)}</span>` : ''}</span>${renderFreshnessColumn(f.release, 'release')}${renderFreshnessColumn(f.head, 'tip')}</div>`;
+      }
+      rows += '<div class="note" style="margin-top:0.4rem">Ages are of the commit under test (day resolution): for HEAD that is how far behind the branch the numbers are; for a release it is the release\'s own age. Dot: <span class="fresh-dot" style="background:var(--ok)"></span> all sweeps on one commit · <span class="fresh-dot" style="background:var(--warn)"></span> sweeps span several commits · <span class="fresh-dot" style="background:var(--danger)"></span> a sweep has no point.</div>';
+      return `<div class="fresh-card">${rows}</div>`;
     }
 
     function renderReleaseComparison(throughputData, memoryData, latencyData) {
@@ -368,11 +469,15 @@
     }
 
     function renderHeadComparison(throughputData, memoryData, latencyData) {
+      const p = primaryEngine(), c = comparisonEngine();
+      const pBasis = FreshnessHelpers.headBasis(ENGINE_SCOPE[p.id]);
+      const cBasis = c ? FreshnessHelpers.headBasis(ENGINE_SCOPE[c.id]) : pBasis;
+      const basis = pBasis === cBasis ? `— ${pBasis}` : `— ${engineLabel(p.id)}: ${pBasis}; ${engineLabel(c.id)}: ${cBasis}`;
       let html = `<div class="summary-card">
         <div class="summary-row"><span class="summary-label">Comparing</span>
-          <span>${engineLabel(primaryEngine().id)} <strong>HEAD</strong> <span class="badge badge-head">unstable</span>
-          vs ${engineLabel(comparisonEngine() ? comparisonEngine().id : '')} <strong>HEAD</strong> <span class="badge badge-head">unstable</span>
-          — median of last 5 data points</span></div>
+          <span>${engineLabel(p.id)} <strong>HEAD</strong> <span class="badge badge-head">unstable</span>
+          vs ${engineLabel(c ? c.id : '')} <strong>HEAD</strong> <span class="badge badge-head">unstable</span>
+          ${basis}</span></div>
       </div>`;
 
       html += '<div class="section"><h2>Throughput (requests/sec)</h2>';
@@ -418,8 +523,8 @@
     function renderThroughputTableHead(data) {
       let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primaryEngine().id)}</span><span>${engineLabel(comparisonEngine() ? comparisonEngine().id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
       for (const w of COMPARE_WORKLOADS) {
-        const v = getLatestValue(data.valkey[w.id], w.id);
-        const r = getLatestValue(data.redis[w.id], w.id);
+        const v = getLatestValue(data.valkey[w.id], w.id, ENGINE_SCOPE.valkey);
+        const r = getLatestValue(data.redis[w.id], w.id, ENGINE_SCOPE.redis);
         if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w.id)}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
         const p = welchPValue(v.value, v.cv, v.reps, r.value, r.cv, r.reps);
@@ -449,8 +554,8 @@
     function renderMemoryTableHead(data) {
       let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primaryEngine().id)}</span><span>${engineLabel(comparisonEngine() ? comparisonEngine().id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
       for (const w of COMPARE_MEMORY) {
-        const v = getLatestValue(data.valkey[w], w);
-        const r = getLatestValue(data.redis[w], w);
+        const v = getLatestValue(data.valkey[w], w, ENGINE_SCOPE.valkey);
+        const r = getLatestValue(data.redis[w], w, ENGINE_SCOPE.redis);
         if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w)}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
         const pct = ((v.value - r.value) / r.value * 100);
         const cls = pct < -1 ? 'positive' : pct > 1 ? 'negative' : 'neutral';
@@ -491,8 +596,8 @@
       const primary = primaryEngine(), comparison = comparisonEngine();
       let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primary.id)}</span><span>${engineLabel(comparison ? comparison.id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
       for (const w of COMPARE_LATENCY) {
-        const v = getLatencyLatest(data[primary.id] ? data[primary.id][w.id] : null);
-        const r = comparison ? getLatencyLatest(data[comparison.id] ? data[comparison.id][w.id] : null) : null;
+        const v = getLatencyLatest(data[primary.id] ? data[primary.id][w.id] : null, ENGINE_SCOPE[primary.id]);
+        const r = comparison ? getLatencyLatest(data[comparison.id] ? data[comparison.id][w.id] : null, ENGINE_SCOPE[comparison.id]) : null;
         rows += renderLatencyRow(workloadLabel(w.id), v, r);
       }
       return `<div class="summary-card">${rows}</div>`;
@@ -537,8 +642,8 @@
           v = getValueAtCommitIndex(data.valkey[wId], latestV.commit_index, wId);
           r = getValueAtCommitIndex(data.redis[wId], latestR.commit_index, wId);
         } else {
-          v = getLatestValue(data.valkey[wId], wId);
-          r = getLatestValue(data.redis[wId], wId);
+          v = getLatestValue(data.valkey[wId], wId, ENGINE_SCOPE.valkey);
+          r = getLatestValue(data.redis[wId], wId, ENGINE_SCOPE.redis);
         }
         valkeyVals.push(v ? v.value : null);
         redisVals.push(r ? r.value : null);

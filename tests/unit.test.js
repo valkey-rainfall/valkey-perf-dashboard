@@ -1727,3 +1727,238 @@ describe('index.html perf-group wiring', () => {
     assert.ok(html.includes('PerfGroups.orderPerfGroups'), 'must call PerfGroups.orderPerfGroups');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// freshness-helpers.js — release / HEAD anchors, commit age, roster completeness
+// Fixtures mirror live v3 series shapes read off the data server on
+// 2026-09-22: Redis (release-and-tip) throughput points carry `sample`,
+// Valkey (history) points carry `sample`, memory/latency points do not.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const freshness = require('../lib/freshness-helpers.js');
+
+const NOW = Date.parse('2026-09-22T16:00:00Z');
+const REL_OLD = '58d0fb9c62e88df331c55dec378cd149909d406b';
+const REL_NEW = '51913f6923875e26c7c7284ae0b10d0528d73900';
+const TIP_A = '0d6266f2deb9c401b686898e263ebd6fe35bc2b0';
+const TIP_B = 'c3215f01aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+function tpoint(commit, idx, date, sample, wl, rps) {
+  return { commit, commit_index: idx, date, sample, results: { [wl]: { rps, cv: 0.3, reps: 5 } } };
+}
+// amd64 redis-get-k16-v16-t7-p10: both release landmarks measured, two tips.
+const redisP10 = {
+  metadata: { engine: 'redis', scope: 'release-and-tip', epoch: 'v3' },
+  landmarks: [{ label: '8.12', commit_index: 716 }],
+  points: [
+    tpoint(REL_OLD, 642, '2026-07-29', 'release', 'redis-get-k16-v16-t7-p10', 3933603),
+    tpoint(REL_NEW, 716, '2026-09-15', 'release', 'redis-get-k16-v16-t7-p10', 3900000),
+    tpoint(TIP_A, 725, '2026-09-21', 'tip', 'redis-get-k16-v16-t7-p10', 3890000),
+    tpoint(TIP_B, 727, '2026-09-22', 'tip', 'redis-get-k16-v16-t7-p10', 3895000),
+  ],
+};
+// graviton4 redis-get-k16-v16-t7-p10: still on the OLD release, one tip behind.
+const redisP10Lagging = {
+  metadata: { engine: 'redis', scope: 'release-and-tip', epoch: 'v3' },
+  landmarks: [{ label: '8.12', commit_index: 716 }],
+  points: [
+    tpoint(REL_OLD, 642, '2026-07-29', 'release', 'redis-get-k16-v16-t7-p10', 3933603),
+    tpoint(TIP_A, 725, '2026-09-21', 'tip', 'redis-get-k16-v16-t7-p10', 3890000),
+  ],
+};
+// graviton4 redis-get-k16-v16-t7-p1: new release, latest tip.
+const redisP1 = {
+  metadata: { engine: 'redis', scope: 'release-and-tip', epoch: 'v3' },
+  landmarks: [{ label: '8.12', commit_index: 716 }],
+  points: [
+    tpoint(REL_NEW, 716, '2026-09-15', 'release', 'redis-get-k16-v16-t7-p1', 1200000),
+    tpoint(TIP_B, 727, '2026-09-22', 'tip', 'redis-get-k16-v16-t7-p1', 1210000),
+  ],
+};
+// Untagged latency series (no `sample`), landmark at 716, exact point present.
+const latencyUntagged = {
+  metadata: { engine: 'redis', epoch: 'v3' },
+  landmarks: [{ label: '8.12', commit_index: 716 }],
+  points: [
+    { commit: REL_NEW, commit_index: 716, date: '2026-09-15', histogram: [[50, 20], [90, 22], [99, 29]] },
+    { commit: TIP_B, commit_index: 727, date: '2026-09-22', histogram: [[50, 20], [90, 22], [99, 30]] },
+  ],
+};
+// Valkey history-scope: tips only so far (rebuild), landmarks with no point yet.
+const valkeyP10 = {
+  metadata: { engine: 'valkey', scope: 'history', epoch: 'v3' },
+  landmarks: [{ label: '9.1', commit_index: 1837 }, { label: '9.2', commit_index: 2261 }],
+  points: [
+    tpoint('f2bcd083', 2275, '2026-09-21', 'tip', 'get-k16-v16-t7-p10', 3100000),
+    tpoint('77b00b2d', 2277, '2026-09-22', 'tip', 'get-k16-v16-t7-p10', 3120000),
+  ],
+};
+
+describe('freshness releasePoint', () => {
+  it('picks the newest sample=release point and labels it from the matching landmark', () => {
+    const r = freshness.releasePoint(redisP10);
+    assert.equal(r.point.commit, REL_NEW);
+    assert.equal(r.label, '8.12');
+  });
+  it('an older release point with no landmark keeps a null label', () => {
+    const r = freshness.releasePoint(redisP10Lagging);
+    assert.equal(r.point.commit, REL_OLD);
+    assert.equal(r.label, null);
+  });
+  it('untagged series: the point sitting exactly on the newest release landmark', () => {
+    const r = freshness.releasePoint(latencyUntagged);
+    assert.equal(r.point.commit, REL_NEW);
+    assert.equal(r.label, '8.12');
+  });
+  it('untagged series with no point on the landmark -> null (never the nearest point)', () => {
+    const s = { landmarks: [{ label: '8.12', commit_index: 716 }], points: [{ commit: TIP_B, commit_index: 727, date: '2026-09-22' }] };
+    assert.equal(freshness.releasePoint(s), null);
+  });
+  it('tagged series with no release point and no landmark hit -> null', () => {
+    assert.equal(freshness.releasePoint(valkeyP10), null);
+  });
+  it('null / empty -> null', () => {
+    assert.equal(freshness.releasePoint(null), null);
+    assert.equal(freshness.releasePoint({ points: [] }), null);
+  });
+});
+
+describe('freshness headPoint', () => {
+  it('tagged series: newest tip, even when a release point is present', () => {
+    assert.equal(freshness.headPoint(redisP10).point.commit, TIP_B);
+    assert.equal(freshness.headPoint(redisP10Lagging).point.commit, TIP_A);
+  });
+  it('tagged series whose newest point is a release still returns the tip', () => {
+    const s = { points: [tpoint(TIP_A, 700, '2026-09-10', 'tip', 'w', 1), tpoint(REL_NEW, 716, '2026-09-15', 'release', 'w', 1)] };
+    assert.equal(freshness.headPoint(s).point.commit, TIP_A);
+  });
+  it('tagged series with no tip -> null', () => {
+    const s = { points: [tpoint(REL_NEW, 716, '2026-09-15', 'release', 'w', 1)] };
+    assert.equal(freshness.headPoint(s), null);
+  });
+  it('untagged series: newest point by commit_index', () => {
+    assert.equal(freshness.headPoint(latencyUntagged).point.commit, TIP_B);
+  });
+  it('history-scope Valkey: newest tip', () => {
+    assert.equal(freshness.headPoint(valkeyP10).point.commit, '77b00b2d');
+  });
+});
+
+describe('freshness commitAgeDays / formatAge', () => {
+  it('whole days from a YYYY-MM-DD commit date', () => {
+    assert.equal(freshness.commitAgeDays('2026-09-15', NOW), 7);
+    assert.equal(freshness.commitAgeDays('2026-09-22', NOW), 0);
+    assert.equal(freshness.commitAgeDays('2026-07-29', NOW), 55);
+  });
+  it('never negative; invalid -> null', () => {
+    assert.equal(freshness.commitAgeDays('2026-09-23', NOW), 0);
+    assert.equal(freshness.commitAgeDays('garbage', NOW), null);
+    assert.equal(freshness.commitAgeDays(null, NOW), null);
+  });
+  it('formats today / N d / empty', () => {
+    assert.equal(freshness.formatAge(0), 'today');
+    assert.equal(freshness.formatAge(7), '7 d');
+    assert.equal(freshness.formatAge(null), '');
+  });
+});
+
+describe('freshness rosterFreshness / engineFreshness', () => {
+  it('complete: every sweep on the same commit (amd64 today)', () => {
+    const f = freshness.engineFreshness([{ id: 'get-k16-v16-t7-p10', series: redisP10 }, { id: 'get-k16-v16-t7-p1', series: redisP1 }], NOW);
+    assert.equal(f.release.state, 'complete');
+    assert.equal(f.release.newest.commit, REL_NEW);
+    assert.equal(f.release.newest.label, '8.12');
+    assert.equal(f.release.newest.ageDays, 7);
+    assert.equal(f.head.state, 'complete');
+    assert.equal(f.head.newest.commit, TIP_B);
+    assert.equal(f.head.newest.ageDays, 0);
+    assert.equal(f.head.measured, 2);
+    assert.equal(f.head.total, 2);
+  });
+  it('partial: sweeps span more than one commit (graviton4 today) with newest reported', () => {
+    const f = freshness.engineFreshness([{ id: 'get-k16-v16-t7-p10', series: redisP10Lagging }, { id: 'get-k16-v16-t7-p1', series: redisP1 }], NOW);
+    assert.equal(f.release.state, 'partial');
+    assert.deepEqual(f.release.commits, [REL_NEW, REL_OLD]);
+    assert.equal(f.release.newest.commit, REL_NEW);
+    assert.equal(f.release.spanDays, 48);
+    assert.equal(f.head.state, 'partial');
+    assert.equal(f.head.newest.commit, TIP_B);
+    assert.equal(f.head.spanDays, 1);
+  });
+  it('missing: a sweep with no point (or no series) is counted, not dropped', () => {
+    const f = freshness.engineFreshness([{ id: 'a', series: redisP10 }, { id: 'b', series: null }], NOW);
+    assert.equal(f.release.state, 'missing');
+    assert.equal(f.release.measured, 1);
+    assert.equal(f.release.total, 2);
+    assert.equal(f.release.items[1].present, false);
+    const g = freshness.engineFreshness([{ id: 'a', series: redisP10 }, { id: 'v', series: valkeyP10 }], NOW);
+    assert.equal(g.release.state, 'missing', 'no release point on one sweep is missing, not partial');
+    assert.equal(g.head.state, 'partial', 'both have tips, on different commits');
+  });
+  it('none: empty roster or nothing measured', () => {
+    assert.equal(freshness.rosterFreshness([], freshness.headPoint, NOW).state, 'none');
+    const f = freshness.rosterFreshness([{ id: 'a', series: null }], freshness.headPoint, NOW);
+    assert.equal(f.state, 'none');
+    assert.equal(f.newest, null);
+  });
+  it('mixed tagged and untagged sweeps agree when on the same commit', () => {
+    const f = freshness.engineFreshness([{ id: 'p1', series: redisP1 }, { id: 'lat', series: latencyUntagged }], NOW);
+    assert.equal(f.release.state, 'complete');
+    assert.equal(f.head.state, 'complete');
+  });
+});
+
+describe('freshness engineScope / headBasis / columnSummary', () => {
+  it('scope comes from the first series carrying metadata.scope', () => {
+    assert.equal(freshness.engineScope([null, latencyUntagged, redisP10]), 'release-and-tip');
+    assert.equal(freshness.engineScope([valkeyP10]), 'history');
+    assert.equal(freshness.engineScope([latencyUntagged]), null);
+    assert.equal(freshness.engineScope([]), null);
+  });
+  it('HEAD basis: newest tip for release-and-tip, median otherwise', () => {
+    assert.equal(freshness.headBasis('release-and-tip'), 'newest tip point');
+    assert.equal(freshness.headBasis('history'), 'median of last 5 points');
+    assert.equal(freshness.headBasis(null), 'median of last 5 points');
+  });
+  it('columnSummary renders label, short sha, date, age, count', () => {
+    const f = freshness.engineFreshness([{ id: 'a', series: redisP10 }], NOW);
+    assert.deepEqual(freshness.columnSummary(f.release), { label: '8.12', sha: '51913f69', date: '2026-09-15', age: '7 d', count: '1/1' });
+    assert.deepEqual(freshness.columnSummary(f.head), { label: null, sha: 'c3215f01', date: '2026-09-22', age: 'today', count: '1/1' });
+    assert.equal(freshness.columnSummary(freshness.rosterFreshness([{ id: 'a', series: null }], freshness.headPoint, NOW)).count, '0/1');
+  });
+  it('state colours use theme variables only', () => {
+    for (const s of ['complete', 'partial', 'missing', 'none', 'bogus']) assert.match(freshness.stateColor(s), /^var\(--/);
+  });
+});
+
+describe('historyEngines (config.js)', () => {
+  it('keeps only engines with a per-commit history line (Redis is release-and-tip)', () => {
+    assert.deepEqual(config.historyEngines().map(e => e.id), ['valkey']);
+  });
+  it('an engine without the flag is treated as history (backwards compatible)', () => {
+    assert.deepEqual(config.historyEngines([{ id: 'x' }, { id: 'y', history: false }]).map(e => e.id), ['x']);
+  });
+});
+
+describe('compare.html freshness + HEAD wiring', () => {
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'compare.html'), 'utf8');
+  it('loads the freshness helper and renders the strip', () => {
+    assert.ok(html.includes('lib/freshness-helpers.js'));
+    assert.ok(html.includes('renderFreshnessStrip('));
+  });
+  it('HEAD values are scope-aware everywhere (no bare getLatestValue/getLatencyLatest calls)', () => {
+    const bare = html.match(/getLat(?:estValue|encyLatest)\([^)]*\)(?:;|\s*$)/gm) || [];
+    const unscoped = bare.filter(c => !c.includes('ENGINE_SCOPE') && !c.startsWith('function'));
+    assert.deepEqual(unscoped, []);
+    assert.ok(!html.includes('— median of last 5 data points'), 'fixed median text must be replaced by the per-engine basis');
+  });
+});
+
+describe('index.html history engines only', () => {
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+  it('selector items and engine chips iterate historyEngines()', () => {
+    assert.ok(!/for \(const eng of ENGINES\)/.test(html));
+    assert.ok(!/key: 'engine', values: ENGINES\.map/.test(html));
+    assert.ok((html.match(/historyEngines\(\)/g) || []).length >= 3);
+  });
+});

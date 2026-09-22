@@ -38,6 +38,23 @@ The comparison page reads its engines and its throughput, memory, and latency
 workloads from the selected epoch's per-platform manifests, so it compares only the
 engines and workloads that epoch actually measured.
 
+### Engines and sweep scope
+
+Only engines flagged `history: true` in `config.js` (`ENGINES`) appear on the
+Performance History page: they are swept across the full commit history and have
+a per-commit line to show. A release-and-tip engine (Redis: latest release plus a
+tip at most once a day, no bisection) appears only on the comparison page.
+
+The comparison page opens with a freshness strip, one row per engine. For each
+engine it shows the release the "At Releases" numbers come from and the HEAD the
+"Current HEAD" numbers come from: release label when known, short SHA, commit
+date, and the age of that commit (day resolution; a point's `date` is the commit
+date, not the measurement time). A dot per column says whether every sweep in the
+roster sits on that same commit: green all on one commit, yellow spread over more
+than one, red at least one sweep has no such point. Expanding the count lists each
+sweep. "Current HEAD" for a release-and-tip engine is its newest tip point; for a
+history engine it stays the median of the last five points.
+
 ## Tests
 
 The test suite uses Node.js 22's built-in test runner and has no third-party dependencies:
