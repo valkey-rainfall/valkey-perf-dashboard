@@ -103,8 +103,9 @@
       if (!container) return;
       if (epochList.length <= 1) { container.style.display = 'none'; return; }
       container.style.display = '';
+      const defaultId = EpochHelpers.defaultEpochId(epochList);
       container.innerHTML = `<select onchange="onEpochChange(this.value)" style="background:var(--card);color:var(--text);border:1px solid var(--border);padding:0.35rem 0.8rem;border-radius:4px;font-size:0.8rem;cursor:pointer;">
-        ${epochList.map(e => `<option value="${e.id}" ${e.id === (activeEpoch || epochList[0]?.id) ? 'selected' : ''}>${e.label}</option>`).join('')}
+        ${epochList.map(e => `<option value="${e.id}" ${e.archived ? 'style="color:var(--muted)"' : ''} ${e.id === (activeEpoch || defaultId) ? 'selected' : ''}>${EpochHelpers.epochOptionLabel(e)}</option>`).join('')}
       </select>`;
     }
 
@@ -546,8 +547,7 @@
       COMPARE_WORKLOADS = THROUGHPUT_WORKLOADS.filter(w => !w.platforms);
       // Discover epochs from manifests
       epochList = EpochHelpers.availableEpochs(PLATFORM_MANIFESTS);
-      if (epochList.length === 1) activeEpoch = epochList[0].id;
-      else if (epochList.length > 0) activeEpoch = epochList[0].id;
+      if (epochList.length > 0) activeEpoch = EpochHelpers.defaultEpochId(epochList);
       buildEpochSelector();
       renderPlatformTabs();
       render();

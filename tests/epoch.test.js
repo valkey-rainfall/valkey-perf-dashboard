@@ -427,6 +427,109 @@ describe('BUILTIN_EPOCHS', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// archived flag — resolveEpochs passthrough and availableEpochs OR
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('archived flag', () => {
+  it('resolveEpochs carries archived: true through', () => {
+    const result = epoch.resolveEpochs({ epochs: [{ id: 'v1', archived: true }] });
+    assert.equal(result[0].archived, true);
+  });
+
+  it('resolveEpochs carries archived: false through', () => {
+    const result = epoch.resolveEpochs({ epochs: [{ id: 'v3', archived: false }] });
+    assert.equal(result[0].archived, false);
+  });
+
+  it('resolveEpochs defaults a missing archived key to false', () => {
+    const result = epoch.resolveEpochs({ epochs: [{ id: 'v1' }] });
+    assert.equal(result[0].archived, false);
+  });
+
+  it('resolveEpochs coerces a non-true archived value to false', () => {
+    const result = epoch.resolveEpochs({ epochs: [{ id: 'v1', archived: 'yes' }] });
+    assert.equal(result[0].archived, false);
+  });
+
+  it('availableEpochs ORs archived across manifests (any archived wins)', () => {
+    const result = epoch.availableEpochs({
+      arm64: { epochs: [{ id: 'v1', archived: true }, { id: 'v3', archived: false }] },
+      amd64: { epochs: [{ id: 'v1', archived: false }, { id: 'v3', archived: false }] },
+    });
+    const v1 = result.find(e => e.id === 'v1');
+    const v3 = result.find(e => e.id === 'v3');
+    assert.equal(v1.archived, true, 'v1 archived on one manifest stays archived');
+    assert.equal(v3.archived, false);
+  });
+
+  it('availableEpochs leaves archived false when no manifest marks it', () => {
+    const result = epoch.availableEpochs({
+      arm64: { epochs: [{ id: 'v1' }, { id: 'v3' }] },
+    });
+    assert.equal(result.every(e => e.archived === false), true);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// defaultEpochId — first live epoch, list-order fallback
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('defaultEpochId', () => {
+  it('picks the first non-archived epoch when an archived one is listed first', () => {
+    const list = [
+      { id: 'v1', archived: true },
+      { id: 'v3', archived: false },
+    ];
+    assert.equal(epoch.defaultEpochId(list), 'v3');
+  });
+
+  it('falls back to the first listed epoch when none carry the flag', () => {
+    const list = [{ id: 'v1' }, { id: 'v3' }];
+    assert.equal(epoch.defaultEpochId(list), 'v1');
+  });
+
+  it('falls back to the first entry when every epoch is archived', () => {
+    const list = [
+      { id: 'v1', archived: true },
+      { id: 'v3', archived: true },
+    ];
+    assert.equal(epoch.defaultEpochId(list), 'v1');
+  });
+
+  it('returns null for an empty list', () => {
+    assert.equal(epoch.defaultEpochId([]), null);
+  });
+
+  it('returns null for a non-array', () => {
+    assert.equal(epoch.defaultEpochId(null), null);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// epochOptionLabel — archived suffix
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('epochOptionLabel', () => {
+  it('suffixes an archived epoch label', () => {
+    assert.equal(
+      epoch.epochOptionLabel({ label: 'Legacy v1 (stock generator)', archived: true }),
+      'Legacy v1 (stock generator) (archived)'
+    );
+  });
+
+  it('leaves a live epoch label unchanged', () => {
+    assert.equal(
+      epoch.epochOptionLabel({ label: 'Cachecannon v3 (io_uring generator)', archived: false }),
+      'Cachecannon v3 (io_uring generator)'
+    );
+  });
+
+  it('treats a missing archived key as live', () => {
+    assert.equal(epoch.epochOptionLabel({ label: 'Legacy v1 (stock generator)' }), 'Legacy v1 (stock generator)');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Static structure: epoch-helpers.js is loadable and exports expected API
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -436,6 +539,7 @@ describe('epoch-helpers API surface', () => {
     'seriesFilename', 'seriesUrl', 'notableUrl', 'manifestUrl',
     'parseEpochFromHash', 'writeEpochToHash',
     'shortLabel', 'epochWorkloadSuffix',
+    'defaultEpochId', 'epochOptionLabel',
   ];
 
   for (const name of expected) {

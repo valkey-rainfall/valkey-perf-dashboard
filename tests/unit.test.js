@@ -1330,3 +1330,66 @@ describe('score-range / saturation wiring in pages', () => {
     assert.ok(html.includes('PointHelpers.clientState'), 'compare.html must call PointHelpers.clientState');
   });
 });
+
+// ===========================================================================
+// epoch default selection + archived labelling (live-epoch default rule)
+// ===========================================================================
+
+describe('epoch default + archived labelling', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+
+  it('resolveEpochs carries the archived flag as a strict boolean', () => {
+    assert.equal(epochHelpers.resolveEpochs({ epochs: [{ id: 'v1', archived: true }] })[0].archived, true);
+    assert.equal(epochHelpers.resolveEpochs({ epochs: [{ id: 'v3', archived: false }] })[0].archived, false);
+    assert.equal(epochHelpers.resolveEpochs({ epochs: [{ id: 'v1' }] })[0].archived, false);
+  });
+
+  it('availableEpochs ORs archived across manifests', () => {
+    const result = epochHelpers.availableEpochs({
+      arm64: { epochs: [{ id: 'v1', archived: true }, { id: 'v3', archived: false }] },
+      amd64: { epochs: [{ id: 'v1', archived: false }, { id: 'v3', archived: false }] },
+    });
+    assert.equal(result.find(e => e.id === 'v1').archived, true);
+    assert.equal(result.find(e => e.id === 'v3').archived, false);
+  });
+
+  it('defaultEpochId picks the first live epoch when archived is listed first', () => {
+    assert.equal(
+      epochHelpers.defaultEpochId([{ id: 'v1', archived: true }, { id: 'v3', archived: false }]),
+      'v3'
+    );
+  });
+
+  it('defaultEpochId falls back to list order for pre-flag manifests', () => {
+    assert.equal(epochHelpers.defaultEpochId([{ id: 'v1' }, { id: 'v3' }]), 'v1');
+  });
+
+  it('defaultEpochId falls back to the first entry when all archived, null when empty', () => {
+    assert.equal(epochHelpers.defaultEpochId([{ id: 'v1', archived: true }, { id: 'v3', archived: true }]), 'v1');
+    assert.equal(epochHelpers.defaultEpochId([]), null);
+  });
+
+  it('epochOptionLabel suffixes archived epochs only', () => {
+    assert.equal(epochHelpers.epochOptionLabel({ label: 'Legacy v1 (stock generator)', archived: true }), 'Legacy v1 (stock generator) (archived)');
+    assert.equal(epochHelpers.epochOptionLabel({ label: 'Cachecannon v3 (io_uring generator)', archived: false }), 'Cachecannon v3 (io_uring generator)');
+  });
+
+  it('index.html defaults the epoch via EpochHelpers.defaultEpochId', () => {
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.ok(html.includes('EpochHelpers.defaultEpochId(epochList)'), 'index.html must default via defaultEpochId, not epochList[0]');
+  });
+
+  it('compare.html defaults the epoch via EpochHelpers.defaultEpochId', () => {
+    const html = fs.readFileSync(path.join(root, 'compare.html'), 'utf8');
+    assert.ok(html.includes('EpochHelpers.defaultEpochId(epochList)'), 'compare.html must default via defaultEpochId, not epochList[0]');
+  });
+
+  it('both pages label archived options via EpochHelpers.epochOptionLabel', () => {
+    for (const f of ['index.html', 'compare.html']) {
+      const html = fs.readFileSync(path.join(root, f), 'utf8');
+      assert.ok(html.includes('EpochHelpers.epochOptionLabel(e)'), `${f} must render option text via epochOptionLabel`);
+    }
+  });
+});

@@ -25,6 +25,15 @@ python3 -m http.server 8080 --bind 127.0.0.1
 # Open http://localhost:8080
 ```
 
+## Epoch selector
+
+An epoch is a measurement generation (a specific load generator and methodology).
+When a platform manifest declares more than one epoch, a selector appears; the page
+opens on the first epoch that is not marked `archived` (an explicit `#epoch=<id>`
+hash still wins, and manifests that predate the flag fall back to the first listed
+epoch), and archived epochs stay selectable but are labelled "(archived)" in the
+muted color.
+
 ## Tests
 
 The test suite uses Node.js 22's built-in test runner and has no third-party dependencies:
