@@ -12,6 +12,7 @@ const status = require('../lib/status-helpers.js');
 const compare = require('../lib/compare-helpers.js');
 const config = require('../config.js');
 const epochHelpers = require('../lib/epoch-helpers.js');
+const pointHelpers = require('../lib/point-helpers.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // status-helpers.js
@@ -1188,5 +1189,144 @@ describe('HTML structural integrity', () => {
     assert.ok(typeof epochHelpers.resolveEpochs === 'function');
     assert.ok(typeof epochHelpers.seriesUrl === 'function');
     assert.ok(typeof epochHelpers.parseEpochFromHash === 'function');
+  });
+});
+
+// ===========================================================================
+// point-helpers: score range + client saturation (v3 per-result metadata)
+// ===========================================================================
+
+describe('scoreRange (point-helpers)', () => {
+  it('reads min/max/aggregate when present', () => {
+    const r = pointHelpers.scoreRange({ rps: 100, score_min: 90, score_max: 110, score_aggregate: 'median' });
+    assert.equal(r.known, true);
+    assert.equal(r.min, 90);
+    assert.equal(r.max, 110);
+    assert.equal(r.aggregate, 'median');
+  });
+
+  it('absent keys resolve to known=false (not a zero range)', () => {
+    const r = pointHelpers.scoreRange({ rps: 100, cv: 1.2 });
+    assert.equal(r.known, false);
+    assert.equal(r.min, undefined);
+    assert.equal(r.max, undefined);
+  });
+
+  it('a lone bound is not enough — known=false', () => {
+    assert.equal(pointHelpers.scoreRange({ score_min: 90 }).known, false);
+    assert.equal(pointHelpers.scoreRange({ score_max: 110 }).known, false);
+  });
+
+  it('null/undefined result is known=false', () => {
+    assert.equal(pointHelpers.scoreRange(null).known, false);
+    assert.equal(pointHelpers.scoreRange(undefined).known, false);
+  });
+
+  it('normalizes inverted bounds', () => {
+    const r = pointHelpers.scoreRange({ score_min: 120, score_max: 100 });
+    assert.equal(r.min, 100);
+    assert.equal(r.max, 120);
+  });
+
+  it('omits aggregate when not a non-empty string', () => {
+    assert.equal(pointHelpers.scoreRange({ score_min: 1, score_max: 2, score_aggregate: '' }).aggregate, undefined);
+    assert.equal(pointHelpers.scoreRange({ score_min: 1, score_max: 2 }).aggregate, undefined);
+  });
+});
+
+describe('clientState (point-helpers)', () => {
+  it('reads a saturated point', () => {
+    const s = pointHelpers.clientState({
+      client_saturated: true, client_utilization: 0.94,
+      client_cores_busy: 7.5, client_allocated_cores: 8,
+    });
+    assert.equal(s.known, true);
+    assert.equal(s.saturated, true);
+    assert.equal(s.utilization, 0.94);
+    assert.equal(s.cores, 7.5);
+    assert.equal(s.allocated, 8);
+  });
+
+  it('present-but-false flag: known=true, saturated=false', () => {
+    const s = pointHelpers.clientState({ client_saturated: false, client_utilization: 0.66 });
+    assert.equal(s.known, true);
+    assert.equal(s.saturated, false);
+    assert.equal(s.utilization, 0.66);
+  });
+
+  it('absent keys resolve to known=false — NOT "not saturated"', () => {
+    const s = pointHelpers.clientState({ rps: 100, cv: 1.2 });
+    assert.equal(s.known, false);
+    assert.equal(s.saturated, undefined);
+  });
+
+  it('null/undefined result is known=false', () => {
+    assert.equal(pointHelpers.clientState(null).known, false);
+    assert.equal(pointHelpers.clientState(undefined).known, false);
+  });
+
+  it('utilization alone (no flag) is known with saturated=false', () => {
+    const s = pointHelpers.clientState({ client_utilization: 0.5 });
+    assert.equal(s.known, true);
+    assert.equal(s.saturated, false);
+    assert.equal(s.utilization, 0.5);
+  });
+});
+
+describe('clientTooltipLine (point-helpers)', () => {
+  it('formats a saturated line with cores', () => {
+    const line = pointHelpers.clientTooltipLine(pointHelpers.clientState({
+      client_saturated: true, client_utilization: 0.94,
+      client_cores_busy: 7.5, client_allocated_cores: 8,
+    }));
+    assert.equal(line, 'client saturated: util 0.94 (7.5/8 cores)');
+  });
+
+  it('formats a non-saturated util line', () => {
+    const line = pointHelpers.clientTooltipLine(pointHelpers.clientState({ client_utilization: 0.66 }));
+    assert.equal(line, 'client util 0.66');
+  });
+
+  it('unknown state -> empty string (caller omits the line)', () => {
+    assert.equal(pointHelpers.clientTooltipLine(pointHelpers.clientState({ rps: 1 })), '');
+    assert.equal(pointHelpers.clientTooltipLine(null), '');
+  });
+
+  it('trims whole-number cores (8.0 -> 8)', () => {
+    const line = pointHelpers.clientTooltipLine(pointHelpers.clientState({
+      client_utilization: 0.5, client_cores_busy: 4, client_allocated_cores: 8,
+    }));
+    assert.equal(line, 'client util 0.50 (4/8 cores)');
+  });
+});
+
+describe('point-helpers.js can be required from Node', () => {
+  it('exports the pure helpers', () => {
+    assert.equal(typeof pointHelpers.scoreRange, 'function');
+    assert.equal(typeof pointHelpers.clientState, 'function');
+    assert.equal(typeof pointHelpers.clientTooltipLine, 'function');
+  });
+});
+
+describe('score-range / saturation wiring in pages', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+
+  it('index.html loads point-helpers.js', () => {
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.ok(html.includes('lib/point-helpers.js'), 'index.html must load lib/point-helpers.js');
+  });
+
+  it('index.html uses PointHelpers for range/client state', () => {
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.ok(html.includes('PointHelpers.scoreRange'), 'index.html must call PointHelpers.scoreRange');
+    assert.ok(html.includes('PointHelpers.clientState'), 'index.html must call PointHelpers.clientState');
+  });
+
+  it('compare.html loads point-helpers.js and reads client state', () => {
+    const html = fs.readFileSync(path.join(root, 'compare.html'), 'utf8');
+    assert.ok(html.includes('lib/point-helpers.js'), 'compare.html must load lib/point-helpers.js');
+    assert.ok(html.includes('PointHelpers.clientState'), 'compare.html must call PointHelpers.clientState');
   });
 });
