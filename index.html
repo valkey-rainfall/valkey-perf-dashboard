@@ -63,6 +63,7 @@
     .controls select, .controls button { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 0.35rem 0.65rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
     .zoom-btn { font-size: 0.8rem; padding: 3px 10px; cursor: pointer; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px; }
     .zoom-btn:hover { background: var(--border); }
+    .visible-range { font-size: 0.75rem; color: var(--muted); margin-left: 0.4rem; font-variant-numeric: tabular-nums; }
 
     /* Workload selector: an overlay anchored under the header's left edge so
        the right side of the chart stays visible while series are toggled. */
@@ -224,6 +225,7 @@
       <button id="btn-last-release" onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
       <button onclick="zoomAll('last100')" class="zoom-btn">Last 100 Commits</button>
       <button onclick="zoomAll('reset')" class="zoom-btn">Reset Zoom</button>
+      <span id="visibleRange" class="visible-range" title="Visible commit-index window"></span>
     </div>
     <nav class="header-links" aria-label="Dashboard pages">
       <a href="notable.html">Notable Changes</a>
@@ -283,6 +285,7 @@
   <script src="lib/latency-helpers.js"></script>
   <script src="lib/selector-helpers.js"></script>
   <script src="lib/selection-helpers.js"></script>
+  <script src="lib/axis-ticks.js"></script>
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
 
@@ -644,8 +647,17 @@
         const max = Math.round(chart.options.scales.x.max);
         params.set('zoom', `${min},${max}`);
       }
+      updateVisibleRange();
       const hash = params.toString();
       history.replaceState(null, '', hash ? '#' + hash : location.pathname);
+    }
+
+    // The axis is marked at releases, so the numeric commit-index window lives
+    // here (next to the zoom buttons) instead of on the axis ticks.
+    function updateVisibleRange() {
+      const el = document.getElementById('visibleRange'); if (!el) return;
+      const x = chart && chart.options.scales.x;
+      el.textContent = x ? `commits ${AxisTicks.formatRange(x.min, x.max)}` : '';
     }
 
     function getVersionReleases(data) {
@@ -696,13 +708,30 @@
     function infoItem(label, value) { return `<span><span class="info-val">${value}</span> ${label}</span>`; }
 
     // Common chart options
+    // Shared x axis: commit index under the hood, marked at release landmarks
+    // (falls back to commit-index ticks when fewer than two releases are in
+    // view). Tick selection lives in lib/axis-ticks.js so it is unit-tested.
+    function xAxisOpts(maxIndex, landmarks) {
+      return {
+        type: 'linear', min: 0, max: maxIndex,
+        grid: { color: 'var(--border)' },
+        afterBuildTicks(scale) {
+          const { ticks } = AxisTicks.releaseTicks(landmarks, scale.min, scale.max);
+          scale.ticks = ticks.map(t => ({ value: t.value, release: t.label }));
+        },
+        ticks: {
+          color: '#64748b', autoSkip: false, maxRotation: 0,
+          callback: (v, i, ticks) => (ticks[i] && ticks[i].release != null) ? ticks[i].release : v,
+        },
+      };
+    }
+
     function baseChartOpts(totalCommits, landmarks) {
       const annotations = {};
       (landmarks || []).forEach((lm, i) => {
         if (lm.commit_index != null) annotations[`lm${i}`] = {
           type: 'line', xMin: lm.commit_index, xMax: lm.commit_index,
           borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
-          label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
         };
       });
       return {
@@ -714,7 +743,7 @@
           zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => { syncZoom(c, c.scales.x.min, c.scales.x.max); updateHashState(); } } },
         },
         scales: {
-          x: { type: 'linear', min: 0, max: totalCommits + 1, ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: 'var(--border)' } },
+          x: xAxisOpts(totalCommits + 1, landmarks),
         }
       };
     }
@@ -773,6 +802,7 @@
         if (hashState.zoom && hashState.zoom.length === 2) {
           const [min, max] = hashState.zoom;
           liveCharts().forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
+          updateVisibleRange();
         }
         if (hashState.commit) highlightCommit(hashState.commit);
       }
@@ -971,6 +1001,7 @@
         options: opts,
       });
       allCharts.push(chart);
+      updateVisibleRange();
 
       // Sub-charts use primary workload only
       await Promise.all([renderMemory(platform, data, gen), renderPerfCharts(platform, gen), renderLatency(platform, gen)]);
@@ -1187,7 +1218,7 @@
         div.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem">${group.title}${helpBtn}</div><canvas></canvas>`;
         container.appendChild(div);
 
-        const scales = { x: { type: 'linear', min: 0, max: maxIdx, ticks: { color: '#64748b', maxTicksLimit: 6 }, grid: { color: 'var(--border)' } } };
+        const scales = { x: xAxisOpts(maxIdx, currentData && currentData.landmarks) };
         if (isCPU) {
           scales.y = { stacked: true, min: 0, max: 100, title: { display: true, text: '% of samples', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'var(--border)' } };
         } else if (isTMA) {
