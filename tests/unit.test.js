@@ -2114,3 +2114,117 @@ describe('index.html latency + render-race wiring', () => {
     }
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// selector-helpers.js — two-section workload selector (selected / available)
+// ═══════════════════════════════════════════════════════════════════════════
+const selector = require('../lib/selector-helpers.js');
+
+describe('parseWorkloadId', () => {
+  it('extracts command, value size, threads and pipelining', () => {
+    assert.deepEqual(selector.parseWorkloadId('get-k16-v128-t7-p10'), { command: 'get', valsize: '128', threads: '7', pipelining: '10' });
+    assert.deepEqual(selector.parseWorkloadId('mixed-s20-k16-v16-t7-p1'), { command: 'mixed-s20', valsize: '16', threads: '7', pipelining: '1' });
+  });
+  it('yields nulls for unknown shapes', () => {
+    assert.deepEqual(selector.parseWorkloadId('bogus'), { command: null, valsize: null, threads: null, pipelining: null });
+    assert.deepEqual(selector.parseWorkloadId(undefined), { command: null, valsize: null, threads: null, pipelining: null });
+  });
+});
+
+describe('partitionSelectorItems', () => {
+  const mk = (platform, id) => ({ engine: 'valkey', platform, workloadId: id, engineLabel: 'Valkey', platLabel: platform, ...selector.parseWorkloadId(id) });
+  const items = [
+    mk('amd64', 'get-k16-v16-t7-p10'), mk('amd64', 'set-k16-v16-t7-p10'), mk('amd64', 'get-k16-v16-t7-p1'),
+    mk('graviton4', 'get-k16-v16-t7-p10'), mk('graviton4', 'set-k16-v16-t7-p10'),
+  ];
+  const noFilters = { engine: null, platform: null, command: null, valsize: null, pipelining: null };
+
+  it('keeps the selected section in selection order and out of the available section', () => {
+    const selected = [items[4], items[0]];
+    const { selected: s, available: a } = selector.partitionSelectorItems(items, selected, noFilters);
+    assert.deepEqual(s.map(selector.selectionKey), selected.map(selector.selectionKey));
+    assert.equal(a.length, 3);
+    assert.ok(a.every(it => !selected.some(sel => selector.selectionKey(sel) === selector.selectionKey(it))));
+  });
+
+  it('never hides a selected row behind a filter', () => {
+    const selected = [items[1]]; // amd64 SET
+    const { selected: s, available: a } = selector.partitionSelectorItems(items, selected, { ...noFilters, command: 'get' });
+    assert.equal(s.length, 1);
+    assert.equal(s[0].workloadId, 'set-k16-v16-t7-p10');
+    assert.ok(a.every(it => it.command === 'get'));
+    assert.equal(a.length, 3);
+  });
+
+  it('applies platform and pipelining filters to the available section', () => {
+    const { available } = selector.partitionSelectorItems(items, [], { ...noFilters, platform: 'graviton4', pipelining: '10' });
+    assert.deepEqual(available.map(it => it.workloadId), ['get-k16-v16-t7-p10', 'set-k16-v16-t7-p10']);
+  });
+
+  it('synthesizes a row for a selected series the manifest no longer lists', () => {
+    const stale = { engine: 'valkey', platform: 'intel', workloadId: 'get-k16-v16-t24-p100' };
+    const { selected } = selector.partitionSelectorItems(items, [stale], noFilters);
+    assert.equal(selected.length, 1);
+    assert.equal(selected[0].missing, true);
+    assert.equal(selected[0].command, 'get');
+    assert.equal(selected[0].pipelining, '100');
+  });
+
+  it('sorts only the available section', () => {
+    const columns = [{ key: 'pipelining', val: it => +it.pipelining, num: true }];
+    const selected = [items[1], items[0]];
+    const { selected: s, available: a } = selector.partitionSelectorItems(items, selected, noFilters, { col: 'pipelining', dir: 1, columns });
+    assert.deepEqual(s.map(it => it.workloadId), ['set-k16-v16-t7-p10', 'get-k16-v16-t7-p10']);
+    assert.deepEqual(a.map(it => +it.pipelining), [1, 10, 10]);
+    const desc = selector.partitionSelectorItems(items, selected, noFilters, { col: 'pipelining', dir: -1, columns }).available;
+    assert.deepEqual(desc.map(it => +it.pipelining), [10, 10, 1]);
+  });
+
+  it('tolerates missing inputs', () => {
+    assert.deepEqual(selector.partitionSelectorItems(undefined, undefined, undefined), { selected: [], available: [] });
+  });
+});
+
+describe('visibleColumns', () => {
+  const cols = [
+    { key: 'platform', text: it => it.platform },
+    { key: 'command', text: it => it.command },
+  ];
+  it('keeps only columns that vary across both sections together', () => {
+    const rows = [{ platform: 'amd64', command: 'get' }, { platform: 'amd64', command: 'set' }];
+    assert.deepEqual(selector.visibleColumns(rows, cols).map(c => c.key), ['command']);
+  });
+  it('falls back when nothing varies', () => {
+    const rows = [{ platform: 'amd64', command: 'get' }];
+    assert.deepEqual(selector.visibleColumns(rows, cols, [cols[1]]).map(c => c.key), ['command']);
+    assert.deepEqual(selector.visibleColumns([], cols), []);
+  });
+});
+
+describe('index.html selector overlay wiring', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  it('renders the panel inside the header as a positioned overlay', () => {
+    const header = html.slice(html.indexOf('<header>'), html.indexOf('</header>'));
+    assert.ok(header.includes('id="selectorPanel"'), 'panel must live inside the header so it is anchored to it');
+    assert.ok(/\.selector-panel \{[^}]*position: absolute/.test(html));
+    assert.ok(/\.selector-panel \{[^}]*z-index/.test(html));
+    assert.ok(!/\.selector-panel \{[^}]*margin-top/.test(html), 'overlay must not take layout space');
+  });
+
+  it('closes on Escape and on clicks outside, via the helper', () => {
+    assert.ok(html.includes('function setSelectorPanel(open)'));
+    assert.ok(/e\.key === 'Escape' && isSelectorPanelOpen\(\)/.test(html));
+    assert.ok(html.includes("e.target.closest('#selectorPanel')"));
+  });
+
+  it('builds the two-section list through SelectorHelpers', () => {
+    assert.ok(html.includes('lib/selector-helpers.js'));
+    assert.ok(html.includes('SelectorHelpers.partitionSelectorItems('));
+    assert.ok(html.includes('SelectorHelpers.visibleColumns('));
+    assert.ok(html.includes('data-action="clear-selection"'));
+    assert.ok(!html.includes("clearS.textContent = '✕ Clear Selection'"), 'Clear Selection chip moved into the Selected section');
+  });
+});
