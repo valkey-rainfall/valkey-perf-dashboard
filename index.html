@@ -251,7 +251,7 @@
 
   <!-- Latency Band Chart -->
   <div id="latencySection" style="display:none">
-    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 id="latencyHeader" style="margin:1.5rem 0 0.5rem">Request Latency (P=1 @ 100K rps flat)</h2><button class="help-btn" onclick="showHelp('latency')">?</button></div>
+    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 id="latencyHeader" style="margin:1.5rem 0 0.5rem">Request Latency</h2><button class="help-btn" onclick="showHelp('latency')">?</button></div>
     <div class="chart-panel chart-panel--throughput" style="position:relative"><canvas id="latencyChart"></canvas></div>
     <div id="latencyInfo" class="info-row"></div>
   </div>
@@ -275,10 +275,27 @@
   <script src="lib/epoch-helpers.js"></script>
   <script src="lib/point-helpers.js"></script>
   <script src="lib/perf-groups.js"></script>
+  <script src="lib/latency-helpers.js"></script>
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
 
     let chart = null, currentData = null, allCharts = [], manifest = null, perfChartInstances = [], globalMaxCommits = 0;
+
+    // Render generation. Every render() bumps it; a render that resumes from an
+    // await after a newer one has started abandons instead of mounting its
+    // charts into the layout the newer render already reset. Without this,
+    // clicking a second series while the first render's fetches are in flight
+    // leaves destroyed charts in allCharts and duplicate panels in the grids.
+    let renderGeneration = 0;
+    function renderIsStale(gen) { return gen !== renderGeneration; }
+
+    // A destroyed Chart.js instance drops its canvas. Zoom/crosshair fan-out
+    // walks only live charts so one stale entry cannot throw and abort the
+    // loop before it reaches the charts that are actually on screen.
+    function liveCharts() {
+      if (allCharts.some(c => !c.canvas)) allCharts = allCharts.filter(c => c.canvas);
+      return allCharts;
+    }
 
     // =========================================================================
     // Epoch state
@@ -563,8 +580,8 @@
         const evt = args.event;
         if (evt.type === 'mousemove' && chart.scales.x) {
           const xVal = chart.scales.x.getValueForPixel(evt.x);
-          if (xVal != null && xVal !== crosshairX) { crosshairX = xVal; allCharts.forEach(c => c.draw()); }
-        } else if (evt.type === 'mouseout') { crosshairX = null; allCharts.forEach(c => c.draw()); }
+          if (xVal != null && xVal !== crosshairX) { crosshairX = xVal; liveCharts().forEach(c => c.draw()); }
+        } else if (evt.type === 'mouseout') { crosshairX = null; liveCharts().forEach(c => c.draw()); }
       },
       afterDraw(chart) {
         if (crosshairX == null || !chart.scales.x) return;
@@ -576,7 +593,7 @@
       }
     });
 
-    function syncZoom(src, min, max) { allCharts.forEach(c => { if (c !== src) { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); } }); updateHashState(); }
+    function syncZoom(src, min, max) { liveCharts().forEach(c => { if (c !== src) { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); } }); updateHashState(); }
 
     // =========================================================================
     // URL hash state (shareable views)
@@ -639,7 +656,7 @@
         const lm = releases.at(-2);
         if (lm) min = lm.commit_index;
       } else if (mode === 'last100') { min = tc - 100; }
-      allCharts.forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
+      liveCharts().forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
       updateHashState();
     }
 
@@ -742,7 +759,7 @@
         await renderAll(initialZoom);
         if (hashState.zoom && hashState.zoom.length === 2) {
           const [min, max] = hashState.zoom;
-          allCharts.forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
+          liveCharts().forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
         }
         if (hashState.commit) highlightCommit(hashState.commit);
       }
@@ -755,9 +772,11 @@
     }
 
     async function render(platform, initialCommit) {
+      const gen = ++renderGeneration;
       // Fetch primary workload data (drives sub-charts + page title)
       const primaryFileId = getWorkloadId();
       const resp = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, primaryFileId, 'throughput', activeEpoch));
+      if (renderIsStale(gen)) return;
       if (!resp.ok) {
         // No data for this selection — clear all charts
         if (chart) { chart.destroy(); chart = null; }
@@ -773,7 +792,9 @@
         currentData = null; currentPoints = null;
         return;
       }
-      const data = await resp.json(); currentData = data;
+      const data = await resp.json();
+      if (renderIsStale(gen)) return;
+      currentData = data;
       const workload = data.workloads[0];
       const engineLabel = ENGINES.find(e => e.id === getEngine())?.label || 'Valkey';
       document.getElementById('pageTitle').textContent = `${engineLabel} Unstable — Performance History`;
@@ -823,8 +844,10 @@
         } else {
           try {
             const r2 = await fetch(EpochHelpers.seriesUrl(DATA_URL, sel.platform, fileId, 'throughput', activeEpoch));
+            if (renderIsStale(gen)) return;
             if (!r2.ok) continue;
             sData = await r2.json();
+            if (renderIsStale(gen)) return;
             sWorkload = sData.workloads[0];
             sPoints = sData.points.filter(p => p.results[sWorkload]).sort((a, b) => a.commit_index - b.commit_index);
             globalMaxCommits = Math.max(globalMaxCommits, sData.metadata.total_commits);
@@ -932,7 +955,8 @@
       allCharts.push(chart);
 
       // Sub-charts use primary workload only
-      await Promise.all([renderMemory(platform, data), renderPerfCharts(platform), renderLatency(platform)]);
+      await Promise.all([renderMemory(platform, data, gen), renderPerfCharts(platform, gen), renderLatency(platform, gen)]);
+      if (renderIsStale(gen)) return;
       renderTable(points, workload);
     }
 
@@ -942,7 +966,7 @@
 
     let memoryChartInstances = [];
 
-    async function renderMemory(platform, mainData) {
+    async function renderMemory(platform, mainData, gen) {
       memoryChartInstances.forEach(c => c.destroy()); memoryChartInstances = [];
       const container = document.getElementById('memoryChartsGrid'); container.innerHTML = '';
 
@@ -950,8 +974,10 @@
         try {
           const fileId = getEngine() === 'valkey' ? workloadId : workloadId.replace('memory-', `memory-${getEngine()}-`);
           const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, fileId, 'memory', activeEpoch));
+          if (renderIsStale(gen)) return;
           if (!r.ok) continue;
           const memData = await r.json();
+          if (renderIsStale(gen)) return;
           const wk = memData.workloads[0];
           const pts = memData.points.filter(p => p.results[wk]).sort((a, b) => a.commit_index - b.commit_index);
           if (!pts.length) continue;
@@ -1027,7 +1053,7 @@
     // Perf charts (including TMA as 100% stacked area)
     // =========================================================================
 
-    async function renderPerfCharts(platform) {
+    async function renderPerfCharts(platform, gen) {
       perfChartInstances.forEach(c => c.destroy()); perfChartInstances = [];
       popupPerfData = {};
       const platformManifest = (typeof PLATFORM_MANIFESTS !== 'undefined' && PLATFORM_MANIFESTS[platform]) || manifest;
@@ -1040,6 +1066,7 @@
       let hasAny = false;
 
       for (const group of perfGroups) {
+        if (renderIsStale(gen)) return;
         const datasets = []; let maxIdx = 0; let colorIdx = 0;
         let cpuClickPts = null; // CPU points (with commit) for flamegraph drill-down
         const isTMA = group.id === 'tma' || group.id === 'tma-main' || group.id === 'tma-io';
@@ -1051,8 +1078,10 @@
           let cpuPts = null, categories = null;
           try {
             const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, workloadId, group.id, activeEpoch));
+            if (renderIsStale(gen)) return;
             if (r.ok) {
               const sd = await r.json();
+              if (renderIsStale(gen)) return;
               const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
               if (pts.length) {
                 cpuPts = pts;
@@ -1083,8 +1112,10 @@
           for (const metricId of group.series) {
             try {
               const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, workloadId, metricId, activeEpoch));
+              if (renderIsStale(gen)) return;
               if (!r.ok) continue;
               const sd = await r.json();
+              if (renderIsStale(gen)) return;
               const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
               if (!pts.length) continue;
               maxIdx = Math.max(maxIdx, pts.at(-1).commit_index);
@@ -1111,8 +1142,10 @@
         for (const metricId of group.series) {
           try {
             const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, workloadId, metricId, activeEpoch));
+            if (renderIsStale(gen)) return;
             if (!r.ok) continue;
             const sd = await r.json();
+            if (renderIsStale(gen)) return;
             const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
             if (!pts.length) continue;
             popupPerfData[metricId] = pts;
@@ -1181,56 +1214,66 @@
 
     let latencyChartInstance = null;
 
-    async function renderLatency(platform) {
+    async function renderLatency(platform, gen) {
       if (latencyChartInstance) { latencyChartInstance.destroy(); allCharts = allCharts.filter(c => c !== latencyChartInstance); latencyChartInstance = null; }
       const section = document.getElementById('latencySection');
-      // Derive latency workload from primary selection (command + k16-v16, no thread/pipe suffix)
-      const command = primaryWorkload?.workloadId?.match(/^(get|set)/)?.[1] || 'get';
-      const baseLatencyId = `${command}-k16-v16`;
+      // The latency series id is epoch-specific (legacy "get-k16-v16" vs a full
+      // shape with a held rate such as "get-k16-v16-t7-p1-r100k"), so take it
+      // from the platform manifest for the active epoch rather than hardcoding.
+      const command = LatencyHelpers.latencyCommand(primaryWorkload?.workloadId);
       const engine = getEngine();
-      const latencyFileId = engine === 'valkey' ? baseLatencyId : `${engine}-${baseLatencyId}`;
+      const platformManifest = (typeof PLATFORM_MANIFESTS !== 'undefined' && PLATFORM_MANIFESTS[platform]) || manifest;
+      const latencyFileId = LatencyHelpers.latencySeriesId(platformManifest?.latency_workloads, command, engine);
+      if (!latencyFileId) { section.style.display = 'none'; return; }
       let resp;
       try { resp = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, latencyFileId, 'latency', activeEpoch)); } catch { section.style.display = 'none'; return; }
+      if (renderIsStale(gen)) return;
       if (!resp.ok) { section.style.display = 'none'; return; }
-      section.style.display = '';
-      const engineLabel = ENGINES.find(e => e.id === engine)?.label || 'Valkey';
-      document.getElementById('latencyHeader').textContent = `${engineLabel} ${command.toUpperCase()} Latency (P=1 @ 100K rps flat)`;
       const data = await resp.json();
+      if (renderIsStale(gen)) return;
       const pts = data.points.sort((a, b) => a.commit_index - b.commit_index);
       if (!pts.length) { section.style.display = 'none'; return; }
+      section.style.display = '';
+      const engineLabel = ENGINES.find(e => e.id === engine)?.label || 'Valkey';
+      document.getElementById('latencyHeader').textContent = `${engineLabel} ${command.toUpperCase()} Latency (${LatencyHelpers.latencyShapeLabel(latencyFileId)})`;
 
       const totalCommits = data.metadata.total_commits;
       globalMaxCommits = Math.max(globalMaxCommits, totalCommits);
-      // Histogram indices: 0=p1, 1=p10, 2=p25, 3=p50, 4=p75, 5=p90, 6=p95, 7=p99, 8=p99.5, 9=p99.9, 10=p100
-      // We use indices 1-9 (p10 through p99.9), skip p1 and p100
+      // Line styling per percentile. Points publish either a full histogram or
+      // only the named p50/p99/p99.9/p100 fields; LatencyHelpers.latencyPercentiles
+      // normalizes both, and a percentile absent from every point is not drawn.
       const subtle = 'rgba(148,163,184,0.45)';
       const lineCfg = [
-        { hi: 1, color: subtle, w: 1, dash: [] },         // p10
-        { hi: 2, color: subtle, w: 1, dash: [] },         // p25
-        { hi: 3, color: '#22c55e', w: 2, dash: [] },      // p50 — green
-        { hi: 4, color: subtle, w: 1, dash: [] },         // p75
-        { hi: 5, color: subtle, w: 1, dash: [] },         // p90
-        { hi: 6, color: subtle, w: 1, dash: [] },         // p95
-        { hi: 7, color: '#6366f1', w: 2.5, dash: [] },    // p99 — indigo
-        { hi: 8, color: subtle, w: 1, dash: [] },         // p99.5
-        { hi: 9, color: '#ef4444', w: 2, dash: [4,3] },   // p99.9 — red dashed
+        { label: 'p10',   color: subtle, w: 1, dash: [] },
+        { label: 'p25',   color: subtle, w: 1, dash: [] },
+        { label: 'p50',   color: '#22c55e', w: 2, dash: [] },      // green
+        { label: 'p75',   color: subtle, w: 1, dash: [] },
+        { label: 'p90',   color: subtle, w: 1, dash: [] },
+        { label: 'p95',   color: subtle, w: 1, dash: [] },
+        { label: 'p99',   color: '#6366f1', w: 2.5, dash: [] },    // indigo
+        { label: 'p99.5', color: subtle, w: 1, dash: [] },
+        { label: 'p99.9', color: '#ef4444', w: 2, dash: [4,3] },   // red dashed
       ];
-      const pctLabels = ['p10','p25','p50','p75','p90','p95','p99','p99.5','p99.9'];
+      const pctLabels = lineCfg.map(c => c.label);
+      const pcts = pts.map(p => LatencyHelpers.latencyPercentiles(p));
 
-      const datasets = lineCfg.map((cfg, i) => ({
-        label: pctLabels[i],
-        data: pts.map(p => ({ x: p.commit_index, y: p.histogram?.[cfg.hi]?.[1] || 0 })),
-        borderColor: cfg.color, borderWidth: cfg.w, borderDash: cfg.dash,
-        pointRadius: 0, fill: false, tension: 0.3,
-      }));
+      const datasets = lineCfg
+        .filter(cfg => pcts.some(pc => pc[cfg.label] != null))
+        .map(cfg => ({
+          label: cfg.label,
+          data: pts.map((p, i) => ({ x: p.commit_index, y: pcts[i][cfg.label] ?? NaN })),
+          borderColor: cfg.color, borderWidth: cfg.w, borderDash: cfg.dash,
+          pointRadius: 0, fill: false, tension: 0.3, spanGaps: false,
+        }));
 
-      const latestH = pts.at(-1).histogram || [];
+      const latest = pcts.at(-1);
+      const fmtPct = v => v == null ? '—' : formatUs(v);
       const defaultInfo = [
         infoItem('points', pts.length),
-        infoItem('p50', formatUs(latestH[3]?.[1] || pts.at(-1).p50_us)),
-        infoItem('p99', formatUs(latestH[7]?.[1] || pts.at(-1).p99_us)),
-        infoItem('p99.9', formatUs(latestH[9]?.[1] || pts.at(-1).p99_9_us)),
-        infoItem('load', (pts.at(-1).target_rps/1e6).toFixed(2)+'M (70%)'),
+        infoItem('p50', fmtPct(latest.p50)),
+        infoItem('p99', fmtPct(latest.p99)),
+        infoItem('p99.9', fmtPct(latest['p99.9'])),
+        infoItem('load', LatencyHelpers.latencyLoadLabel(pts.at(-1).target_rps)),
       ].join('');
       document.getElementById('latencyInfo').innerHTML = defaultInfo;
 
@@ -1253,11 +1296,11 @@
         type: 'line', data: { datasets },
         plugins: [makeInfoPlugin('latencyInfo', (_, idx) => {
           const p = pts[idx];
-          const h = p.histogram || [];
+          const pc = pcts[idx];
           return [
             infoItem('', p.date), p.commit.slice(0,8) + (p.pr ? ' #'+p.pr : ''),
-            ...pctLabels.map((lbl, i) => infoItem(lbl, formatUs(h[lineCfg[i].hi]?.[1] || 0))),
-            infoItem('load', (p.actual_rps/1e6).toFixed(2)+'M'),
+            ...pctLabels.filter(lbl => pc[lbl] != null).map(lbl => infoItem(lbl, formatUs(pc[lbl]))),
+            infoItem('load', LatencyHelpers.latencyLoadLabel(p.actual_rps)),
             p.pr_title || '',
           ].filter(Boolean).join('<span class="info-sep"> · </span>');
         }, defaultInfo)],
@@ -1827,16 +1870,16 @@
       const hash = point.commit;
       const shortHash = hash.slice(0, 7);
       const h = point.histogram || [];
+      const pc = LatencyHelpers.latencyPercentiles(point);
+      const prevPc = LatencyHelpers.latencyPercentiles(prevPoint);
 
       // Primary metric: p99
-      const p99 = h[7]?.[1] || 0;
-      const p50 = h[3]?.[1] || 0;
-      const p999 = h[9]?.[1] || 0;
+      const p99 = pc.p99 || 0;
+      const p999 = pc['p99.9'] || 0;
 
       let deltaHtml = '';
       if (prevPoint) {
-        const prevH = prevPoint.histogram || [];
-        const prevP99 = prevH[7]?.[1] || 0;
+        const prevP99 = prevPc.p99 || 0;
         if (prevP99 > 0 && p99 > 0) {
           const delta = ((p99 - prevP99) / prevP99) * 100;
           const gap = point.commit_index - prevPoint.commit_index;
@@ -1856,19 +1899,18 @@
         }
       }
 
-      // Percentile grid
+      // Percentile grid (only percentiles this point actually carries)
       const keyPcts = [
-        { label: 'p50', val: p50 },
-        { label: 'p90', val: h[5]?.[1] || 0 },
-        { label: 'p99', val: p99 },
-        { label: 'p99.9', val: p999 },
-      ];
-      const prevH = prevPoint?.histogram || [];
-      const prevPcts = [prevH[3]?.[1], prevH[5]?.[1], prevH[7]?.[1], prevH[9]?.[1]];
-      const pctItems = keyPcts.map((pct, i) => {
+        { label: 'p50', val: pc.p50 },
+        { label: 'p90', val: pc.p90 },
+        { label: 'p99', val: pc.p99 },
+        { label: 'p99.9', val: pc['p99.9'] },
+      ].filter(p => p.val != null);
+      const pctItems = keyPcts.map(pct => {
         let dStr = '';
-        if (prevPcts[i] && prevPcts[i] > 0) {
-          const d = ((pct.val - prevPcts[i]) / prevPcts[i]) * 100;
+        const prevVal = prevPc[pct.label];
+        if (prevVal && prevVal > 0) {
+          const d = ((pct.val - prevVal) / prevVal) * 100;
           if (Math.abs(d) > 1) {
             const sign = d > 0 ? '+' : '';
             const dCls = d > 0 ? 'cpop-delta-sig-down' : 'cpop-delta-sig-up';
@@ -1919,10 +1961,10 @@
         </div>
         <hr class="cpop-sep">
         <div class="cpop-rps">${formatUs(p99)} <span class="cpop-rps-unit">p99 latency</span></div>
-        <div class="cpop-cv">@ ${(point.target_rps/1e6).toFixed(2)}M rps (70% load)</div>
+        <div class="cpop-cv">@ ${LatencyHelpers.latencyLoadLabel(point.target_rps)} held</div>
         ${deltaHtml}
         <hr class="cpop-sep">
-        <div class="cpop-perf"><div class="cpop-perf-label">Percentiles</div><div class="cpop-perf-grid" style="grid-template-columns:1fr 1fr 1fr 1fr">${pctItems.join('')}</div></div>
+        <div class="cpop-perf"><div class="cpop-perf-label">Percentiles</div><div class="cpop-perf-grid" style="grid-template-columns:repeat(${Math.max(keyPcts.length, 1)}, 1fr)">${pctItems.join('')}</div></div>
         ${histogramSvg}
         <div class="cpop-footer"><span>Esc to dismiss</span><span>${platLabel}</span></div>
       </div>`;
