@@ -2228,3 +2228,74 @@ describe('index.html selector overlay wiring', () => {
     assert.ok(!html.includes("clearS.textContent = '✕ Clear Selection'"), 'Clear Selection chip moved into the Selected section');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// selection-helpers.js — cross-platform overlays: labels + hash encoding
+// ═══════════════════════════════════════════════════════════════════════════
+const selection = require('../lib/selection-helpers.js');
+
+describe('seriesLabel', () => {
+  const names = { workload: id => 'W(' + id + ')', platform: id => 'P(' + id + ')', engine: id => 'E(' + id + ')' };
+  const g4get = { engine: 'valkey', platform: 'graviton4', workloadId: 'get' };
+  const g4set = { engine: 'valkey', platform: 'graviton4', workloadId: 'set' };
+  const amdget = { engine: 'valkey', platform: 'amd64', workloadId: 'get' };
+
+  it('is just the workload label within one platform', () => {
+    assert.equal(selection.seriesLabel(g4get, [g4get, g4set], names), 'W(get)');
+  });
+  it('prepends the platform when the selection spans platforms', () => {
+    assert.equal(selection.seriesLabel(g4get, [g4get, amdget], names), 'P(graviton4) · W(get)');
+    assert.equal(selection.seriesLabel(amdget, [g4get, amdget], names), 'P(amd64) · W(get)');
+  });
+  it('prepends the engine too when engines differ', () => {
+    const redis = { engine: 'redis', platform: 'graviton4', workloadId: 'get' };
+    assert.equal(selection.seriesLabel(redis, [g4get, redis], names), 'E(redis) · W(get)');
+    assert.equal(selection.seriesLabel(redis, [amdget, redis], names), 'E(redis) · P(graviton4) · W(get)');
+  });
+});
+
+describe('encodeWorkloads / decodeWorkloads', () => {
+  const g4get = { engine: 'valkey', platform: 'graviton4', workloadId: 'get-k16-v16-t7-p10' };
+  const g4set = { engine: 'valkey', platform: 'graviton4', workloadId: 'set-k16-v16-t7-p10' };
+  const amdget = { engine: 'valkey', platform: 'amd64', workloadId: 'get-k16-v16-t7-p10' };
+
+  it('writes bare ids when everything is on the primary platform (old form)', () => {
+    assert.equal(selection.encodeWorkloads([g4get, g4set], 'graviton4'), 'get-k16-v16-t7-p10,set-k16-v16-t7-p10');
+  });
+  it('writes platform:id for every entry once any entry is elsewhere', () => {
+    assert.equal(selection.encodeWorkloads([g4get, amdget], 'graviton4'), 'graviton4:get-k16-v16-t7-p10,amd64:get-k16-v16-t7-p10');
+  });
+  it('decodes the old bare form onto the fallback platform', () => {
+    assert.deepEqual(selection.decodeWorkloads('get-k16-v16-t7-p10,set-k16-v16-t7-p10', 'graviton4', 'valkey'), [g4get, g4set]);
+  });
+  it('decodes platform-qualified entries and mixes with bare ones', () => {
+    assert.deepEqual(selection.decodeWorkloads('graviton4:get-k16-v16-t7-p10,amd64:get-k16-v16-t7-p10', 'intel', 'valkey'), [g4get, amdget]);
+    assert.deepEqual(selection.decodeWorkloads('set-k16-v16-t7-p10,amd64:get-k16-v16-t7-p10', 'graviton4', 'valkey'), [g4set, amdget]);
+  });
+  it('round-trips a mixed selection', () => {
+    const sels = [g4get, amdget, g4set];
+    assert.deepEqual(selection.decodeWorkloads(selection.encodeWorkloads(sels, 'graviton4'), 'graviton4', 'valkey'), sels);
+  });
+  it('drops empty entries and handles a missing parameter', () => {
+    assert.deepEqual(selection.decodeWorkloads('', 'x', 'valkey'), []);
+    assert.deepEqual(selection.decodeWorkloads(null, 'x', 'valkey'), []);
+    assert.equal(selection.decodeWorkloads('a,,b', 'x', 'valkey').length, 2);
+  });
+});
+
+describe('index.html cross-platform selection wiring', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  it('no longer gates multi-select on engine+platform', () => {
+    assert.ok(!html.includes('sameContext'));
+  });
+  it('labels and hash go through SelectionHelpers', () => {
+    assert.ok(html.includes('lib/selection-helpers.js'));
+    assert.ok(html.includes('SelectionHelpers.seriesLabel('));
+    assert.ok(html.includes('SelectionHelpers.encodeWorkloads('));
+    assert.ok(html.includes('SelectionHelpers.decodeWorkloads('));
+    assert.ok(!html.includes("params.get('workloads')?.split(',')"));
+  });
+});

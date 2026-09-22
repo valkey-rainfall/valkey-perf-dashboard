@@ -282,6 +282,7 @@
   <script src="lib/perf-groups.js"></script>
   <script src="lib/latency-helpers.js"></script>
   <script src="lib/selector-helpers.js"></script>
+  <script src="lib/selection-helpers.js"></script>
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
 
@@ -547,13 +548,9 @@
           primaryWorkload = selectedWorkloads[0] || null;
         }
       } else {
-        // Only allow multi-select within same engine+platform
-        const sameContext = selectedWorkloads.length === 0 ||
-          (selectedWorkloads[0].engine === item.engine && selectedWorkloads[0].platform === item.platform);
-        if (!sameContext) {
-          // Switch context — clear previous selections
-          selectedWorkloads = [];
-        }
+        // Any combination may be overlaid: every platform sweeps the same
+        // commit list, so all series share the x axis. Labels and the URL
+        // hash carry the platform when the selection spans more than one.
         selectedWorkloads.push(item);
       }
       // Single selection is always primary
@@ -621,7 +618,7 @@
         engine: params.get('engine'),
         platform: params.get('platform'),
         workload: params.get('workload'),
-        workloads: params.get('workloads')?.split(','),
+        workloads: params.get('workloads'),
         zoom: params.get('zoom')?.split(',').map(Number),
         commit: params.get('commit'),
         epoch: EpochHelpers.parseEpochFromHash(params),
@@ -639,7 +636,7 @@
         const wl = selectedWorkloads[0].workloadId;
         if (wl !== DEFAULT_WORKLOAD) params.set('workload', wl);
       } else if (selectedWorkloads.length > 1) {
-        params.set('workloads', selectedWorkloads.map(s => s.workloadId).join(','));
+        params.set('workloads', SelectionHelpers.encodeWorkloads(selectedWorkloads, plat));
       }
       EpochHelpers.writeEpochToHash(params, activeEpoch);
       if (chart && chart.options.scales.x.min > 0) {
@@ -748,10 +745,12 @@
       // that no longer has a history line here (redis) falls back to Valkey.
       const engine = historyEngines().some(e => e.id === hashState.engine) ? hashState.engine : 'valkey';
       const platform = hashState.platform || DEFAULT_PLATFORM;
-      const workloadIds = hashState.workloads || [hashState.workload || DEFAULT_WORKLOAD];
-      for (const wlId of workloadIds) {
-        selectedWorkloads.push({ engine, platform, workloadId: wlId });
-      }
+      // `workloads=` entries may carry their own platform (`graviton4:get-...`);
+      // bare ids (older bookmarks) inherit the `platform=` parameter.
+      const restored = hashState.workloads
+        ? SelectionHelpers.decodeWorkloads(hashState.workloads, platform, engine)
+        : [{ engine, platform, workloadId: hashState.workload || DEFAULT_WORKLOAD }];
+      selectedWorkloads.push(...restored);
       primaryWorkload = selectedWorkloads[0] || null;
 
       // Build UI
@@ -812,8 +811,9 @@
       const workload = data.workloads[0];
       const engineLabel = ENGINES.find(e => e.id === getEngine())?.label || 'Valkey';
       document.getElementById('pageTitle').textContent = `${engineLabel} Unstable — Performance History`;
+      const spansPlatforms = new Set(selectedWorkloads.map(s => s.platform)).size > 1;
       document.getElementById('workload-label').textContent = selectedWorkloads.length > 1
-        ? `${selectedWorkloads.length} workloads overlaid`
+        ? `${selectedWorkloads.length} workloads overlaid` + (spansPlatforms ? ` · detail charts: ${PLATFORM_SHORT_LABELS[platform] || platform}` : '')
         : 'Workload: ' + workload;
 
       // Update release button labels
@@ -868,7 +868,11 @@
           } catch { continue; }
         }
 
-        const wlLabel = THROUGHPUT_WORKLOADS.find(w => w.id === sel.workloadId)?.label || sel.workloadId;
+        const wlLabel = SelectionHelpers.seriesLabel(sel, selectedWorkloads, {
+          workload: id => THROUGHPUT_WORKLOADS.find(w => w.id === id)?.label || id,
+          platform: id => PLATFORM_SHORT_LABELS[id] || PLATFORM_LABELS[id] || id,
+          engine: id => ENGINES.find(e => e.id === id)?.label || id,
+        });
         allSeriesData.push({ points: sPoints, workload: sWorkload, color, label: wlLabel, selection: sel });
 
         // CV band (only for primary or if single-select)
