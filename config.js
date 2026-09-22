@@ -190,15 +190,15 @@ const HELP_TEXT = {
   latency: {
     title: 'Request Latency',
     content: `
-      <p><strong>What it measures:</strong> Per-request latency at 70% of max throughput for each commit. Measured with memtier_benchmark (streaming pipeline, per-request timing).</p>
-      <p><strong>How to read it:</strong> The shaded band spans p50 (bottom) to p99.9 (top). The bold line is p99 — the primary SLA metric.</p>
+      <p><strong>What it measures:</strong> Per-request latency for each commit at a held request rate. The section header names the series shape and rate (for example K=16B V=16B T=7 P=1 @ 100k req/s); the legacy series instead held 70% of that commit's own peak throughput. The load generator is the one for the selected measurement epoch.</p>
+      <p><strong>How to read it:</strong> Each line is one percentile across commits. The bold line is p99 — the primary SLA metric.</p>
       <ul>
-        <li><strong>p50</strong> — typical request latency (dashed green)</li>
+        <li><strong>p50</strong> — typical request latency (green)</li>
         <li><strong>p99</strong> — 99th percentile, regression-sensitive (bold accent)</li>
         <li><strong>p99.9</strong> — tail latency from jemalloc, rehash, THP (dashed red)</li>
       </ul>
-      <p><strong>Tooltip sparkline:</strong> Shows the probability density function (PDF) of the latency distribution. Tall narrow peak = healthy; short wide spread = long tail.</p>
-      <p><strong>Methodology:</strong> Rate-limited to 70% of throughput (same commit). 3 reps, median of each percentile. t=4 c=50 P=10 (200 connections). Server restarted between reps.</p>
+      <p><strong>Percentile coverage:</strong> a series that publishes a full latency histogram shows the intermediate percentiles as thin grey lines and a histogram sparkline in the commit popup; a series that publishes only p50/p99/p99.9/p100 shows those lines alone.</p>
+      <p><strong>Methodology:</strong> Multiple repetitions per commit, median of each percentile. Server restarted between repetitions.</p>
     `
   },
   memory: {

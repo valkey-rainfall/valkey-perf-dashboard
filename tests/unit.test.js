@@ -1962,3 +1962,155 @@ describe('index.html history engines only', () => {
     assert.ok((html.match(/historyEngines\(\)/g) || []).length >= 3);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// latency-helpers.js — latency series id, header, load label, percentiles
+// Fixtures mirror the live manifests: the legacy manifest lists
+// ['get-k16-v16']; the v3 manifest lists a full shape with a held rate plus
+// an engine-prefixed twin, and its points carry named pNN_us fields with no
+// histogram.
+// ═══════════════════════════════════════════════════════════════════════════
+const latency = require('../lib/latency-helpers.js');
+
+describe('latencyCommand', () => {
+  it('reads get/set from the primary workload id', () => {
+    assert.equal(latency.latencyCommand('get-k16-v16-t7-p10'), 'get');
+    assert.equal(latency.latencyCommand('set-k16-v1024-t7-p1'), 'set');
+  });
+  it('falls back to get for mixed, empty and unknown ids', () => {
+    assert.equal(latency.latencyCommand('mixed-s20-k16-v16-t7-p10'), 'get');
+    assert.equal(latency.latencyCommand(undefined), 'get');
+    assert.equal(latency.latencyCommand('bogus'), 'get');
+  });
+});
+
+describe('latencySeriesId', () => {
+  const v3 = ['get-k16-v16-t7-p1-r100k', 'redis-get-k16-v16-t7-p1-r100k'];
+  const legacy = ['get-k16-v16'];
+
+  it('picks the un-prefixed id for valkey from a v3 manifest', () => {
+    assert.equal(latency.latencySeriesId(v3, 'get', 'valkey'), 'get-k16-v16-t7-p1-r100k');
+  });
+  it('picks the engine-prefixed id for another engine', () => {
+    assert.equal(latency.latencySeriesId(v3, 'get', 'redis'), 'redis-get-k16-v16-t7-p1-r100k');
+  });
+  it('returns null when the manifest has no series for the command', () => {
+    assert.equal(latency.latencySeriesId(v3, 'set', 'valkey'), null);
+    assert.equal(latency.latencySeriesId(v3, 'set', 'redis'), null);
+  });
+  it('keeps the legacy id from a legacy manifest', () => {
+    assert.equal(latency.latencySeriesId(legacy, 'get', 'valkey'), 'get-k16-v16');
+  });
+  it('prefixes at fetch time when a legacy manifest lists only valkey ids', () => {
+    assert.equal(latency.latencySeriesId(legacy, 'get', 'redis'), 'redis-get-k16-v16');
+  });
+  it('falls back to the legacy id when the manifest is missing or empty', () => {
+    assert.equal(latency.latencySeriesId(undefined, 'get', 'valkey'), 'get-k16-v16');
+    assert.equal(latency.latencySeriesId([], 'set', 'valkey'), 'set-k16-v16');
+    assert.equal(latency.latencySeriesId(null, 'get', 'redis'), 'redis-get-k16-v16');
+  });
+  it('does not mistake a prefixed id for a valkey one', () => {
+    assert.equal(latency.latencySeriesId(['redis-get-k16-v16-t7-p1-r100k'], 'get', 'valkey'), null);
+  });
+  it('ignores non-string entries', () => {
+    assert.equal(latency.latencySeriesId([null, 42, 'get-k16-v16-t7-p1-r100k'], 'get', 'valkey'), 'get-k16-v16-t7-p1-r100k');
+  });
+});
+
+describe('latencyShapeLabel', () => {
+  it('spells out a full v3 id without the command word', () => {
+    assert.equal(latency.latencyShapeLabel('get-k16-v16-t7-p1-r100k'), 'K=16B V=16B T=7 P=1 @ 100k req/s');
+  });
+  it('drops the engine prefix', () => {
+    assert.equal(latency.latencyShapeLabel('redis-get-k16-v16-t7-p1-r100k'), 'K=16B V=16B T=7 P=1 @ 100k req/s');
+  });
+  it('omits parts a legacy id does not carry', () => {
+    assert.equal(latency.latencyShapeLabel('get-k16-v16'), 'K=16B V=16B');
+  });
+  it('handles a bare rate without the k suffix and mixed ids', () => {
+    assert.equal(latency.latencyShapeLabel('mixed-s20-k16-v64-t7-p10-r500'), 'K=16B V=64B T=7 P=10 @ 500 req/s');
+  });
+  it('returns unparseable ids unchanged', () => {
+    assert.equal(latency.latencyShapeLabel('weird'), 'weird');
+    assert.equal(latency.latencyShapeLabel(undefined), '');
+  });
+});
+
+describe('latencyLoadLabel', () => {
+  it('formats thousands and millions', () => {
+    assert.equal(latency.latencyLoadLabel(100000), '100k req/s');
+    assert.equal(latency.latencyLoadLabel(99999.4), '100k req/s');
+    assert.equal(latency.latencyLoadLabel(1500000), '1.50M req/s');
+    assert.equal(latency.latencyLoadLabel(500), '500 req/s');
+  });
+  it('shows a dash for unknown rates', () => {
+    assert.equal(latency.latencyLoadLabel(undefined), '\u2014');
+    assert.equal(latency.latencyLoadLabel(0), '\u2014');
+    assert.equal(latency.latencyLoadLabel('nope'), '\u2014');
+  });
+});
+
+describe('latencyPercentiles', () => {
+  it('reads named fields when no histogram is published (v3 point)', () => {
+    const pc = latency.latencyPercentiles({ p50_us: 13, p99_us: 19, p99_9_us: 98, p100_us: 511 });
+    assert.equal(pc.p50, 13);
+    assert.equal(pc.p99, 19);
+    assert.equal(pc['p99.9'], 98);
+    assert.equal(pc.p100, 511);
+    assert.equal(pc.p90, null);
+    assert.equal(pc.p10, null);
+  });
+  it('reads every percentile from a full histogram', () => {
+    const histogram = latency.HISTOGRAM_PCTS.map((_, i) => [i, (i + 1) * 10]);
+    const pc = latency.latencyPercentiles({ histogram });
+    assert.equal(pc.p1, 10);
+    assert.equal(pc.p50, 40);
+    assert.equal(pc.p90, 60);
+    assert.equal(pc.p99, 80);
+    assert.equal(pc['p99.9'], 100);
+    assert.equal(pc.p100, 110);
+  });
+  it('prefers the histogram but fills gaps from named fields', () => {
+    const histogram = [[1, 5], [10, 6], [25, 7], [50, 0]];
+    const pc = latency.latencyPercentiles({ histogram, p50_us: 12, p99_us: 20 });
+    assert.equal(pc.p25, 7);
+    assert.equal(pc.p50, 12);
+    assert.equal(pc.p99, 20);
+  });
+  it('yields all-null for a missing point', () => {
+    const pc = latency.latencyPercentiles(null);
+    assert.ok(Object.values(pc).every(v => v === null));
+    assert.deepEqual(Object.keys(pc), latency.HISTOGRAM_PCTS);
+  });
+});
+
+describe('index.html latency + render-race wiring', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  it('loads lib/latency-helpers.js and resolves the series id from the manifest', () => {
+    assert.ok(html.includes('lib/latency-helpers.js'));
+    assert.ok(html.includes('LatencyHelpers.latencySeriesId('));
+    assert.ok(!/`\$\{command\}-k16-v16`/.test(html), 'latency id must not be hardcoded');
+    assert.ok(!html.includes('(P=1 @ 100K rps flat)'), 'latency header must derive from the series id');
+    assert.ok(!html.includes('(70%)'), 'load label must derive from target_rps');
+  });
+
+  it('fans zoom and crosshair out over live charts only', () => {
+    assert.ok(html.includes('function liveCharts()'));
+    // Every remaining direct walk of allCharts must be a destroy sweep.
+    const walks = html.match(/allCharts\.forEach\([^)]*\)/g) || [];
+    assert.ok(walks.every(w => w.includes('destroy')), `unexpected direct walks: ${walks.join(' | ')}`);
+    assert.ok(/function syncZoom[^\n]*liveCharts\(\)/.test(html));
+  });
+
+  it('stamps renders with a generation and re-checks it after awaits', () => {
+    assert.ok(html.includes('const gen = ++renderGeneration;'));
+    const checks = (html.match(/if \(renderIsStale\(gen\)\) return;/g) || []).length;
+    assert.ok(checks >= 12, `expected staleness checks after every await, found ${checks}`);
+    for (const fn of ['renderMemory(platform, data, gen)', 'renderPerfCharts(platform, gen)', 'renderLatency(platform, gen)']) {
+      assert.ok(html.includes(fn), `${fn} must receive the generation`);
+    }
+  });
+});
