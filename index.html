@@ -293,11 +293,9 @@
         return;
       }
       container.style.display = '';
-      const label = activeEpoch
-        ? (epochList.find(e => e.id === activeEpoch) || {}).label || activeEpoch
-        : (epochList[0] || {}).label || 'Default';
+      const defaultId = EpochHelpers.defaultEpochId(epochList);
       container.innerHTML = `<select id="epochSelect" onchange="onEpochChange(this.value)" style="background:var(--card);color:var(--text);border:1px solid var(--border);padding:0.35rem 0.65rem;border-radius:4px;font-size:0.8rem;cursor:pointer;">
-        ${epochList.map(e => `<option value="${e.id}" ${e.id === (activeEpoch || epochList[0]?.id) ? 'selected' : ''}>${e.label}</option>`).join('')}
+        ${epochList.map(e => `<option value="${e.id}" ${e.archived ? 'style="color:var(--muted)"' : ''} ${e.id === (activeEpoch || defaultId) ? 'selected' : ''}>${EpochHelpers.epochOptionLabel(e)}</option>`).join('')}
       </select>`;
     }
 
@@ -702,10 +700,8 @@
       epochList = EpochHelpers.availableEpochs(PLATFORM_MANIFESTS);
       if (hashState.epoch && epochList.some(e => e.id === hashState.epoch)) {
         activeEpoch = hashState.epoch;
-      } else if (epochList.length === 1) {
-        activeEpoch = epochList[0].id; // auto-select sole epoch
       } else if (epochList.length > 0) {
-        activeEpoch = epochList[0].id; // default to first
+        activeEpoch = EpochHelpers.defaultEpochId(epochList); // default to first live epoch
       }
       buildEpochSelector();
 
