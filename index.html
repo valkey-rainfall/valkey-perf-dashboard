@@ -344,7 +344,7 @@
     // =========================================================================
     let selectedWorkloads = [];  // [{engine, platform, workloadId}]
     let primaryWorkload = null;  // {engine, platform, workloadId} — drives sub-charts
-    let activeFilters = { engine: null, platform: null, command: null, valsize: null, pipelining: null }; // chip filters
+    let activeFilters = { platform: null, command: null, valsize: null, pipelining: null }; // chip filters
 
     const MULTI_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
@@ -395,7 +395,6 @@
     // One column per workload parameter; only columns whose value varies across
     // the rows on show are rendered (so a pinned filter collapses its column).
     const SELECTOR_COLUMNS = [
-      { key: 'engine',     label: 'Engine',   text: it => it.engineLabel,                                      val: it => it.engine,        num: false },
       { key: 'platform',   label: 'Platform', text: it => PLATFORM_SHORT_LABELS[it.platform] || it.platLabel,  val: it => it.platform,      num: false },
       { key: 'command',    label: 'Cmd',      text: it => (it.command || '').toUpperCase(),                    val: it => it.command || '', num: false },
       { key: 'valsize',    label: 'Value',    text: it => it.valsize ? 'v' + it.valsize : '',                  val: it => +it.valsize,      num: true },
@@ -412,7 +411,7 @@
       const { selected, available } = SelectorHelpers.partitionSelectorItems(
         selectorItems(), selectedWorkloads, activeFilters,
         { col: selectorSort.col, dir: selectorSort.dir, columns: SELECTOR_COLUMNS });
-      const shownCols = SelectorHelpers.visibleColumns([...selected, ...available], SELECTOR_COLUMNS, SELECTOR_COLUMNS.slice(2, 4)); // fallback: Cmd + Value
+      const shownCols = SelectorHelpers.visibleColumns([...selected, ...available], SELECTOR_COLUMNS, SELECTOR_COLUMNS.slice(1, 3)); // fallback: Cmd + Value
       const span = shownCols.length + 2;
 
       const arrow = k => selectorSort.col === k ? (selectorSort.dir > 0 ? ' ▲' : ' ▼') : '';
@@ -486,7 +485,6 @@
       const pipelines = [...new Set(THROUGHPUT_WORKLOADS.map(wl => wl.id.match(/p(\d+)$/)?.[1]).filter(Boolean))];
 
       const groups = [
-        { key: 'engine', values: historyEngines().map(e => ({ id: e.id, label: e.label })) },
         { key: 'platform', values: PLATFORMS.map(p => ({ id: p, label: PLATFORM_SHORT_LABELS[p] || (PLATFORM_LABELS[p] || p).split(' ')[0] })) },
         { key: 'command', values: commands.map(c => ({ id: c, label: c.toUpperCase() })) },
         { key: 'valsize', values: valsizes.map(v => ({ id: v, label: 'v' + v })) },
@@ -518,7 +516,7 @@
         clearF.style.color = 'var(--danger)';
         clearF.textContent = '✕ Clear Filters';
         clearF.onclick = () => {
-          activeFilters = { engine: null, platform: null, command: null, valsize: null, pipelining: null };
+          activeFilters = { platform: null, command: null, valsize: null, pipelining: null };
           buildChips(); buildSelectorItems();
         };
         bar.appendChild(clearF);
@@ -575,8 +573,7 @@
       if (selectedWorkloads.length === 1) {
         const s = selectedWorkloads[0];
         const wl = THROUGHPUT_WORKLOADS.find(w => w.id === s.workloadId);
-        const eng = ENGINES.find(e => e.id === s.engine);
-        el.textContent = `${eng?.label || s.engine} · ${PLATFORM_SHORT_LABELS[s.platform] || (PLATFORM_LABELS[s.platform]||s.platform).split('(')[0].trim()} · ${wl?.label || s.workloadId}`;
+        el.textContent = `${PLATFORM_SHORT_LABELS[s.platform] || (PLATFORM_LABELS[s.platform]||s.platform).split('(')[0].trim()} · ${wl?.label || s.workloadId}`;
       } else {
         el.textContent = `${selectedWorkloads.length} workloads selected`;
       }

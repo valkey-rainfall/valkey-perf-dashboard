@@ -1965,10 +1965,18 @@ describe('compare.html freshness + HEAD wiring', () => {
 
 describe('index.html history engines only', () => {
   const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
-  it('selector items and engine chips iterate historyEngines()', () => {
+  it('selector items and hash decoding iterate historyEngines()', () => {
     assert.ok(!/for \(const eng of ENGINES\)/.test(html));
-    assert.ok(!/key: 'engine', values: ENGINES\.map/.test(html));
-    assert.ok((html.match(/historyEngines\(\)/g) || []).length >= 3);
+    assert.ok((html.match(/historyEngines\(\)/g) || []).length >= 2);
+  });
+  // The history page shows Valkey only, so the selector carries no engine
+  // chip group, no engine column and no engine prefix in its summary line.
+  // The engine stays in the selection model (file ids, hash) untouched.
+  it('selector has no engine filter chip or column', () => {
+    assert.ok(!/key: 'engine', values:/.test(html), 'engine chip group must not be built');
+    assert.ok(!/key: 'engine',\s+label: 'Engine'/.test(html), 'engine column must not be defined');
+    assert.ok(!/activeFilters = \{ engine:/.test(html), 'engine must not be a filter key');
+    assert.ok(/SELECTOR_COLUMNS\.slice\(1, 3\)\)/.test(html), 'fallback columns must still be Cmd + Value');
   });
 });
 
