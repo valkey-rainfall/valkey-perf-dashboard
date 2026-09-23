@@ -63,19 +63,21 @@
     .controls select, .controls button { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 0.35rem 0.65rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
     .zoom-btn { font-size: 0.8rem; padding: 3px 10px; cursor: pointer; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px; }
     .zoom-btn:hover { background: var(--border); }
+    .visible-range { font-size: 0.75rem; color: var(--muted); margin-left: 0.4rem; font-variant-numeric: tabular-nums; }
 
-    /* Flat list selector */
+    /* Workload selector: an overlay anchored under the header's left edge so
+       the right side of the chart stays visible while series are toggled. */
     .selector-toggle { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.8rem; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 0.35rem; flex: 0 0 auto; white-space: nowrap; }
     .selector-toggle:hover { border-color: var(--accent); }
     .selector-toggle .arrow { transition: transform 0.2s; }
     .selector-toggle.open .arrow { transform: rotate(180deg); }
-    .selector-panel { display: none; background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-top: 0.75rem; overflow: hidden; flex-direction: column; }
+    .selector-panel { display: none; position: absolute; top: calc(100% + 4px); left: 1rem; z-index: 200; width: min(680px, calc(100vw - 2rem)); max-height: min(70vh, 640px); background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.45); overflow: hidden; flex-direction: column; }
     .selector-panel.open { display: flex; }
-    .chip-bar { display: flex; gap: 0.4rem; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center; }
+    .chip-bar { display: flex; gap: 0.4rem; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center; flex: 0 0 auto; }
     .chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; }
     .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
     .chip:hover:not(.active) { border-color: var(--muted); color: var(--text); }
-    .selector-list { display: block; padding: 0.5rem; max-height: 260px; overflow-y: auto; }
+    .selector-list { display: block; padding: 0.5rem; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
     .selector-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.6rem; border-radius: 5px; cursor: pointer; font-size: 0.82rem; transition: background 0.1s; }
     .selector-item:hover { background: var(--bg); }
     .selector-item.selected { background: rgba(99,102,241,0.12); }
@@ -103,6 +105,11 @@
     .selector-table .si-star { color: var(--border); cursor: pointer; padding: 2px 4px; border-radius: 3px; }
     .selector-table .si-star:hover { color: var(--accent); background: rgba(99,102,241,0.1); }
     .selector-table tr.primary .si-star { color: var(--accent); }
+    .selector-table tr.selector-section td { padding: 0.55rem 0.6rem 0.25rem; color: var(--muted); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 1px solid var(--border); background: var(--bg); }
+    .selector-table tr.selector-section .section-action { float: right; text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--danger); cursor: pointer; }
+    .selector-table tr.selector-section .section-action:hover { text-decoration: underline; }
+    .selector-table tr.selector-row.missing td { color: var(--muted); font-style: italic; }
+    .selector-table tr.selector-empty td { padding: 0.6rem; color: var(--muted); font-size: 0.78rem; font-style: italic; }
 
     /* Annotations */
     .annotations { display: grid; gap: 0.5rem; }
@@ -208,7 +215,7 @@
       <h1 id="pageTitle" style="font-size:1.05rem;margin:0;">Valkey Unstable — Performance History</h1>
       <span id="workload-label" style="color:var(--muted);font-size:0.78rem;"></span>
     </div>
-    <button class="selector-toggle" id="selectorToggle" onclick="toggleSelectorPanel()">
+    <button class="selector-toggle" id="selectorToggle" onclick="toggleSelectorPanel()" aria-haspopup="dialog" aria-expanded="false" aria-controls="selectorPanel">
       <span id="selectorSummary">Loading...</span>
       <span class="arrow" style="font-size:0.7rem;">▼</span>
     </button>
@@ -218,19 +225,19 @@
       <button id="btn-last-release" onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
       <button onclick="zoomAll('last100')" class="zoom-btn">Last 100 Commits</button>
       <button onclick="zoomAll('reset')" class="zoom-btn">Reset Zoom</button>
+      <span id="visibleRange" class="visible-range" title="Visible commit-index window"></span>
     </div>
     <nav class="header-links" aria-label="Dashboard pages">
       <a href="notable.html">Notable Changes</a>
       <a href="compare.html">Compare Engines</a>
       <a href="status.html">Host Status ↗</a>
     </nav>
+    <!-- Workload selector: overlay anchored under the header, not part of the page flow -->
+    <div id="selectorPanel" class="selector-panel" role="dialog" aria-label="Select workloads">
+      <div class="chip-bar" id="chipBar"></div>
+      <div class="selector-list" id="selectorList"></div>
+    </div>
   </header>
-
-  <!-- Workload selector panel (inline, expands below header) -->
-  <div id="selectorPanel" class="selector-panel">
-    <div class="chip-bar" id="chipBar"></div>
-    <div class="selector-list" id="selectorList"></div>
-  </div>
 
   <!-- Throughput -->
   <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Throughput</h2><button class="help-btn" onclick="showHelp('throughput')">?</button></div>
@@ -276,6 +283,9 @@
   <script src="lib/point-helpers.js"></script>
   <script src="lib/perf-groups.js"></script>
   <script src="lib/latency-helpers.js"></script>
+  <script src="lib/selector-helpers.js"></script>
+  <script src="lib/selection-helpers.js"></script>
+  <script src="lib/axis-ticks.js"></script>
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
 
@@ -345,17 +355,28 @@
     // Selector panel
     // =========================================================================
 
-    function toggleSelectorPanel() {
+    function setSelectorPanel(open) {
       const panel = document.getElementById('selectorPanel');
       const toggle = document.getElementById('selectorToggle');
-      panel.classList.toggle('open');
-      toggle.classList.toggle('open');
+      panel.classList.toggle('open', open);
+      toggle.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', String(open));
     }
+    function isSelectorPanelOpen() { return document.getElementById('selectorPanel').classList.contains('open'); }
+    function toggleSelectorPanel() { setSelectorPanel(!isSelectorPanelOpen()); }
+
+    // The panel is an overlay: Esc and a click anywhere outside it (or its
+    // toggle) close it. Clicks inside keep it open so several series can be
+    // toggled in a row while the chart updates behind it.
+    document.addEventListener('mousedown', e => {
+      if (!isSelectorPanelOpen()) return;
+      if (e.target.closest('#selectorPanel') || e.target.closest('#selectorToggle')) return;
+      setSelectorPanel(false);
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && isSelectorPanelOpen()) setSelectorPanel(false); });
 
     let selectorSort = { col: null, dir: 1 };
-    function buildSelectorItems() {
-      const list = document.getElementById('selectorList');
-      list.innerHTML = '';
+    function selectorItems() {
       const items = [];
       // Only history-scope engines have a per-commit line to show here; a
       // release-and-tip engine (Redis) lives on the comparison page.
@@ -363,67 +384,71 @@
         for (const plat of PLATFORMS) {
           for (const wl of THROUGHPUT_WORKLOADS) {
             if (wl.platforms && !wl.platforms.includes(plat)) continue;
-            // Parse command, value size, and pipelining from workload ID (e.g. "get-k16-v128-t7-p10")
-            const parts = wl.id.match(/^(get|set|mixed-s\d+)-k\d+-v(\d+)-t(\d+)-p(\d+)/);
-            const command = parts ? parts[1] : null;
-            const valsize = parts ? parts[2] : null;
-            const threads = parts ? parts[3] : null;
-            const pipelining = parts ? parts[4] : null;
-            items.push({ engine: eng.id, platform: plat, workloadId: wl.id, label: wl.label, engineLabel: eng.label, platLabel: PLATFORM_SHORT_LABELS[plat] || PLATFORM_LABELS[plat] || plat, command, valsize, threads, pipelining });
+            const parsed = SelectorHelpers.parseWorkloadId(wl.id);
+            items.push({ engine: eng.id, platform: plat, workloadId: wl.id, label: wl.label, engineLabel: eng.label, platLabel: PLATFORM_SHORT_LABELS[plat] || PLATFORM_LABELS[plat] || plat, ...parsed });
           }
         }
       }
+      return items;
+    }
 
-      const filtered = items.filter(it => {
-        if (activeFilters.engine && it.engine !== activeFilters.engine) return false;
-        if (activeFilters.platform && it.platform !== activeFilters.platform) return false;
-        if (activeFilters.command && it.command !== activeFilters.command) return false;
-        if (activeFilters.valsize && it.valsize !== activeFilters.valsize) return false;
-        if (activeFilters.pipelining && it.pipelining !== activeFilters.pipelining) return false;
-        return true;
-      });
+    // One column per workload parameter; only columns whose value varies across
+    // the rows on show are rendered (so a pinned filter collapses its column).
+    const SELECTOR_COLUMNS = [
+      { key: 'engine',     label: 'Engine',   text: it => it.engineLabel,                                      val: it => it.engine,        num: false },
+      { key: 'platform',   label: 'Platform', text: it => PLATFORM_SHORT_LABELS[it.platform] || it.platLabel,  val: it => it.platform,      num: false },
+      { key: 'command',    label: 'Cmd',      text: it => (it.command || '').toUpperCase(),                    val: it => it.command || '', num: false },
+      { key: 'valsize',    label: 'Value',    text: it => it.valsize ? 'v' + it.valsize : '',                  val: it => +it.valsize,      num: true },
+      { key: 'threads',    label: 'Threads',  text: it => it.threads ? 't' + it.threads : '',                  val: it => +it.threads,      num: true },
+      { key: 'pipelining', label: 'Pipeline', text: it => it.pipelining ? 'P' + it.pipelining : '',            val: it => +it.pipelining,   num: true },
+    ];
 
-      // One column per workload parameter; only render columns whose value actually varies
-      // across the filtered set (so a pinned filter collapses its column).
-      const allCols = [
-        { key: 'engine',     label: 'Engine',   text: it => it.engineLabel,                                      val: it => it.engine,        num: false },
-        { key: 'platform',   label: 'Platform', text: it => PLATFORM_SHORT_LABELS[it.platform] || it.platLabel,  val: it => it.platform,      num: false },
-        { key: 'command',    label: 'Cmd',      text: it => (it.command || '').toUpperCase(),                    val: it => it.command || '', num: false },
-        { key: 'valsize',    label: 'Value',    text: it => it.valsize ? 'v' + it.valsize : '',                  val: it => +it.valsize,      num: true },
-        { key: 'threads',    label: 'Threads',  text: it => it.threads ? 't' + it.threads : '',                  val: it => +it.threads,      num: true },
-        { key: 'pipelining', label: 'Pipeline', text: it => it.pipelining ? 'P' + it.pipelining : '',            val: it => +it.pipelining,   num: true },
-      ];
-      const varyCols = allCols.filter(c => new Set(filtered.map(it => c.text(it))).size > 1);
-      const shownCols = varyCols.length ? varyCols : allCols.slice(2, 4); // fallback: Cmd + Value
-
-      if (selectorSort.col) {
-        const c = allCols.find(x => x.key === selectorSort.col);
-        if (c) filtered.sort((a, b) => c.num
-          ? (c.val(a) - c.val(b)) * selectorSort.dir
-          : String(c.val(a)).localeCompare(String(c.val(b))) * selectorSort.dir);
-      }
+    // Two sections in one table so the columns stay aligned: the selected
+    // series first, in selection order (= chart colour/legend order) and never
+    // hidden by a filter; then the unselected series matching the filters.
+    function buildSelectorItems() {
+      const list = document.getElementById('selectorList');
+      list.innerHTML = '';
+      const { selected, available } = SelectorHelpers.partitionSelectorItems(
+        selectorItems(), selectedWorkloads, activeFilters,
+        { col: selectorSort.col, dir: selectorSort.dir, columns: SELECTOR_COLUMNS });
+      const shownCols = SelectorHelpers.visibleColumns([...selected, ...available], SELECTOR_COLUMNS, SELECTOR_COLUMNS.slice(2, 4)); // fallback: Cmd + Value
+      const span = shownCols.length + 2;
 
       const arrow = k => selectorSort.col === k ? (selectorSort.dir > 0 ? ' ▲' : ' ▼') : '';
+      const rowHtml = (it, ref) => {
+        const key = getSelectionKey(it);
+        const colorIdx = selectedWorkloads.findIndex(s => getSelectionKey(s) === key);
+        const isSelected = colorIdx >= 0;
+        const isPrimary = primaryWorkload && getSelectionKey(primaryWorkload) === key;
+        const color = isSelected ? MULTI_COLORS[colorIdx % MULTI_COLORS.length] : 'transparent';
+        const title = it.missing ? ' title="Not in the current manifest; click to remove"' : '';
+        return `<tr class="selector-row${isSelected ? ' selected' : ''}${isPrimary ? ' primary' : ''}${it.missing ? ' missing' : ''}" data-ref="${ref}"${title}>` +
+          `<td class="si-sel-col"><span class="si-check">${isSelected ? '✓' : ''}</span><span class="si-color" style="background:${color}"></span></td>` +
+          shownCols.map(c => `<td>${c.text(it)}</td>`).join('') +
+          `<td class="si-star-col"><span class="si-star" title="Set as primary (drives detail charts)">★</span></td></tr>`;
+      };
+      const sectionHtml = (label, action) =>
+        `<tr class="selector-section"><td colspan="${span}">${label}${action ? `<span class="section-action" data-action="${action.id}">${action.label}</span>` : ''}</td></tr>`;
+
       const table = document.createElement('table');
       table.className = 'selector-table';
       table.innerHTML =
         '<thead><tr><th class="si-sel-col"></th>' +
         shownCols.map(c => `<th data-key="${c.key}">${c.label}${arrow(c.key)}</th>`).join('') +
         '<th class="si-star-col"></th></tr></thead><tbody>' +
-        filtered.map((it, idx) => {
-          const key = getSelectionKey(it);
-          const isSelected = selectedWorkloads.some(s => getSelectionKey(s) === key);
-          const isPrimary = primaryWorkload && getSelectionKey(primaryWorkload) === key;
-          const colorIdx = selectedWorkloads.findIndex(s => getSelectionKey(s) === key);
-          const color = isSelected ? MULTI_COLORS[colorIdx % MULTI_COLORS.length] : 'transparent';
-          return `<tr class="selector-row${isSelected ? ' selected' : ''}${isPrimary ? ' primary' : ''}" data-idx="${idx}">` +
-            `<td class="si-sel-col"><span class="si-check">${isSelected ? '✓' : ''}</span><span class="si-color" style="background:${color}"></span></td>` +
-            shownCols.map(c => `<td>${c.text(it)}</td>`).join('') +
-            `<td class="si-star-col"><span class="si-star" title="Set as primary (drives detail charts)">★</span></td></tr>`;
-        }).join('') +
+        sectionHtml(`Selected (${selected.length})`, selected.length ? { id: 'clear-selection', label: '✕ Clear selection' } : null) +
+        (selected.length
+          ? selected.map((it, i) => rowHtml(it, `s${i}`)).join('')
+          : `<tr class="selector-empty"><td colspan="${span}">Nothing selected — pick a series below.</td></tr>`) +
+        sectionHtml(`Available (${available.length})`) +
+        (available.length
+          ? available.map((it, i) => rowHtml(it, `a${i}`)).join('')
+          : `<tr class="selector-empty"><td colspan="${span}">No unselected series match the current filters.</td></tr>`) +
         '</tbody>';
 
-      // Sort on header click
+      // Sort on header click (applies to the available section; the selected
+      // section keeps selection order)
       table.querySelectorAll('th[data-key]').forEach(th => {
         th.addEventListener('click', () => {
           const k = th.dataset.key;
@@ -432,9 +457,11 @@
           buildSelectorItems();
         });
       });
+      table.querySelectorAll('.section-action[data-action="clear-selection"]').forEach(el => el.addEventListener('click', clearSelection));
       // Row = toggle selection; star = set primary
+      const byRef = ref => ref[0] === 's' ? selected[+ref.slice(1)] : available[+ref.slice(1)];
       table.querySelectorAll('tr.selector-row').forEach(tr => {
-        const it = filtered[+tr.dataset.idx];
+        const it = byRef(tr.dataset.ref);
         tr.addEventListener('click', (e) => {
           if (e.target.closest('.si-star')) return;
           toggleSelection(it);
@@ -480,7 +507,8 @@
         }
       }
 
-      // Clear buttons (separate for filters and selection)
+      // Clear Filters lives here; Clear Selection sits in the Selected section
+      // header of the list so it stays next to the rows it acts on.
       const hasFilter = Object.values(activeFilters).some(v => v);
       if (hasFilter) {
         bar.appendChild(Object.assign(document.createElement('span'), { style: 'width:1px;height:16px;background:var(--border)' }));
@@ -494,16 +522,6 @@
           buildChips(); buildSelectorItems();
         };
         bar.appendChild(clearF);
-      }
-      if (selectedWorkloads.length > 0) {
-        if (!hasFilter) bar.appendChild(Object.assign(document.createElement('span'), { style: 'width:1px;height:16px;background:var(--border)' }));
-        const clearS = document.createElement('span');
-        clearS.className = 'chip';
-        clearS.style.borderColor = 'var(--danger)';
-        clearS.style.color = 'var(--danger)';
-        clearS.textContent = '✕ Clear Selection';
-        clearS.onclick = clearSelection;
-        bar.appendChild(clearS);
       }
     }
 
@@ -533,13 +551,9 @@
           primaryWorkload = selectedWorkloads[0] || null;
         }
       } else {
-        // Only allow multi-select within same engine+platform
-        const sameContext = selectedWorkloads.length === 0 ||
-          (selectedWorkloads[0].engine === item.engine && selectedWorkloads[0].platform === item.platform);
-        if (!sameContext) {
-          // Switch context — clear previous selections
-          selectedWorkloads = [];
-        }
+        // Any combination may be overlaid: every platform sweeps the same
+        // commit list, so all series share the x axis. Labels and the URL
+        // hash carry the platform when the selection spans more than one.
         selectedWorkloads.push(item);
       }
       // Single selection is always primary
@@ -607,7 +621,7 @@
         engine: params.get('engine'),
         platform: params.get('platform'),
         workload: params.get('workload'),
-        workloads: params.get('workloads')?.split(','),
+        workloads: params.get('workloads'),
         zoom: params.get('zoom')?.split(',').map(Number),
         commit: params.get('commit'),
         epoch: EpochHelpers.parseEpochFromHash(params),
@@ -625,7 +639,7 @@
         const wl = selectedWorkloads[0].workloadId;
         if (wl !== DEFAULT_WORKLOAD) params.set('workload', wl);
       } else if (selectedWorkloads.length > 1) {
-        params.set('workloads', selectedWorkloads.map(s => s.workloadId).join(','));
+        params.set('workloads', SelectionHelpers.encodeWorkloads(selectedWorkloads, plat));
       }
       EpochHelpers.writeEpochToHash(params, activeEpoch);
       if (chart && chart.options.scales.x.min > 0) {
@@ -633,8 +647,17 @@
         const max = Math.round(chart.options.scales.x.max);
         params.set('zoom', `${min},${max}`);
       }
+      updateVisibleRange();
       const hash = params.toString();
       history.replaceState(null, '', hash ? '#' + hash : location.pathname);
+    }
+
+    // The axis is marked at releases, so the numeric commit-index window lives
+    // here (next to the zoom buttons) instead of on the axis ticks.
+    function updateVisibleRange() {
+      const el = document.getElementById('visibleRange'); if (!el) return;
+      const x = chart && chart.options.scales.x;
+      el.textContent = x ? `commits ${AxisTicks.formatRange(x.min, x.max)}` : '';
     }
 
     function getVersionReleases(data) {
@@ -685,13 +708,30 @@
     function infoItem(label, value) { return `<span><span class="info-val">${value}</span> ${label}</span>`; }
 
     // Common chart options
+    // Shared x axis: commit index under the hood, marked at release landmarks
+    // (falls back to commit-index ticks when fewer than two releases are in
+    // view). Tick selection lives in lib/axis-ticks.js so it is unit-tested.
+    function xAxisOpts(maxIndex, landmarks) {
+      return {
+        type: 'linear', min: 0, max: maxIndex,
+        grid: { color: 'var(--border)' },
+        afterBuildTicks(scale) {
+          const { ticks } = AxisTicks.releaseTicks(landmarks, scale.min, scale.max);
+          scale.ticks = ticks.map(t => ({ value: t.value, release: t.label }));
+        },
+        ticks: {
+          color: '#64748b', autoSkip: false, maxRotation: 0,
+          callback: (v, i, ticks) => (ticks[i] && ticks[i].release != null) ? ticks[i].release : v,
+        },
+      };
+    }
+
     function baseChartOpts(totalCommits, landmarks) {
       const annotations = {};
       (landmarks || []).forEach((lm, i) => {
         if (lm.commit_index != null) annotations[`lm${i}`] = {
           type: 'line', xMin: lm.commit_index, xMax: lm.commit_index,
           borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
-          label: { display: true, content: lm.label, position: 'start', font: { size: 10 }, color: '#64748b' }
         };
       });
       return {
@@ -703,7 +743,7 @@
           zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart: c}) => { syncZoom(c, c.scales.x.min, c.scales.x.max); updateHashState(); } } },
         },
         scales: {
-          x: { type: 'linear', min: 0, max: totalCommits + 1, ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: 'var(--border)' } },
+          x: xAxisOpts(totalCommits + 1, landmarks),
         }
       };
     }
@@ -734,10 +774,12 @@
       // that no longer has a history line here (redis) falls back to Valkey.
       const engine = historyEngines().some(e => e.id === hashState.engine) ? hashState.engine : 'valkey';
       const platform = hashState.platform || DEFAULT_PLATFORM;
-      const workloadIds = hashState.workloads || [hashState.workload || DEFAULT_WORKLOAD];
-      for (const wlId of workloadIds) {
-        selectedWorkloads.push({ engine, platform, workloadId: wlId });
-      }
+      // `workloads=` entries may carry their own platform (`graviton4:get-...`);
+      // bare ids (older bookmarks) inherit the `platform=` parameter.
+      const restored = hashState.workloads
+        ? SelectionHelpers.decodeWorkloads(hashState.workloads, platform, engine)
+        : [{ engine, platform, workloadId: hashState.workload || DEFAULT_WORKLOAD }];
+      selectedWorkloads.push(...restored);
       primaryWorkload = selectedWorkloads[0] || null;
 
       // Build UI
@@ -760,6 +802,7 @@
         if (hashState.zoom && hashState.zoom.length === 2) {
           const [min, max] = hashState.zoom;
           liveCharts().forEach(c => { c.options.scales.x.min = min; c.options.scales.x.max = max; c.update('none'); });
+          updateVisibleRange();
         }
         if (hashState.commit) highlightCommit(hashState.commit);
       }
@@ -798,8 +841,9 @@
       const workload = data.workloads[0];
       const engineLabel = ENGINES.find(e => e.id === getEngine())?.label || 'Valkey';
       document.getElementById('pageTitle').textContent = `${engineLabel} Unstable — Performance History`;
+      const spansPlatforms = new Set(selectedWorkloads.map(s => s.platform)).size > 1;
       document.getElementById('workload-label').textContent = selectedWorkloads.length > 1
-        ? `${selectedWorkloads.length} workloads overlaid`
+        ? `${selectedWorkloads.length} workloads overlaid` + (spansPlatforms ? ` · detail charts: ${PLATFORM_SHORT_LABELS[platform] || platform}` : '')
         : 'Workload: ' + workload;
 
       // Update release button labels
@@ -854,7 +898,11 @@
           } catch { continue; }
         }
 
-        const wlLabel = THROUGHPUT_WORKLOADS.find(w => w.id === sel.workloadId)?.label || sel.workloadId;
+        const wlLabel = SelectionHelpers.seriesLabel(sel, selectedWorkloads, {
+          workload: id => THROUGHPUT_WORKLOADS.find(w => w.id === id)?.label || id,
+          platform: id => PLATFORM_SHORT_LABELS[id] || PLATFORM_LABELS[id] || id,
+          engine: id => ENGINES.find(e => e.id === id)?.label || id,
+        });
         allSeriesData.push({ points: sPoints, workload: sWorkload, color, label: wlLabel, selection: sel });
 
         // CV band (only for primary or if single-select)
@@ -953,6 +1001,7 @@
         options: opts,
       });
       allCharts.push(chart);
+      updateVisibleRange();
 
       // Sub-charts use primary workload only
       await Promise.all([renderMemory(platform, data, gen), renderPerfCharts(platform, gen), renderLatency(platform, gen)]);
@@ -1169,7 +1218,7 @@
         div.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem">${group.title}${helpBtn}</div><canvas></canvas>`;
         container.appendChild(div);
 
-        const scales = { x: { type: 'linear', min: 0, max: maxIdx, ticks: { color: '#64748b', maxTicksLimit: 6 }, grid: { color: 'var(--border)' } } };
+        const scales = { x: xAxisOpts(maxIdx, currentData && currentData.landmarks) };
         if (isCPU) {
           scales.y = { stacked: true, min: 0, max: 100, title: { display: true, text: '% of samples', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'var(--border)' } };
         } else if (isTMA) {

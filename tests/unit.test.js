@@ -2114,3 +2114,308 @@ describe('index.html latency + render-race wiring', () => {
     }
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// selector-helpers.js — two-section workload selector (selected / available)
+// ═══════════════════════════════════════════════════════════════════════════
+const selector = require('../lib/selector-helpers.js');
+
+describe('parseWorkloadId', () => {
+  it('extracts command, value size, threads and pipelining', () => {
+    assert.deepEqual(selector.parseWorkloadId('get-k16-v128-t7-p10'), { command: 'get', valsize: '128', threads: '7', pipelining: '10' });
+    assert.deepEqual(selector.parseWorkloadId('mixed-s20-k16-v16-t7-p1'), { command: 'mixed-s20', valsize: '16', threads: '7', pipelining: '1' });
+  });
+  it('yields nulls for unknown shapes', () => {
+    assert.deepEqual(selector.parseWorkloadId('bogus'), { command: null, valsize: null, threads: null, pipelining: null });
+    assert.deepEqual(selector.parseWorkloadId(undefined), { command: null, valsize: null, threads: null, pipelining: null });
+  });
+});
+
+describe('partitionSelectorItems', () => {
+  const mk = (platform, id) => ({ engine: 'valkey', platform, workloadId: id, engineLabel: 'Valkey', platLabel: platform, ...selector.parseWorkloadId(id) });
+  const items = [
+    mk('amd64', 'get-k16-v16-t7-p10'), mk('amd64', 'set-k16-v16-t7-p10'), mk('amd64', 'get-k16-v16-t7-p1'),
+    mk('graviton4', 'get-k16-v16-t7-p10'), mk('graviton4', 'set-k16-v16-t7-p10'),
+  ];
+  const noFilters = { engine: null, platform: null, command: null, valsize: null, pipelining: null };
+
+  it('keeps the selected section in selection order and out of the available section', () => {
+    const selected = [items[4], items[0]];
+    const { selected: s, available: a } = selector.partitionSelectorItems(items, selected, noFilters);
+    assert.deepEqual(s.map(selector.selectionKey), selected.map(selector.selectionKey));
+    assert.equal(a.length, 3);
+    assert.ok(a.every(it => !selected.some(sel => selector.selectionKey(sel) === selector.selectionKey(it))));
+  });
+
+  it('never hides a selected row behind a filter', () => {
+    const selected = [items[1]]; // amd64 SET
+    const { selected: s, available: a } = selector.partitionSelectorItems(items, selected, { ...noFilters, command: 'get' });
+    assert.equal(s.length, 1);
+    assert.equal(s[0].workloadId, 'set-k16-v16-t7-p10');
+    assert.ok(a.every(it => it.command === 'get'));
+    assert.equal(a.length, 3);
+  });
+
+  it('applies platform and pipelining filters to the available section', () => {
+    const { available } = selector.partitionSelectorItems(items, [], { ...noFilters, platform: 'graviton4', pipelining: '10' });
+    assert.deepEqual(available.map(it => it.workloadId), ['get-k16-v16-t7-p10', 'set-k16-v16-t7-p10']);
+  });
+
+  it('synthesizes a row for a selected series the manifest no longer lists', () => {
+    const stale = { engine: 'valkey', platform: 'intel', workloadId: 'get-k16-v16-t24-p100' };
+    const { selected } = selector.partitionSelectorItems(items, [stale], noFilters);
+    assert.equal(selected.length, 1);
+    assert.equal(selected[0].missing, true);
+    assert.equal(selected[0].command, 'get');
+    assert.equal(selected[0].pipelining, '100');
+  });
+
+  it('sorts only the available section', () => {
+    const columns = [{ key: 'pipelining', val: it => +it.pipelining, num: true }];
+    const selected = [items[1], items[0]];
+    const { selected: s, available: a } = selector.partitionSelectorItems(items, selected, noFilters, { col: 'pipelining', dir: 1, columns });
+    assert.deepEqual(s.map(it => it.workloadId), ['set-k16-v16-t7-p10', 'get-k16-v16-t7-p10']);
+    assert.deepEqual(a.map(it => +it.pipelining), [1, 10, 10]);
+    const desc = selector.partitionSelectorItems(items, selected, noFilters, { col: 'pipelining', dir: -1, columns }).available;
+    assert.deepEqual(desc.map(it => +it.pipelining), [10, 10, 1]);
+  });
+
+  it('tolerates missing inputs', () => {
+    assert.deepEqual(selector.partitionSelectorItems(undefined, undefined, undefined), { selected: [], available: [] });
+  });
+});
+
+describe('visibleColumns', () => {
+  const cols = [
+    { key: 'platform', text: it => it.platform },
+    { key: 'command', text: it => it.command },
+  ];
+  it('keeps only columns that vary across both sections together', () => {
+    const rows = [{ platform: 'amd64', command: 'get' }, { platform: 'amd64', command: 'set' }];
+    assert.deepEqual(selector.visibleColumns(rows, cols).map(c => c.key), ['command']);
+  });
+  it('falls back when nothing varies', () => {
+    const rows = [{ platform: 'amd64', command: 'get' }];
+    assert.deepEqual(selector.visibleColumns(rows, cols, [cols[1]]).map(c => c.key), ['command']);
+    assert.deepEqual(selector.visibleColumns([], cols), []);
+  });
+});
+
+describe('index.html selector overlay wiring', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  it('renders the panel inside the header as a positioned overlay', () => {
+    const header = html.slice(html.indexOf('<header>'), html.indexOf('</header>'));
+    assert.ok(header.includes('id="selectorPanel"'), 'panel must live inside the header so it is anchored to it');
+    assert.ok(/\.selector-panel \{[^}]*position: absolute/.test(html));
+    assert.ok(/\.selector-panel \{[^}]*z-index/.test(html));
+    assert.ok(!/\.selector-panel \{[^}]*margin-top/.test(html), 'overlay must not take layout space');
+  });
+
+  it('closes on Escape and on clicks outside, via the helper', () => {
+    assert.ok(html.includes('function setSelectorPanel(open)'));
+    assert.ok(/e\.key === 'Escape' && isSelectorPanelOpen\(\)/.test(html));
+    assert.ok(html.includes("e.target.closest('#selectorPanel')"));
+  });
+
+  it('builds the two-section list through SelectorHelpers', () => {
+    assert.ok(html.includes('lib/selector-helpers.js'));
+    assert.ok(html.includes('SelectorHelpers.partitionSelectorItems('));
+    assert.ok(html.includes('SelectorHelpers.visibleColumns('));
+    assert.ok(html.includes('data-action="clear-selection"'));
+    assert.ok(!html.includes("clearS.textContent = '✕ Clear Selection'"), 'Clear Selection chip moved into the Selected section');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// selection-helpers.js — cross-platform overlays: labels + hash encoding
+// ═══════════════════════════════════════════════════════════════════════════
+const selection = require('../lib/selection-helpers.js');
+
+describe('seriesLabel', () => {
+  const names = { workload: id => 'W(' + id + ')', platform: id => 'P(' + id + ')', engine: id => 'E(' + id + ')' };
+  const g4get = { engine: 'valkey', platform: 'graviton4', workloadId: 'get' };
+  const g4set = { engine: 'valkey', platform: 'graviton4', workloadId: 'set' };
+  const amdget = { engine: 'valkey', platform: 'amd64', workloadId: 'get' };
+
+  it('is just the workload label within one platform', () => {
+    assert.equal(selection.seriesLabel(g4get, [g4get, g4set], names), 'W(get)');
+  });
+  it('prepends the platform when the selection spans platforms', () => {
+    assert.equal(selection.seriesLabel(g4get, [g4get, amdget], names), 'P(graviton4) · W(get)');
+    assert.equal(selection.seriesLabel(amdget, [g4get, amdget], names), 'P(amd64) · W(get)');
+  });
+  it('prepends the engine too when engines differ', () => {
+    const redis = { engine: 'redis', platform: 'graviton4', workloadId: 'get' };
+    assert.equal(selection.seriesLabel(redis, [g4get, redis], names), 'E(redis) · W(get)');
+    assert.equal(selection.seriesLabel(redis, [amdget, redis], names), 'E(redis) · P(graviton4) · W(get)');
+  });
+});
+
+describe('encodeWorkloads / decodeWorkloads', () => {
+  const g4get = { engine: 'valkey', platform: 'graviton4', workloadId: 'get-k16-v16-t7-p10' };
+  const g4set = { engine: 'valkey', platform: 'graviton4', workloadId: 'set-k16-v16-t7-p10' };
+  const amdget = { engine: 'valkey', platform: 'amd64', workloadId: 'get-k16-v16-t7-p10' };
+
+  it('writes bare ids when everything is on the primary platform (old form)', () => {
+    assert.equal(selection.encodeWorkloads([g4get, g4set], 'graviton4'), 'get-k16-v16-t7-p10,set-k16-v16-t7-p10');
+  });
+  it('writes platform:id for every entry once any entry is elsewhere', () => {
+    assert.equal(selection.encodeWorkloads([g4get, amdget], 'graviton4'), 'graviton4:get-k16-v16-t7-p10,amd64:get-k16-v16-t7-p10');
+  });
+  it('decodes the old bare form onto the fallback platform', () => {
+    assert.deepEqual(selection.decodeWorkloads('get-k16-v16-t7-p10,set-k16-v16-t7-p10', 'graviton4', 'valkey'), [g4get, g4set]);
+  });
+  it('decodes platform-qualified entries and mixes with bare ones', () => {
+    assert.deepEqual(selection.decodeWorkloads('graviton4:get-k16-v16-t7-p10,amd64:get-k16-v16-t7-p10', 'intel', 'valkey'), [g4get, amdget]);
+    assert.deepEqual(selection.decodeWorkloads('set-k16-v16-t7-p10,amd64:get-k16-v16-t7-p10', 'graviton4', 'valkey'), [g4set, amdget]);
+  });
+  it('round-trips a mixed selection', () => {
+    const sels = [g4get, amdget, g4set];
+    assert.deepEqual(selection.decodeWorkloads(selection.encodeWorkloads(sels, 'graviton4'), 'graviton4', 'valkey'), sels);
+  });
+  it('drops empty entries and handles a missing parameter', () => {
+    assert.deepEqual(selection.decodeWorkloads('', 'x', 'valkey'), []);
+    assert.deepEqual(selection.decodeWorkloads(null, 'x', 'valkey'), []);
+    assert.equal(selection.decodeWorkloads('a,,b', 'x', 'valkey').length, 2);
+  });
+});
+
+describe('index.html cross-platform selection wiring', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  it('no longer gates multi-select on engine+platform', () => {
+    assert.ok(!html.includes('sameContext'));
+  });
+  it('labels and hash go through SelectionHelpers', () => {
+    assert.ok(html.includes('lib/selection-helpers.js'));
+    assert.ok(html.includes('SelectionHelpers.seriesLabel('));
+    assert.ok(html.includes('SelectionHelpers.encodeWorkloads('));
+    assert.ok(html.includes('SelectionHelpers.decodeWorkloads('));
+    assert.ok(!html.includes("params.get('workloads')?.split(',')"));
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// axis-ticks.js — release-marked x axis
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('axis-ticks.js', () => {
+  const axis = require('../lib/axis-ticks.js');
+  // Live graviton4 landmarks as of 9.2 (total_commits 2278).
+  const LANDMARKS = [
+    { label: 'First benchmarkable', commit_index: 105 },
+    { label: '7.2.4', commit_index: 163 },
+    { label: '8.0', commit_index: 645 },
+    { label: '8.1', commit_index: 1093 },
+    { label: '9.0', commit_index: 1425 },
+    { label: '9.1', commit_index: 1837 },
+    { label: '9.2', commit_index: 2261 },
+  ];
+
+  describe('releaseLandmarks', () => {
+    it('keeps only version-labelled landmarks, sorted ascending', () => {
+      assert.deepEqual(axis.releaseLandmarks(LANDMARKS).map(l => l.label), ['7.2.4', '8.0', '8.1', '9.0', '9.1', '9.2']);
+    });
+    it('drops entries without a finite commit_index and de-duplicates by label', () => {
+      const out = axis.releaseLandmarks([
+        { label: '8.0', commit_index: 645 }, { label: '8.0', commit_index: 646 },
+        { label: '9.0', commit_index: null }, null, { label: 7 },
+      ]);
+      assert.deepEqual(out, [{ label: '8.0', commit_index: 645 }]);
+    });
+    it('handles missing input', () => {
+      assert.deepEqual(axis.releaseLandmarks(undefined), []);
+    });
+  });
+
+  describe('releaseTicks', () => {
+    it('full range: one tick per release, no numeric ticks, "First benchmarkable" skipped', () => {
+      const r = axis.releaseTicks(LANDMARKS, 0, 2279);
+      assert.equal(r.mode, 'releases');
+      assert.deepEqual(r.ticks.map(t => t.label), ['7.2.4', '8.0', '8.1', '9.0', '9.1', '9.2']);
+      assert.deepEqual(r.ticks.map(t => t.value), [163, 645, 1093, 1425, 1837, 2261]);
+    });
+    it('"Since Previous Release" (9.1..HEAD) still has two releases in view', () => {
+      const r = axis.releaseTicks(LANDMARKS, 1837, 2279);
+      assert.equal(r.mode, 'releases');
+      assert.deepEqual(r.ticks.map(t => t.label), ['9.1', '9.2']);
+    });
+    it('"Since Last Release" (9.2..HEAD) falls back to commit-index ticks with 9.2 labelled', () => {
+      const r = axis.releaseTicks(LANDMARKS, 2261, 2279);
+      assert.equal(r.mode, 'index');
+      const labels = r.ticks.map(t => t.label);
+      assert.ok(labels.includes('9.2'), labels.join(','));
+      assert.ok(labels.some(l => /^\d+$/.test(l)), 'needs numeric scale ticks');
+      const values = r.ticks.map(t => t.value);
+      assert.deepEqual([...values].sort((a, b) => a - b), values, 'ascending');
+      assert.equal(new Set(values).size, values.length, 'no duplicate values');
+      assert.ok(values.every(v => v >= 2261 && v <= 2279));
+    });
+    it('"Last 100 Commits" with no release in view: numeric ticks only', () => {
+      const r = axis.releaseTicks(LANDMARKS, 1900, 2000);
+      assert.equal(r.mode, 'index');
+      assert.ok(r.ticks.length >= 3 && r.ticks.length <= 8, `got ${r.ticks.length}`);
+      assert.ok(r.ticks.every(t => /^\d+$/.test(t.label)));
+    });
+    it('a numeric tick that would collide with a release label is dropped', () => {
+      // Last 100 at HEAD 2279: step 20 gives 2260, one index from 9.2 @ 2261.
+      const r = axis.releaseTicks(LANDMARKS, 2178, 2279);
+      assert.deepEqual(r.ticks.map(t => t.label), ['2180', '2200', '2220', '2240', '9.2']);
+    });
+    it('a release exactly on the window edge is in view', () => {
+      const r = axis.releaseTicks(LANDMARKS, 645, 1093);
+      assert.deepEqual(r.ticks.map(t => t.label), ['8.0', '8.1']);
+    });
+    it('tolerates swapped bounds and empty landmarks', () => {
+      assert.equal(axis.releaseTicks(LANDMARKS, 2279, 0).mode, 'releases');
+      const r = axis.releaseTicks([], 0, 2279);
+      assert.equal(r.mode, 'index');
+      assert.ok(r.ticks.length > 0);
+    });
+  });
+
+  describe('indexTicks / niceStep', () => {
+    it('nice steps are 1/2/5 x 10^n and never below 1', () => {
+      assert.equal(axis.niceStep(0.3), 1);
+      assert.equal(axis.niceStep(3), 5);
+      assert.equal(axis.niceStep(17), 20);
+      assert.equal(axis.niceStep(380), 500);
+      assert.equal(axis.niceStep(0), 1);
+    });
+    it('ticks land on multiples of the step inside the window', () => {
+      assert.deepEqual(axis.indexTicks(2261, 2279, 6), [2265, 2270, 2275]);
+      assert.deepEqual(axis.indexTicks(0, 2279, 6), [0, 500, 1000, 1500, 2000]);
+      assert.deepEqual(axis.indexTicks(5, 5, 6), []);
+    });
+  });
+
+  describe('formatRange', () => {
+    it('rounds and uses an en dash', () => {
+      assert.equal(axis.formatRange(1424.6, 2279), '1425\u20132279');
+      assert.equal(axis.formatRange(undefined, 3), '');
+    });
+  });
+});
+
+describe('index.html release-marked axis wiring', () => {
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+  it('loads the helper and every x axis goes through xAxisOpts', () => {
+    assert.ok(html.includes('lib/axis-ticks.js'));
+    assert.ok(html.includes('AxisTicks.releaseTicks('));
+    // No chart builds its own linear x scale with maxTicksLimit any more.
+    assert.ok(!/x: \{ type: 'linear'[^\n]*maxTicksLimit/.test(html), 'stray hand-built x scale');
+    assert.ok((html.match(/xAxisOpts\(/g) || []).length >= 3, 'definition + baseChartOpts + perf charts');
+  });
+  it('landmark lines no longer carry top labels (ticks carry the release names)', () => {
+    assert.ok(!/content: lm\.label/.test(html));
+  });
+  it('the visible commit window is shown next to the zoom buttons', () => {
+    assert.ok(html.includes('id="visibleRange"'));
+    assert.ok((html.match(/updateVisibleRange\(\)/g) || []).length >= 4, 'definition + hash update + initial render + hash restore');
+  });
+});
