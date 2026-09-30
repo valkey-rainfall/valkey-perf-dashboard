@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<!-- BRIEF: Valkey 80s "sign-on" animation, v2. A ~6.5s boot sequence in the tradition of a CRT
+     terminal powering on: cool blue vector graphics (Tron / Battlezone / a Commodore booting),
+     deliberately NOT the Conductress vaporwave poster. One hue only: Valkey blue #6983ff.
+
+     CONCEPT: the unlock. The Valkey mark is a keyhole inside a hexagon, so the machine powers on,
+     draws its own emblem as wireframe, turns the key, and unlocks into solid colour. It ends on the
+     tagline with a cursor that blinks forever. (v1 had a READY. prompt after the tagline; cut in v2
+     -- it didn't land.)
+
+     TIMELINE (seconds)
+       0.00  CRT power-on: a white line flares across the centre and expands into the picture
+       0.50  boot lines scroll like a BIOS POST, one per beat (0.5 / 0.8 / 1.1 / 1.4), dot leaders,
+             status word snaps on 0.24s after each label
+       1.75  wireframe draw: the official mark path traced as a glowing vector stroke (0.9s), then
+             the keyhole circle last (2.65-2.80)
+       2.85  key turn: the whole wireframe rotates 16deg with a click, holds, snaps back at 3.18.
+             The boot log vanishes as the key starts to turn.
+       3.18  UNLOCK: solid blue floods outward from the keyhole, white flare, shock ring, glow.
+       3.70  VALKEY revealed by a vertical scan beam sweeping left to right (0.6s)
+       4.50  OPEN SOURCE, FOREVER types in with a block cursor (20 chars, 0.8s); cursor blinks on
+       5.90  one scanline flicker. Hold. REPLAY.
+
+     HARMONY (v2): everything before the unlock sits on the DOMINANT so the E major hit at 3.18 is a
+     resolution, not a repeat. Boot status notes climb F# A C# D# (5, b7, 9, 3 of B9, ending on the
+     leading tone); the wireframe arpeggio outlines B13; the keyhole bell is D#; TURBINE's stacked
+     swells are a B7 voicing held to ignition; LAUNCH's sequencer arpeggiates B7 and its string swell
+     is the D#/A tritone; SID's key turn is a ii-V bass walk (F#2, B2) into E.
+
+     MODES (v3): KEY TURN (above) or CONNECT. In CONNECT the key turn is replaced by clients:
+       2.40       all 28 horizontal lines leave both edges TOGETHER and land within ~0.16s (per-line
+                  0.20-0.36s ease-out), stopping at a padding hexagon with the mark's own proportions.
+                  Nobody draws that hexagon; the line endpoints trace it. Each landing twinkles.
+       3.18       the flood fills the mark and every connected line erupts with a stream of glowing
+                  dots flowing OUTWARD (the server serving). Emission ramps 5 -> 30 dots/s over 1.4s;
+                  dots leave slow and accelerate (v0 55px/s, 950px/s^2), stretching into dashes as
+                  they speed up (motion blur) and fading at the frame edge. Five straggler flourishes
+                  during the hold are re-twinkles on EXISTING ports (no new connections), timed as a
+                  musical phrase (G# B C# D# . E). Streams run forever. Inward motion is ONLY the
+                  connection landing. Defaults: CONNECT + LAUNCH.
+       Rendering: a transparent <canvas> over the SVG, mix-blend-mode:screen, one pre-rendered glow
+       sprite stamped additively (no shadowBlur). Every dot is closed-form in time (no simulation
+       state), so ?t= seek is exact and REPLAY is identical. Tuning knobs: HEX, ARRIVE, RAMP, V0, ACC.
+       Audio: the skeleton's key event becomes one dominant-tone ping per connection, plus a quiet
+       data-hiss bed after the unlock.
+
+     AUDIO: synthesised live in WebAudio, four scores + silent, all in E major, all locked to the
+     timeline above. Any score can be run through the VHS TAPE chain (lowpass, high-shelf dip, soft
+     saturation, wow+flutter via a modulated delay line, pink hiss bed).
+       FM SYNTH   DX7 / Sega-startup world: bell per boot line over a low B pad, six-note ascending
+                  arpeggio on the wireframe draw, ratchet + thunk on the key, FM-brass chord on unlock.
+       SID CHIP   Commodore 64: PWM pulse leads, 50Hz chord arpeggios, ring-mod bell, noise drum.
+       TURBINE    Vangelis. A TUNED jet-engine drone (saws + resonant noise) glides up from E2 to
+                  B3 over the spool; an amplitude flutter starts as an 7Hz blade-pass chop and
+                  accelerates into a 60Hz whine. CS-80 brass swells stack one per boot line.
+                  Unlock = sub hit + huge brass chord + shimmer; engine drops to idle under the hold.
+       LAUNCH     Rocket countdown. A 16th-note sequencer accelerates over the spool riding a
+                  Shepard glissando (six octave-spaced voices, each sweeping one octave, windowed so
+                  the rise never arrives); brown-noise rumble grows; boot lines are the count.
+                  Ignition = white-noise blast swept down + bass drop + a rising-fifth brass motif.
+     Browsers refuse audio without a gesture, so the sequence starts on a click: PRESS START.
+
+     EMBED (dashboard loading screen): ?embed=1&score=launch|fm|sid|turbine|mute[&tape=1]
+            Hides PRESS START and REPLAY, starts CONNECT mode at once, and talks to the parent
+            window with postMessage {type:'conductress-intro', event:'ready'|'done'|'skip'|'restart'}.
+            'done' fires at T.embedDone; the parent fades the frame at max(charts ready, done).
+            Sound: the score is scheduled immediately if the browser lets the AudioContext run
+            without a gesture (Chrome's media-engagement allowance); otherwise a small SOUND
+            button appears and a click restarts the sequence from power-on with the score (a refused
+            AudioContext has no advancing clock, so a mid-timeline join is not schedulable).
+            Clicking anywhere else asks the parent to skip. The parent sends {cmd:'fade', ms} so
+            the output gain rides the visual fade down instead of cutting.
+
+     DEBUG: ?t=2.5 pauses every animation at t=2.5s (Web Animations API) for frame capture; add
+            &mode=connect to render the canvas streams at that instant too.
+            ?run=turbine[&tape=1] starts the sequence + schedules that score without a gesture
+            (audio stays suspended, but any scheduling exception surfaces in the console).
+     Valkey and the Valkey logo are trademarks of LF Projects, LLC. Mark path from valkey.io. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VALKEY — sign-on</title>
+<style>
+  :root { --bg:#070a1a; --blue:#6983ff; --ice:#9fb0ff; --white:#eaf0ff; --dim:#3a4a8a; }
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  #stage{position:fixed;inset:0;display:grid;place-items:center;background:#000}
+  #frame{position:relative;width:min(100vw,180vh)}
+  svg#art{width:100%;height:auto;display:block}
+  /* CONNECT mode: the client streams live on a canvas over the SVG, screen-blended so the additive glow reads as light */
+  #streams{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen}
+  .connect #key{animation-name:none}
+  .mono{font-family:'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace}
+
+  /* everything parks in its "before" state; .play starts the clocks.
+     NOTE: never use the `animation:` shorthand below -- it resets fill-mode/play-state and
+     overrides this class. Longhands only. */
+  .anim{animation-play-state:paused;animation-fill-mode:both}
+  .play .anim{animation-play-state:running}
+
+  /* 0.00 power on */
+  #bg   {animation-name:fadein;animation-duration:.5s;animation-timing-function:ease-out;animation-delay:.12s}
+  #tube {transform-origin:450px 250px;animation-name:tube;animation-duration:.6s;animation-timing-function:cubic-bezier(.2,.8,.3,1);animation-delay:0s}
+
+  /* 0.50 boot lines: label types, status pops 0.24s later; whole log vanishes as the key turns */
+  #boot{animation-name:fadeout;animation-duration:.25s;animation-timing-function:ease-out;animation-delay:2.85s}
+  .bl{animation-name:typein;animation-duration:.2s;animation-timing-function:steps(24,end)}
+  .st{animation-name:pop;animation-duration:.01s;animation-timing-function:steps(1,end)}
+  .bl:nth-of-type(1){animation-delay:.50s} .bl:nth-of-type(1) .st{animation-delay:.74s}
+  .bl:nth-of-type(2){animation-delay:.80s} .bl:nth-of-type(2) .st{animation-delay:1.04s}
+  .bl:nth-of-type(3){animation-delay:1.10s} .bl:nth-of-type(3) .st{animation-delay:1.34s}
+  .bl:nth-of-type(4){animation-delay:1.40s} .bl:nth-of-type(4) .st{animation-delay:1.64s}
+
+  /* 1.75 wireframe draw (stroke length set from JS into --L), fades out once the fill lands */
+  #wmain{stroke-dasharray:var(--L);stroke-dashoffset:var(--L);animation-name:draw;animation-duration:.9s;animation-timing-function:cubic-bezier(.35,.2,.45,1);animation-delay:1.75s}
+  #wcirc{stroke-dasharray:var(--L);stroke-dashoffset:var(--L);animation-name:draw;animation-duration:.15s;animation-timing-function:ease-out;animation-delay:2.65s}
+  #wire {animation-name:fadeout;animation-duration:.45s;animation-timing-function:ease-out;animation-delay:3.18s}
+
+  /* 2.85 key turn: whole mark (wire + fill) rotates, holds, snaps back at 3.18 */
+  #key  {transform-origin:450px 225px;animation-name:keyturn;animation-duration:.33s;animation-timing-function:linear;animation-delay:2.85s}
+
+  /* 3.18 unlock */
+  #flood{animation-name:flood;animation-duration:.42s;animation-timing-function:cubic-bezier(.2,.8,.2,1);animation-delay:3.18s}
+  #flare {transform-origin:450px 225px;animation-name:flare;animation-duration:.9s;animation-timing-function:ease-out;animation-delay:3.18s}
+  #shock {transform-origin:450px 225px;animation-name:shock;animation-duration:.9s;animation-timing-function:cubic-bezier(.1,.8,.2,1);animation-delay:3.18s}
+  #glow  {transform-origin:450px 225px;animation-name:glowup;animation-duration:.9s;animation-timing-function:cubic-bezier(.2,.9,.2,1);animation-delay:3.18s}
+
+  /* 3.70 wordmark scan-beam reveal */
+  #word {animation-name:typein;animation-duration:.6s;animation-timing-function:linear;animation-delay:3.70s}
+  #beam {animation-name:beam;animation-duration:.6s;animation-timing-function:linear;animation-delay:3.70s}
+
+  /* 4.50 tagline types; its cursor then blinks forever */
+  #tag  {animation-name:typein;animation-duration:.8s;animation-timing-function:steps(20,end);animation-delay:4.50s}
+  #tcur {animation-fill-mode:none !important;animation-name:blink;animation-duration:1.06s;animation-timing-function:steps(1,end);animation-delay:4.50s;animation-iteration-count:infinite}
+  #scan {animation-name:flicker;animation-duration:.35s;animation-timing-function:steps(2,end);animation-delay:5.9s}
+  #vignette{animation-name:fadein;animation-duration:1.2s;animation-timing-function:ease-out;animation-delay:0s}
+
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  @keyframes fadeout{from{opacity:1}to{opacity:0}}
+  @keyframes tube{0%{transform:scale(0,.004);opacity:1}
+                  30%{transform:scale(1,.004);opacity:1}
+                  70%{transform:scale(1,1);opacity:.85}
+                  100%{transform:scale(1,1);opacity:0}}
+  @keyframes typein{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+  @keyframes pop{from{opacity:0}to{opacity:1}}
+  @keyframes dim{to{opacity:.32}}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes keyturn{0%{transform:rotate(0deg)}
+                     38%{transform:rotate(16deg)}
+                     76%{transform:rotate(16deg)}
+                     90%{transform:rotate(-2.5deg)}
+                     100%{transform:rotate(0deg)}}
+  @keyframes flood{from{clip-path:circle(0px at 28.45px 32.45px)}to{clip-path:circle(40px at 28.45px 32.45px)}}
+  @keyframes flare{0%{opacity:0;transform:scale(1.3)}15%{opacity:1;transform:scale(1.04)}100%{opacity:0;transform:scale(1)}}
+  @keyframes shock{0%{opacity:0;transform:scale(.3)}3%{opacity:.7}100%{opacity:0;transform:scale(3.2)}}
+  @keyframes glowup{from{opacity:0;transform:scale(.3)}to{opacity:.13;transform:scale(1)}}
+  @keyframes beam{0%{transform:translateX(0);opacity:0}2%{opacity:1}92%{opacity:1}100%{transform:translateX(var(--bw));opacity:0}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+  @keyframes flicker{0%{opacity:.16}50%{opacity:.5}100%{opacity:.2}}
+
+  /* ---------- chrome ---------- */
+  #ui{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.74);color:var(--white);
+      letter-spacing:.18em;text-align:center;transition:opacity .3s}
+  #ui.hidden{opacity:0;pointer-events:none}
+  #ui button{background:none;border:2px solid var(--blue);color:var(--blue);font:inherit;letter-spacing:.3em;padding:14px 34px;cursor:pointer;margin:10px}
+  #ui button:hover{background:var(--blue);color:var(--bg)}
+  #ui .row{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap;max-width:640px}
+  #ui .row label{font-size:12px;opacity:.85;cursor:pointer;border:1px solid var(--dim);padding:8px 14px}
+  #ui .row input{display:none}
+  #ui .row input:checked+span{color:var(--ice)}
+  #ui .row label:has(input:checked){border-color:var(--blue)}
+  #replay{position:fixed;right:18px;bottom:14px;font-size:11px;letter-spacing:.25em;
+      color:var(--dim);background:none;border:1px solid #1a2244;padding:6px 12px;cursor:pointer;opacity:0;transition:opacity .4s}
+  .play #replay{opacity:1;transition-delay:6.5s}
+
+  /* ---------- embed mode (dashboard loading screen) ---------- */
+  .embed #replay{display:none}
+  #soundhint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:none;
+      font-size:11px;letter-spacing:.25em;color:var(--ice);background:rgba(7,10,26,.7);
+      border:1px solid var(--dim);padding:8px 16px;cursor:pointer;opacity:0;transition:opacity .4s}
+  .embed.wantsound #soundhint{display:block;opacity:.9}
+  .embed.wantsound.audio #soundhint,.embed.fading #soundhint{opacity:0;pointer-events:none}
+  #soundhint:hover{border-color:var(--blue);color:var(--white)}
+</style>
+</head>
+<body>
+<div id="stage">
+<div id="frame">
+<svg id="art" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" role="img" aria-label="Valkey sign-on animation">
+  <defs>
+    <radialGradient id="bgg" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#0d1434"/><stop offset="55%" stop-color="#070a1a"/><stop offset="100%" stop-color="#03040b"/>
+    </radialGradient>
+    <linearGradient id="beamg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6983ff" stop-opacity="0"/><stop offset="45%" stop-color="#ffffff"/><stop offset="100%" stop-color="#6983ff" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="scanp" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1.6" fill="#000"/></pattern>
+    <!-- phosphor: soft blue halo on text -->
+    <filter id="phos" x="-10%" y="-60%" width="120%" height="220%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="hotglow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="bloom" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="flareblur" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="900" height="500" fill="#000"/>
+  <g id="bg" class="anim"><rect width="900" height="500" fill="url(#bgg)"/></g>
+  <circle id="glow" class="anim" cx="450" cy="225" r="200" fill="#6983ff"/>
+
+  <!-- boot log, top-left, terminal style -->
+  <g id="boot" class="anim mono" filter="url(#phos)" font-size="13" letter-spacing="1" fill="#6983ff">
+    <text class="bl anim" x="64" y="48">&gt; MEMORY ............ <tspan class="st anim" fill="#eaf0ff">OK</tspan></text>
+    <text class="bl anim" x="64" y="70">&gt; REPLICATION ....... <tspan class="st anim" fill="#eaf0ff">ONLINE</tspan></text>
+    <text class="bl anim" x="64" y="92">&gt; CLUSTER ........... <tspan class="st anim" fill="#eaf0ff">ONLINE</tspan></text>
+    <text class="bl anim" x="64" y="114">&gt; PERSISTENCE ....... <tspan class="st anim" fill="#eaf0ff">ONLINE</tspan></text>
+  </g>
+
+  <!-- the mark. #key rotates the whole thing for the key turn; inner transform places the official path -->
+  <g id="key" class="anim">
+    <g transform="translate(450 225) scale(3.4026) translate(-28.45 -32.45)">
+      <!-- solid mark, revealed by a clip-path circle growing from the keyhole (in mark units) -->
+      <g id="flood" class="anim" style="clip-path:circle(0px at 28.45px 32.45px)">
+        <path id="solid" fill="#6983ff" fill-rule="evenodd" filter="url(#bloom)"
+          d="M15.2,50l-9.4-5.9v-25L28.8,6l22.3,13.1v26.3l-22.7,12.8-7.9-4.9v-12l-4.3-2.7v-13.6l12.4-7.1,12.1,7.1v14.2l-9.6,5.4v-5.7c2.9-1.1,4.9-3.9,4.9-7.3s-3.4-7.8-7.6-7.8-7.6,3.5-7.6,7.8,2.1,6.2,4.9,7.3v10.9l2.7,1.7,16.8-9.5v-19.7l-16.6-9.8-17.1,9.8v18.5l3.6,2.3v6.8ZM28.5,28.1c1.9,0,3.4,1.6,3.4,3.6s-1.5,3.6-3.4,3.6-3.4-1.6-3.4-3.6,1.5-3.6,3.4-3.6Z"/>
+      </g>
+      <!-- wireframe: the same geometry traced as a vector stroke -->
+      <g id="wire" class="anim" fill="none" stroke="#b9c6ff" stroke-width=".55" stroke-linejoin="round" filter="url(#hotglow)">
+        <path id="wmain" class="anim" d="M15.2,50l-9.4-5.9v-25L28.8,6l22.3,13.1v26.3l-22.7,12.8-7.9-4.9v-12l-4.3-2.7v-13.6l12.4-7.1,12.1,7.1v14.2l-9.6,5.4v-5.7c2.9-1.1,4.9-3.9,4.9-7.3s-3.4-7.8-7.6-7.8-7.6,3.5-7.6,7.8,2.1,6.2,4.9,7.3v10.9l2.7,1.7,16.8-9.5v-19.7l-16.6-9.8-17.1,9.8v18.5l3.6,2.3v6.8Z"/>
+        <path id="wcirc" class="anim" d="M28.5,28.1c1.9,0,3.4,1.6,3.4,3.6s-1.5,3.6-3.4,3.6-3.4-1.6-3.4-3.6,1.5-3.6,3.4-3.6Z"/>
+      </g>
+    </g>
+  </g>
+  <!-- white version of the mark that flares over the unlock and fades -->
+  <g id="flare" class="anim" filter="url(#flareblur)" opacity="0">
+    <g transform="translate(450 225) scale(3.4026) translate(-28.45 -32.45)">
+      <path fill="#ffffff" fill-rule="evenodd"
+        d="M15.2,50l-9.4-5.9v-25L28.8,6l22.3,13.1v26.3l-22.7,12.8-7.9-4.9v-12l-4.3-2.7v-13.6l12.4-7.1,12.1,7.1v14.2l-9.6,5.4v-5.7c2.9-1.1,4.9-3.9,4.9-7.3s-3.4-7.8-7.6-7.8-7.6,3.5-7.6,7.8,2.1,6.2,4.9,7.3v10.9l2.7,1.7,16.8-9.5v-19.7l-16.6-9.8-17.1,9.8v18.5l3.6,2.3v6.8ZM28.5,28.1c1.9,0,3.4,1.6,3.4,3.6s-1.5,3.6-3.4,3.6-3.4-1.6-3.4-3.6,1.5-3.6,3.4-3.6Z"/>
+    </g>
+  </g>
+  <!-- shock ring from the unlock -->
+  <circle id="shock" class="anim" cx="450" cy="225" r="80" fill="none" stroke="#dfe6ff" stroke-width="2" opacity="0"/>
+
+  <!-- wordmark: three copies (blue ghosts either side, white face), revealed by a clip that tracks the beam -->
+  <g id="wordwrap" filter="url(#phos)" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-weight="800" font-size="72" letter-spacing="6" text-anchor="middle">
+    <g id="word" class="anim">
+      <text x="447" y="372" fill="#6983ff" opacity=".85">VALKEY</text>
+      <text x="453" y="372" fill="#6983ff" opacity=".85">VALKEY</text>
+      <text x="450" y="372" fill="#f4f7ff">VALKEY</text>
+    </g>
+    <rect id="beam" class="anim" style="--bw:318px" x="290" y="308" width="8" height="78" fill="url(#beamg)" filter="url(#hotglow)" opacity="0"/>
+  </g>
+
+  <!-- tagline -->
+  <g id="tagline" class="mono" filter="url(#phos)">
+    <text id="tag" class="anim" x="450" y="410" text-anchor="middle" font-size="15" letter-spacing="7" fill="#9fb0ff">OPEN SOURCE, FOREVER</text>
+    <rect id="tcur" class="anim" x="616" y="397" width="10" height="16" fill="#9fb0ff" opacity="0"/>
+  </g>
+
+  <!-- CRT power-on flare: a white line that expands into the tube -->
+  <rect id="tube" class="anim" x="0" y="0" width="900" height="500" fill="#ffffff"/>
+
+  <rect id="scan" class="anim" width="900" height="500" fill="url(#scanp)" opacity="0.16"/>
+  <rect id="vignette" class="anim" width="900" height="500" fill="none" stroke="#000" stroke-width="44" opacity="0.55"/>
+</svg>
+<canvas id="streams" aria-hidden="true"></canvas>
+</div>
+</div>
+
+<div id="ui" class="mono">
+  <div>
+    <div style="font-size:11px;opacity:.7;margin-bottom:14px">VALKEY · SIGN-ON</div>
+    <button id="start">PRESS START</button>
+    <div class="row">
+      <label><input type="radio" name="mode" value="keyturn"><span>KEY TURN</span></label>
+      <label><input type="radio" name="mode" value="connect" checked><span>CONNECT</span></label>
+    </div>
+    <div class="row">
+      <label><input type="radio" name="score" value="fm"><span>FM SYNTH</span></label>
+      <label><input type="radio" name="score" value="sid"><span>SID CHIP</span></label>
+      <label><input type="radio" name="score" value="turbine"><span>TURBINE</span></label>
+      <label><input type="radio" name="score" value="launch" checked><span>LAUNCH</span></label>
+      <label><input type="radio" name="score" value="mute"><span>SILENT</span></label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="tape"><span>VHS TAPE</span></label>
+    </div>
+  </div>
+</div>
+<button id="replay" class="mono">REPLAY</button>
+<button id="soundhint" class="mono" aria-label="Turn sound on">&#x266A; SOUND</button>
+
+<script>
+/* ============================ TIMELINE (must match the CSS above) ============================ */
+const T = {
+  boot: [0.50, 0.80, 1.10, 1.40], status: 0.24,
+  draw: 1.75, drawDur: 0.9, circ: 2.65,
+  turn: 2.85, click: 2.97, snap: 3.18,
+  unlock: 3.18, scan: 3.70, scanDur: 0.6,
+  tag: 4.50, tagDur: 0.8, tagN: 20,
+  flicker: 5.90, end: 7.6,
+  embedDone: 5.5,                                        // embed mode: tagline typed + one cursor blink; the parent may fade from here
+};
+// stroke length for the wireframe draw, read from the geometry itself
+for (const id of ['wmain', 'wcirc']) { const p = document.getElementById(id); p.style.setProperty('--L', p.getTotalLength().toFixed(2)); }
+
+/* ============================ CONNECT MODE: the client streams ============================ */
+// Everything here is a pure function of time. Connections have seeded arrival times; each dot's
+// position, speed, stretch and fade are closed-form in its age. So ?t= seek is exact, REPLAY is
+// identical, and there is no simulation state to drift.
+function mulberry(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hash(i) { i = (i ^ 61) ^ (i >>> 16); i = i + (i << 3); i ^= i >>> 4; i = Math.imul(i, 0x27d4eb2d); i ^= i >>> 15; return (i >>> 0) / 4294967296; }
+
+// The padding hexagon the lines stop at: same proportions as the mark's outer hexagon (pointy-top, so
+// its left and right sides are vertical). Nobody draws it; the line endpoints trace it.
+const HEX = {apex: 108, hw: 92.4, vh: 53.7};
+const hexHalfWidth = dy => (dy = Math.abs(dy)) <= HEX.vh ? HEX.hw : HEX.hw * (HEX.apex - dy) / (HEX.apex - HEX.vh);
+
+const LAUNCH_AT = 2.40;                     // every line leaves its edge at this instant...
+const ARRIVE = [.20, .36];                  // ...and takes this long to land, so the landings ripple across ~0.16s
+const RAMP = {r0: 5, r1: 30, R: 1.4};       // emission rate ramps 5 -> 30 dots/s over the first 1.4s of a stream
+const V0 = 55, ACC = 950;                   // px/s and px/s^2 in viewBox units: dots leave slow and get flung
+// straggler flourishes during the hold: re-twinkles on EXISTING ports, timed as a phrase (see STRAGGLER_NOTES)
+const STRAGGLERS = [{t: 3.75, li: 9}, {t: 4.05, li: 22}, {t: 4.35, li: 2}, {t: 4.65, li: 18}, {t: 5.25, li: 13}];
+
+const NET = (() => {
+  const rnd = mulberry(4242), lines = [];
+  for (const side of [-1, 1]) for (let k = 0; k < 14; k++) {
+    const dy = (k - 6.5) * 12.5;                                   // 14 rows per side, +-81px around the mark's centre
+    const stopX = 450 + side * hexHalfWidth(dy), edgeX = side < 0 ? 0 : 900;
+    const arrive = ARRIVE[0] + rnd() * (ARRIVE[1] - ARRIVE[0]);
+    lines.push({side, y: 225 + dy, stopX, edgeX, D: Math.abs(edgeX - stopX), arrive, connectAt: LAUNCH_AT + arrive, alpha: .16 + rnd() * .2});
+  }
+  return {lines};
+})();
+NET.lines.forEach(l => { l.streamAt = Math.max(T.unlock, l.connectAt + .12); });
+
+// emitted-count function and its inverse
+const C_R = RAMP.r0 * RAMP.R + (RAMP.r1 - RAMP.r0) * RAMP.R / 2;
+function emitted(tau) { return tau < RAMP.R ? RAMP.r0 * tau + (RAMP.r1 - RAMP.r0) * tau * tau / (2 * RAMP.R) : C_R + RAMP.r1 * (tau - RAMP.R); }
+function emitTime(n) { if (n < C_R) { const a = (RAMP.r1 - RAMP.r0) / RAMP.R; return (-RAMP.r0 + Math.sqrt(RAMP.r0 * RAMP.r0 + 2 * a * n)) / a; } return RAMP.R + (n - C_R) / RAMP.r1; }
+const AMAX = (-V0 + Math.sqrt(V0 * V0 + 2 * ACC * 460)) / ACC;      // oldest age any dot can have before it has left the frame
+const smooth = (a, b, x) => { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); };
+const easeOut = u => 1 - Math.pow(1 - u, 3);
+
+const cv = document.getElementById('streams'), cx2 = cv.getContext('2d');
+// one pre-rendered glow sprite, stamped additively. Stretching its destination rect is the motion blur.
+const SPR = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.22, 'rgba(205,215,255,.9)'); r.addColorStop(.55, 'rgba(105,131,255,.38)'); r.addColorStop(1, 'rgba(105,131,255,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 64, 64); return c; })();
+let cvW = 0, cvH = 0;
+function sizeCanvas() {
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+  if (w !== cvW || h !== cvH) { cv.width = cvW = w; cv.height = cvH = h; }
+  cx2.setTransform(w / 900, 0, 0, h / 500, 0, 0);
+}
+function stamp(x, y, w, h, alpha) { cx2.globalAlpha = alpha; cx2.drawImage(SPR, x - w / 2, y - h / 2, w, h); }
+
+function twinkle(l, tw) {                                                                    // tw in [0,1): a bright flash and a thin cross at the port
+  const k = 1 - tw; stamp(l.stopX, l.y, 8 + 30 * k, 8 + 30 * k, k);
+  cx2.globalAlpha = k * .9; cx2.strokeStyle = '#fff'; cx2.lineWidth = .7; const r = 4 + 16 * k;
+  cx2.beginPath(); cx2.moveTo(l.stopX - r, l.y); cx2.lineTo(l.stopX + r, l.y); cx2.moveTo(l.stopX, l.y - r); cx2.lineTo(l.stopX, l.y + r); cx2.stroke();
+}
+
+function renderNet(t) {
+  sizeCanvas();
+  cx2.globalCompositeOperation = 'source-over'; cx2.globalAlpha = 1; cx2.clearRect(0, 0, 900, 500);
+  // 1. the connections: every line leaves its edge at LAUNCH_AT and stops at the padding hexagon
+  cx2.lineWidth = .9; cx2.lineCap = 'round';
+  for (const l of NET.lines) {
+    const u = (t - LAUNCH_AT) / l.arrive; if (u <= 0) continue;
+    const tip = l.edgeX + (l.stopX - l.edgeX) * easeOut(Math.min(1, u));
+    cx2.strokeStyle = `rgba(105,131,255,${l.alpha})`; cx2.beginPath(); cx2.moveTo(l.edgeX, l.y); cx2.lineTo(tip, l.y); cx2.stroke();
+  }
+  // 2. light: ports, connect twinkles, straggler re-twinkles, and the streams -- all additive
+  cx2.globalCompositeOperation = 'lighter';
+  NET.lines.forEach((l, li) => {
+    if (t < l.connectAt) return;
+    stamp(l.stopX, l.y, 7, 7, .45);                                                          // the port, lit while connected
+    const tw = (t - l.connectAt) / .4; if (tw < 1) twinkle(l, tw);
+    const tau = t - l.streamAt; if (tau <= 0) return;
+    const nMax = Math.floor(emitted(tau)), nMin = Math.ceil(emitted(Math.max(0, tau - AMAX)));
+    for (let n = nMin; n <= nMax; n++) {
+      const a = tau - emitTime(n); if (a < 0) continue;
+      const h0 = hash(li * 7919 + n * 4), h1 = hash(li * 7919 + n * 4 + 1), h2 = hash(li * 7919 + n * 4 + 2);
+      const sf = .85 + .3 * h0, v0 = V0 * sf, acc = ACC * sf;
+      const d = v0 * a + .5 * acc * a * a; if (d >= l.D) continue;
+      const v = v0 + acc * a, len = Math.min(46, 3.5 + v * .042), size = 4.5 + 2.5 * h1;
+      const alpha = (1 - smooth(.72, 1, d / l.D)) * (.6 + .4 * h2);
+      const lead = l.stopX + l.side * d, y = l.y + (hash(li * 7919 + n * 4 + 3) - .5) * 1.6;
+      stamp(lead - l.side * len / 2, y, len, size, alpha);                                    // trail extends back toward the hex
+    }
+  });
+  for (const s of STRAGGLERS) { const tw = (t - s.t) / .5; if (tw >= 0 && tw < 1) twinkle(NET.lines[s.li], tw); }
+  cx2.globalAlpha = 1; cx2.globalCompositeOperation = 'source-over';
+}
+let netRunning = false, netStart = 0;
+function netTick() { if (!netRunning) return; renderNet((performance.now() - netStart) / 1000); requestAnimationFrame(netTick); }
+function netStop() { netRunning = false; sizeCanvas(); cx2.clearRect(0, 0, 900, 500); }
+window.addEventListener('resize', sizeCanvas);
+
+/* ============================ AUDIO CORE ============================ */
+const N = n => 440 * Math.pow(2, (n - 69) / 12);          // MIDI note -> Hz.  E major: E=40/52/64/76, G#=56/68/80, B=47/59/71/83
+let ctx, mainOut;
+
+function impulse(seconds, decay) {
+  const len = Math.ceil(ctx.sampleRate * seconds), buf = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
+  return buf;
+}
+
+function buildMaster(score, tape) {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  mainOut = ctx.createGain(); mainOut.gain.value = 0.55;
+  let node = mainOut;
+  if (score === 'turbine' || score === 'launch') {
+    // reverb send + limiter for the cinematic pair
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.knee.value = 18; comp.ratio.value = 4; comp.attack.value = .005; comp.release.value = .25;
+    const cv = ctx.createConvolver(); cv.buffer = impulse(score === 'turbine' ? 3.2 : 2.4, 3.0);
+    const wet = ctx.createGain(); wet.gain.value = score === 'turbine' ? .38 : .30;
+    mainOut.connect(comp); mainOut.connect(cv); cv.connect(wet); wet.connect(comp); node = comp;
+  }
+  if (tape) {
+    // VHS: lowpass, high-shelf dip, soft saturation, then wow+flutter as a modulated delay line
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3400; lp.Q.value = 0.7;
+    const hs = ctx.createBiquadFilter(); hs.type = 'highshelf'; hs.frequency.value = 1800; hs.gain.value = -5;
+    const sat = ctx.createWaveShaper(); const curve = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; curve[i] = Math.tanh(1.8 * x) / Math.tanh(1.8); }
+    sat.curve = curve;
+    const d = ctx.createDelay(.1); d.delayTime.value = .02;
+    const now = ctx.currentTime;
+    [[0.45, .0016], [6.5, .00018]].forEach(([hz, depth]) => { const o = ctx.createOscillator(); o.frequency.value = hz; const g = ctx.createGain(); g.gain.value = depth; o.connect(g); g.connect(d.delayTime); o.start(now); o.stop(now + T.end + 1); });
+    node.connect(lp); lp.connect(hs); hs.connect(sat); sat.connect(d); node = d;
+  }
+  node.connect(ctx.destination);
+}
+
+// noise: color 'white' | 'pink' (Kellet) | 'brown'; returns its nodes so callers can automate the filters
+function noise(t0, dur, {gain = .1, lp = 4000, hp = 200, attack = .01, release = .1, color = 'white', dest = null} = {}) {
+  const len = Math.ceil(ctx.sampleRate * dur), buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+  let b0 = 0, b1 = 0, b2 = 0, br = 0;
+  for (let i = 0; i < len; i++) {
+    const w = Math.random() * 2 - 1;
+    if (color === 'pink') { b0 = .99765 * b0 + w * .0990460; b1 = .96300 * b1 + w * .2965164; b2 = .57000 * b2 + w * 1.0526913; d[i] = (b0 + b1 + b2 + w * .1848) * .18; }
+    else if (color === 'brown') { br = (br + .02 * w) / 1.02; d[i] = br * 3.5; }
+    else d[i] = w;
+  }
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const f1 = ctx.createBiquadFilter(); f1.type = 'lowpass'; f1.frequency.value = lp;
+  const f2 = ctx.createBiquadFilter(); f2.type = 'highpass'; f2.frequency.value = hp;
+  const g = ctx.createGain(); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(gain, t0 + attack);
+  g.gain.setValueAtTime(gain, t0 + Math.max(attack, dur - release)); g.gain.linearRampToValueAtTime(0, t0 + dur);
+  src.connect(f1); f1.connect(f2); f2.connect(g); g.connect(dest || mainOut); src.start(t0); src.stop(t0 + dur);
+  return {src, f1, f2, g};
+}
+
+/* ============================ INSTRUMENTS ============================ */
+// analog brass: saw + detuned saw + triangle sub, lowpass with envelope
+function brass(t0, midi, dur, vel = .5) {
+  const out = ctx.createGain(); out.gain.setValueAtTime(0, t0);
+  out.gain.linearRampToValueAtTime(vel, t0 + .04); out.gain.setValueAtTime(vel, t0 + Math.max(.05, dur - .12));
+  out.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 1.2;
+  f.frequency.setValueAtTime(500, t0); f.frequency.linearRampToValueAtTime(2600, t0 + .09); f.frequency.exponentialRampToValueAtTime(1200, t0 + dur);
+  [['sawtooth', 0, .5], ['sawtooth', 9, .4], ['triangle', -1200, .55]].forEach(([type, det, g]) => {
+    const o = ctx.createOscillator(); o.type = type; o.frequency.value = N(midi); o.detune.value = det;
+    const og = ctx.createGain(); og.gain.value = g; o.connect(og); og.connect(f); o.start(t0); o.stop(t0 + dur + .05);
+  });
+  f.connect(out); out.connect(mainOut);
+}
+
+// CS-80 swell: three detuned saws, slow attack, opening lowpass, vibrato that grows in
+function swell(t0, midi, dur, vel = .14, attack = .4) {
+  const out = ctx.createGain(); out.gain.setValueAtTime(0, t0); out.gain.linearRampToValueAtTime(vel, t0 + attack);
+  out.gain.setValueAtTime(vel, t0 + Math.max(attack, dur - .4)); out.gain.linearRampToValueAtTime(0, t0 + dur);
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 1.4;
+  f.frequency.setValueAtTime(260, t0); f.frequency.exponentialRampToValueAtTime(2400, t0 + attack * 1.3); f.frequency.exponentialRampToValueAtTime(1100, t0 + dur);
+  const vib = ctx.createOscillator(); vib.frequency.value = 5.5; const vg = ctx.createGain(); vg.gain.setValueAtTime(0, t0); vg.gain.linearRampToValueAtTime(9, t0 + attack * 2); vib.connect(vg);
+  [-8, 0, 8].forEach(det => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = N(midi); o.detune.value = det; vg.connect(o.detune);
+    const og = ctx.createGain(); og.gain.value = .33; o.connect(og); og.connect(f); o.start(t0); o.stop(t0 + dur + .05); });
+  vib.start(t0); vib.stop(t0 + dur + .05); f.connect(out); out.connect(mainOut);
+}
+
+// strings: three detuned saws, slow attack, optional swell-to-end
+function strings(t0, midi, dur, vel = .18, {attack = .35, swell: sw = false} = {}) {
+  const out = ctx.createGain();
+  if (sw) { out.gain.setValueAtTime(.001, t0); out.gain.exponentialRampToValueAtTime(vel, t0 + dur * .85); out.gain.linearRampToValueAtTime(0, t0 + dur); }
+  else { out.gain.setValueAtTime(0, t0); out.gain.linearRampToValueAtTime(vel, t0 + attack); out.gain.setValueAtTime(vel, t0 + Math.max(attack, dur - .35)); out.gain.linearRampToValueAtTime(0, t0 + dur); }
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 4200; f.Q.value = .5;
+  [-7, 0, 8].forEach(det => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = N(midi); o.detune.value = det;
+    const og = ctx.createGain(); og.gain.value = .33; o.connect(og); og.connect(f); o.start(t0); o.stop(t0 + dur + .05); });
+  f.connect(out); out.connect(mainOut);
+}
+
+// DX7-style FM brass: sine carrier, ratio-1 modulator with an index envelope; two detuned layers
+function fmBrass(t0, midi, dur, vel = .3, {ratio = 1, index = 3.2} = {}) {
+  const f = N(midi); const out = ctx.createGain(); out.gain.setValueAtTime(0, t0);
+  out.gain.linearRampToValueAtTime(vel, t0 + .035); out.gain.setValueAtTime(vel, t0 + Math.max(.04, dur - .3)); out.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  [0, 7].forEach(det => {
+    const c = ctx.createOscillator(); c.type = 'sine'; c.frequency.value = f; c.detune.value = det;
+    const m = ctx.createOscillator(); m.type = 'sine'; m.frequency.value = f * ratio; m.detune.value = det;
+    const mg = ctx.createGain(); mg.gain.setValueAtTime(f * index * .2, t0); mg.gain.linearRampToValueAtTime(f * index, t0 + .06); mg.gain.exponentialRampToValueAtTime(f * index * .35, t0 + dur);
+    m.connect(mg); mg.connect(c.frequency);
+    const cg = ctx.createGain(); cg.gain.value = .5; c.connect(cg); cg.connect(out); c.start(t0); m.start(t0); c.stop(t0 + dur + .03); m.stop(t0 + dur + .03);
+  });
+  out.connect(mainOut);
+}
+
+// FM glass bell: sine carrier, 3.5x modulator with decaying index
+function bell(t0, midi, vel = .2, dur = 1.4, ratio = 3.5) {
+  const c = ctx.createOscillator(); c.type = 'sine'; c.frequency.value = N(midi);
+  const m = ctx.createOscillator(); m.type = 'sine'; m.frequency.value = N(midi) * ratio;
+  const mg = ctx.createGain(); mg.gain.setValueAtTime(N(midi) * 2.2, t0); mg.gain.exponentialRampToValueAtTime(1, t0 + dur * .7);
+  m.connect(mg); mg.connect(c.frequency);
+  const g = ctx.createGain(); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vel, t0 + .004); g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  c.connect(g); g.connect(mainOut); c.start(t0); m.start(t0); c.stop(t0 + dur + .02); m.stop(t0 + dur + .02);
+}
+
+// SID ring-mod bell: sine carrier amplitude-modulated by a non-harmonic sine
+function ringBell(t0, midi, vel = .2, dur = 1.2, ratio = 1.41) {
+  const c = ctx.createOscillator(); c.type = 'sine'; c.frequency.value = N(midi);
+  const m = ctx.createOscillator(); m.type = 'sine'; m.frequency.value = N(midi) * ratio;
+  const ring = ctx.createGain(); ring.gain.value = 0; m.connect(ring.gain); c.connect(ring);
+  const g = ctx.createGain(); g.gain.setValueAtTime(vel, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  ring.connect(g); g.connect(mainOut); c.start(t0); m.start(t0); c.stop(t0 + dur + .02); m.stop(t0 + dur + .02);
+}
+
+// pad: sine + triangle chorus, slow attack
+function pad(t0, midi, dur, vel = .12, {attack = .9, release = 1.6} = {}) {
+  const out = ctx.createGain(); out.gain.setValueAtTime(0, t0); out.gain.linearRampToValueAtTime(vel, t0 + attack);
+  out.gain.setValueAtTime(vel, t0 + Math.max(attack, dur - release)); out.gain.linearRampToValueAtTime(0, t0 + dur);
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = .8; f.frequency.value = 1800;
+  [['sine', -6], ['triangle', 0], ['sine', 7]].forEach(([type, det]) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = N(midi); o.detune.value = det;
+    const og = ctx.createGain(); og.gain.value = .4; o.connect(og); og.connect(f); o.start(t0); o.stop(t0 + dur + .05); });
+  f.connect(out); out.connect(mainOut);
+}
+
+// pluck: triangle with fast decay
+function pluck(t0, midi, vel = .25, dur = .9) {
+  const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = N(midi);
+  const g = ctx.createGain(); g.gain.setValueAtTime(vel, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  o.connect(g); g.connect(mainOut); o.start(t0); o.stop(t0 + dur + .02);
+}
+
+// chip: fixed-duty pulse, instant envelope, optional chord cycling at `rate` Hz (30 = NES, 50 = SID)
+function pulseWave(duty) { const real = new Float32Array(32), imag = new Float32Array(32); for (let k = 1; k < 32; k++) imag[k] = (2 / (k * Math.PI)) * Math.sin(k * Math.PI * duty); return ctx.createPeriodicWave(real, imag); }
+function chip(t0, midis, dur, vel = .22, duty = .5, rate = 50) {
+  const notes = Array.isArray(midis) ? midis : [midis];
+  const o = ctx.createOscillator(); o.setPeriodicWave(pulseWave(duty));
+  const g = ctx.createGain(); g.gain.setValueAtTime(vel, t0); g.gain.setValueAtTime(vel * .7, t0 + dur * .6); g.gain.setValueAtTime(0, t0 + dur);
+  const step = 1 / rate;
+  for (let t = 0, i = 0; t < dur; t += step, i++) o.frequency.setValueAtTime(N(notes[i % notes.length]), t0 + t);
+  o.connect(g); g.connect(mainOut); o.start(t0); o.stop(t0 + dur + .01);
+}
+function chipNoise(t0, dur, vel = .3) { return noise(t0, dur, {gain: vel, lp: 9000, hp: 800, attack: .002, release: dur * .8}); }
+
+// SID lead: pulse-width modulation by crossfading a 50% and a 12% pulse under an LFO
+function sid(t0, midi, dur, vel = .2, pwm = 3) {
+  const a = ctx.createOscillator(); a.setPeriodicWave(pulseWave(.5)); a.frequency.value = N(midi);
+  const b = ctx.createOscillator(); b.setPeriodicWave(pulseWave(.12)); b.frequency.value = N(midi);
+  const ga = ctx.createGain(), gb = ctx.createGain(); ga.gain.value = .5; gb.gain.value = .5;
+  const l = ctx.createOscillator(); l.frequency.value = pwm; const lg = ctx.createGain(); lg.gain.value = .5; const inv = ctx.createGain(); inv.gain.value = -1;
+  l.connect(lg); lg.connect(ga.gain); lg.connect(inv); inv.connect(gb.gain);
+  const env = ctx.createGain(); env.gain.setValueAtTime(0, t0); env.gain.linearRampToValueAtTime(vel, t0 + .01); env.gain.setValueAtTime(vel, t0 + Math.max(.02, dur - .06)); env.gain.linearRampToValueAtTime(0, t0 + dur);
+  a.connect(ga); b.connect(gb); ga.connect(env); gb.connect(env); env.connect(mainOut);
+  [a, b, l].forEach(o => { o.start(t0); o.stop(t0 + dur + .02); });
+}
+
+// percussive helpers
+function click(t0, vel = .12, lp = 5000, hp = 1500) { noise(t0, .012, {gain: vel, lp, hp, attack: .001, release: .008}); }
+function thunk(t0, vel = .5, f1 = 110, f2 = 45) {
+  const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f1, t0); o.frequency.exponentialRampToValueAtTime(f2, t0 + .12);
+  const g = ctx.createGain(); g.gain.setValueAtTime(vel, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + .35);
+  o.connect(g); g.connect(mainOut); o.start(t0); o.stop(t0 + .4);
+  noise(t0, .06, {gain: vel * .5, lp: 700, hp: 60, attack: .001, release: .05});
+}
+function sub(t0, f1, f2, dur, vel = .6) {
+  const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f1, t0); o.frequency.exponentialRampToValueAtTime(f2, t0 + dur * .6);
+  const g = ctx.createGain(); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vel, t0 + .015); g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  o.connect(g); g.connect(mainOut); o.start(t0); o.stop(t0 + dur + .05);
+}
+function timpani(t0, midi = 40, vel = .7) {
+  const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(N(midi) * 1.6, t0); o.frequency.exponentialRampToValueAtTime(N(midi), t0 + .06);
+  const g = ctx.createGain(); g.gain.setValueAtTime(vel, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + 1.1);
+  o.connect(g); g.connect(mainOut); o.start(t0); o.stop(t0 + 1.2);
+  noise(t0, .09, {gain: vel * .35, lp: 900, hp: 80, attack: .002, release: .07});
+}
+// the ratchet of the key turning (2.85-2.97), then the thunk as it seats
+function keyTurn(t0, vel = .14) { for (let i = 0; i < 5; i++) click(t0 + T.turn + i * .024, vel * (1 + i * .1), 6000, 2000); thunk(t0 + T.click, .45); }
+// the scan beam: a rising, hissing sweep
+function beamSweep(t0, vel = .07) { const n = noise(t0 + T.scan, T.scanDur, {gain: vel, lp: 12000, hp: 300, attack: .05, release: .12}); n.f2.frequency.setValueAtTime(300, t0 + T.scan); n.f2.frequency.exponentialRampToValueAtTime(7000, t0 + T.scan + T.scanDur); }
+
+/* ---------- the engines ---------- */
+// TURBINE: tuned drone E2 -> B3 over the spool, blade-pass flutter 7Hz chop -> 60Hz whine, resonant air
+function turbine(t0, {start = .15, peak = T.click, cut = T.unlock, idle = 3.7, end = T.end} = {}) {
+  const out = ctx.createGain(); out.gain.setValueAtTime(0, t0 + start);
+  out.gain.linearRampToValueAtTime(.30, t0 + peak); out.gain.setValueAtTime(.30, t0 + cut);
+  out.gain.linearRampToValueAtTime(.05, t0 + cut + .2); out.gain.linearRampToValueAtTime(.10, t0 + idle);
+  out.gain.setValueAtTime(.10, t0 + end - 1.4); out.gain.linearRampToValueAtTime(0, t0 + end);
+  // flutter: a gain whose value is (base + lfo*depth); the lfo accelerates, the depth shrinks
+  const flut = ctx.createGain(); flut.gain.value = .55;
+  const lfo = ctx.createOscillator(); lfo.type = 'sine';
+  lfo.frequency.setValueAtTime(7, t0 + start); lfo.frequency.exponentialRampToValueAtTime(60, t0 + peak);
+  lfo.frequency.setValueAtTime(60, t0 + cut); lfo.frequency.exponentialRampToValueAtTime(22, t0 + idle);
+  const depth = ctx.createGain(); depth.gain.setValueAtTime(.45, t0 + start); depth.gain.linearRampToValueAtTime(.15, t0 + peak);
+  lfo.connect(depth); depth.connect(flut.gain); lfo.start(t0 + start); lfo.stop(t0 + end);
+  // drone body
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 2.2;
+  f.frequency.setValueAtTime(320, t0 + start); f.frequency.exponentialRampToValueAtTime(2800, t0 + peak);
+  f.frequency.setValueAtTime(2800, t0 + cut); f.frequency.exponentialRampToValueAtTime(700, t0 + idle);
+  const glide = (p, mult) => { p.setValueAtTime(N(40) * mult, t0 + start); p.exponentialRampToValueAtTime(N(59) * mult, t0 + peak); p.setValueAtTime(N(59) * mult, t0 + cut); p.exponentialRampToValueAtTime(N(40) * mult, t0 + idle); };
+  [['sawtooth', 1, 0, .35], ['sawtooth', 1, 7, .3], ['sine', .5, 0, .55]].forEach(([type, mult, det, g]) => {
+    const o = ctx.createOscillator(); o.type = type; o.detune.value = det; glide(o.frequency, mult);
+    const og = ctx.createGain(); og.gain.value = g; o.connect(og); og.connect(f); o.start(t0 + start); o.stop(t0 + end);
+  });
+  // air: white noise through a resonant bandpass riding the drone's harmonics
+  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 6; glide(bp.frequency, 6);
+  noise(t0 + start, end - start, {gain: .9, lp: 14000, hp: 120, attack: 1.2, release: 1.5, dest: bp});
+  f.connect(flut); bp.connect(flut); flut.connect(out); out.connect(mainOut);
+}
+
+// LAUNCH: Shepard glissando -- six octave-spaced triangle voices, each sweeping one octave, gain windowed so the rise never arrives
+function shepard(t0, start, end, vel = .06) {
+  const V = 6, base = N(28), w = x => .5 - .5 * Math.cos(2 * Math.PI * x / V);
+  for (let i = 0; i < V; i++) {
+    const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(base * Math.pow(2, i), t0 + start); o.frequency.exponentialRampToValueAtTime(base * Math.pow(2, i + 1), t0 + end);
+    const g = ctx.createGain(); g.gain.setValueAtTime(vel * w(i) + .0001, t0 + start); g.gain.linearRampToValueAtTime(vel * w(i + 1) + .0001, t0 + end); g.gain.linearRampToValueAtTime(0, t0 + end + .06);
+    o.connect(g); g.connect(mainOut); o.start(t0 + start); o.stop(t0 + end + .1);
+  }
+}
+// accelerating sequencer: 16ths that tighten from 160ms to 45ms, arpeggiating B7 and climbing an octave with the Shepard
+function sequencer(t0, start, end, voice) {
+  let t = start, dt = .16, i = 0;
+  while (t < end) { const p = (t - start) / (end - start); voice(t0 + t, 47 + [0, 7, 4, 10][i % 4] + Math.round(p * 12), .04 + .02 * p, i); t += dt; dt = Math.max(.045, dt * .93); i++; }
+}
+// the ignition blast: white noise swept from open to closed, plus the bass drop
+function blast(t0, vel = .5) {
+  const n = noise(t0, 1.3, {gain: vel, lp: 9000, hp: 60, attack: .01, release: .9});
+  n.f1.frequency.setValueAtTime(9000, t0); n.f1.frequency.exponentialRampToValueAtTime(150, t0 + 1.1);
+  sub(t0, 130, 34, 1.0, .7);
+}
+
+/* ============================ SCORES ============================ */
+// shared skeleton events every score hits, each in its own voice:
+//   power(t) boot(i,t) status(i,t) draw(i,t) circ(t) key() unlock(t) beam() tag(i,t) ready(t) flicker(t)
+// HARMONY: everything before the unlock lives on the DOMINANT (B7 and its extensions) so the E major
+// hit at 3.18 lands as a resolution rather than a repeat. Boot notes climb the upper structure of
+// B9 and end on the leading tone; the wireframe arpeggio outlines B13; the keyhole bell is D#.
+const DRAW6 = [59, 63, 66, 69, 73, 75];      // B D# F# A C# D# -- B13, one per sixth of the wireframe draw
+const STATUS4 = [78, 81, 85, 87];             // F#5 A5 C#6 D#6 -- 5, b7, 9, 3 of B9; D# leads to the E above
+const STATUS_CH = [[78, 75, 69], [81, 78, 75], [85, 81, 78], [87, 81, 78]];   // SID chord cycles under each status note
+const CIRC = 87;                              // D#6: the leading tone, held hanging until the unlock
+const CONNECT_NOTES = [78, 81, 85, 87, 90, 93];   // B9 upper structure climbing: the strum of connect pings stays on the dominant
+const STRAGGLER_NOTES = [80, 83, 85, 87, 88];     // G# B C# D# . E -- the flourishes are a phrase that walks up to the tonic
+let MODE = 'connect';
+function skeleton(t0, s) {
+  s.power(t0);
+  T.boot.forEach((b, i) => { s.boot(t0 + b, i); s.status(t0 + b + T.status, i); });
+  DRAW6.forEach((m, i) => s.draw(t0 + T.draw + i * (T.drawDur / 6), m, i));
+  s.circ(t0 + T.circ);
+  if (MODE === 'connect') {
+    // one quiet ping per client as its line lands (they all land within ~0.16s: a strum); then the straggler
+    // phrase during the hold, whose last note is the tonic with a low E under it. Plus a data-hiss bed.
+    [...NET.lines].sort((a, b) => a.connectAt - b.connectAt).forEach((l, i) => s.connect(t0 + l.connectAt, CONNECT_NOTES[i % CONNECT_NOTES.length] + (i % 5 === 0 ? 12 : 0), i, false));
+    STRAGGLERS.forEach((st, i) => s.connect(t0 + st.t, STRAGGLER_NOTES[i], i, true, i === STRAGGLERS.length - 1));
+    noise(t0 + T.unlock, T.end - T.unlock, {gain: .028, lp: 9000, hp: 2500, attack: .4, release: 1.2, color: 'pink'});
+  } else {
+    s.key(t0);
+  }
+  s.unlock(t0 + T.unlock);
+  s.beam(t0);
+  for (let i = 0; i < T.tagN; i++) s.tag(t0 + T.tag + i * (T.tagDur / T.tagN), i);
+  s.flicker(t0 + T.flicker);
+}
+
+function scoreFM(t0) {
+  pad(t0 + .45, 35, T.unlock - .45, .09, {attack: .6, release: .12});                       // B1 under the whole boot: the dominant, felt
+  skeleton(t0, {
+    power: t => { sub(t, 40, 220, .5, .2); noise(t, .5, {gain: .06, lp: 6000, hp: 400, attack: .02, release: .4, color: 'pink'}); },
+    boot: t => { for (let i = 0; i < 8; i++) click(t + i * .024, .05, 4000, 1800); },
+    status: (t, i) => bell(t, STATUS4[i], .13, .7, 3.5),
+    draw: (t, m, i) => bell(t, m, .15 + i * .01, .9, 2.0),
+    circ: t => bell(t, CIRC, .16, 1.2, 3.5),
+    key: t => keyTurn(t, .12),
+    connect: (t, m, i, late, last) => { bell(t, m, late ? .11 : .04, late ? 1.4 : .8, 3.5); if (last) bell(t, 64, .09, 2.0, 2.0); },
+    unlock: t => { sub(t, 90, 38, .6, .5); [40, 52, 59, 64, 68, 71, 76].forEach((m, i) => fmBrass(t, m, 2.6, i < 2 ? .22 : .13)); bell(t, 88, .2, 2.6, 3.5); bell(t + .03, 95, .12, 2.4, 2.0); pad(t + .2, 40, T.end - T.unlock - .2, .10, {attack: 1.2, release: 1.4}); },
+    beam: t => beamSweep(t, .06),
+    tag: t => bell(t, 103, .035, .25, 5),
+    flicker: t => noise(t, .1, {gain: .06, lp: 2500, hp: 600, attack: .002, release: .08, color: 'pink'}),
+  });
+}
+
+function scoreSID(t0) {
+  skeleton(t0, {
+    power: t => { for (let i = 0; i < 12; i++) chip(t + i * .035, 36 + i * 3, .035, .1, .5); chipNoise(t + .1, .3, .12); },
+    boot: t => { for (let i = 0; i < 6; i++) chip(t + i * .03, 96, .012, .05, .125); },
+    status: (t, i) => chip(t, STATUS_CH[i], .14, .16, .5, 50),
+    draw: (t, m) => sid(t, m, .16, .18, 8),
+    circ: t => ringBell(t, CIRC, .18, 1.0, 1.41),
+    // key turn: ratchet clicks, then a ii-V bass walk (F#2 on the turn, B2 as the key seats) that resolves to E at the unlock
+    key: t => { for (let i = 0; i < 5; i++) chipNoise(t + T.turn + i * .024, .012, .12); sid(t + T.turn, 42, T.click - T.turn, .2, 6); sid(t + T.click, 47, T.unlock - T.click, .22, 6); chipNoise(t + T.click, .05, .15); },
+    connect: (t, m, i, late, last) => { chip(t, m, late ? .12 : .05, late ? .14 : .06, .125); if (!late && i === 0) sid(t, 47, T.unlock - (t - t0), .18, 6); if (last) chip(t, [64, 68, 71], .6, .12, .5, 50); },
+    unlock: t => { chipNoise(t, .35, .3); sid(t, 40, 2.4, .22, 4); chip(t, [64, 68, 71, 76], 2.4, .2, .5, 50); ringBell(t, 88, .2, 2.0); sid(t + .6, 52, 1.8, .10, 2); },
+    beam: t => { const n = chipNoise(t + T.scan, T.scanDur, .08); n.f2.frequency.setValueAtTime(400, t + T.scan); n.f2.frequency.exponentialRampToValueAtTime(8000, t + T.scan + T.scanDur); },
+    tag: t => chip(t, 100, .015, .06, .125),
+    flicker: t => chipNoise(t, .06, .15),
+  });
+}
+
+function scoreTurbine(t0) {
+  turbine(t0);
+  const CHORD = [35, 47, 51, 57];              // B1 B2 D#3 A3 -- B7, one swell per boot line, held until ignition resolves it to E
+  skeleton(t0, {
+    power: t => noise(t, .6, {gain: .08, lp: 1200, hp: 60, attack: .05, release: .5, color: 'brown'}),
+    boot: () => {},
+    status: (t, i) => swell(t - .1, CHORD[i], T.unlock - (t - t0) - .05, .12, .5),
+    draw: (t, m, i) => swell(t, m, .55, .07 + i * .01, .12),
+    circ: t => bell(t, CIRC, .12, 1.4, 2.0),
+    key: t => keyTurn(t, .16),
+    connect: (t, m, i, late, last) => { bell(t, m, late ? .10 : .035, late ? 1.8 : 1.2, 2.0); if (last) swell(t, 64, 1.8, .07, .08); },
+    unlock: t => {
+      noise(t - .28, .3, {gain: .1, lp: 11000, hp: 2500, attack: .25, release: .05});           // cymbal swell into the hit
+      sub(t, 70, 30, .9, .8); timpani(t, 40, .7);
+      [40, 52, 59, 64, 68, 71, 76, 83].forEach((m, i) => brass(t, m, 2.8, i < 2 ? .26 : .15));
+      [64, 71, 76].forEach(m => strings(t + .05, m + 12, 3.0, .07, {attack: .3}));
+      bell(t, 88, .18, 3.0, 2.0); bell(t + .4, 95, .1, 2.8, 3.5);
+    },
+    beam: t => beamSweep(t, .08),
+    tag: t => bell(t, 100, .03, .3, 5),
+    flicker: () => {},
+  });
+}
+
+function scoreLaunch(t0) {
+  // rumble grows across the whole spool, spikes at ignition, idles under the hold
+  const r = noise(t0, T.end, {gain: 1, lp: 400, hp: 30, attack: .01, release: 1.6, color: 'brown'});
+  r.g.gain.cancelScheduledValues(t0); r.g.gain.setValueAtTime(0, t0); r.g.gain.linearRampToValueAtTime(.32, t0 + T.click);
+  r.g.gain.setValueAtTime(.32, t0 + T.unlock); r.g.gain.linearRampToValueAtTime(.55, t0 + T.unlock + .1); r.g.gain.exponentialRampToValueAtTime(.09, t0 + T.unlock + 1.4);
+  r.g.gain.setValueAtTime(.09, t0 + T.end - 1.6); r.g.gain.linearRampToValueAtTime(0, t0 + T.end);
+  shepard(t0, .3, T.click, .055);
+  sequencer(t0, .5, T.click, (t, m, d, i) => chip(t, m, d, i % 4 === 0 ? .12 : .08, .25));
+  strings(t0 + 1.75, 75, T.click - 1.75, .08, {swell: true}); strings(t0 + 1.75, 81, T.click - 1.75, .06, {swell: true});   // D# + A: the tritone of B7, resolving into the hit
+  skeleton(t0, {
+    power: t => sub(t, 30, 60, .8, .3),
+    boot: (t, i) => { const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 880; const g = ctx.createGain(); g.gain.setValueAtTime(.12, t); g.gain.setValueAtTime(.12, t + .1); g.gain.linearRampToValueAtTime(0, t + .13); o.connect(g); g.connect(mainOut); o.start(t); o.stop(t + .15); timpani(t, 40 - i, .3); },
+    status: (t, i) => bell(t, STATUS4[i], .1, .6, 3.5),
+    draw: () => {}, circ: () => {},
+    key: t => keyTurn(t, .16),
+    connect: (t, m, i, late, last) => { bell(t, m, late ? .10 : .035, late ? 1.4 : .7, 3.5); if (late) pluck(t, m - 12, .05, .3); if (last) { bell(t, 64, .08, 2.2, 2.0); pluck(t, 52, .07, .8); } },
+    unlock: t => {
+      blast(t, .5); timpani(t, 40, .8);
+      // the motif: a rising perfect fifth, then the octave lands with the scan beam
+      brass(t, 64, .26, .4); brass(t + .26, 71, .26, .42);
+      [40, 52, 59, 64, 68, 71, 76].forEach((m, i) => brass(t + .52, m, 2.6, i < 2 ? .26 : .14));
+      [76, 83, 88].forEach(m => strings(t + .52, m, 2.8, .07, {attack: .08}));
+      bell(t + .52, 88, .16, 2.6, 2.0);
+    },
+    beam: t => beamSweep(t, .05),
+    tag: t => pluck(t, 100, .06, .2),
+    flicker: () => {},
+  });
+}
+
+const SCORES = {fm: scoreFM, sid: scoreSID, turbine: scoreTurbine, launch: scoreLaunch};
+
+/* ============================ CONTROL ============================ */
+const stage = document.getElementById('stage'), ui = document.getElementById('ui');
+function begin() {                                       // start the CSS clocks and, in CONNECT mode, the canvas clock, together
+  stage.classList.add('play');
+  if (MODE === 'connect') { netStart = performance.now(); netRunning = true; requestAnimationFrame(netTick); }
+}
+function play(forcedScore, forcedTape, forcedMode) {
+  const score = forcedScore || document.querySelector('input[name=score]:checked').value;
+  const tape = forcedTape !== undefined ? forcedTape : document.getElementById('tape').checked;
+  MODE = forcedMode || document.querySelector('input[name=mode]:checked').value;
+  netStop();
+  stage.classList.remove('play'); stage.classList.toggle('connect', MODE === 'connect'); void stage.offsetWidth;   // restart all keyframes
+  if (score !== 'mute') {
+    if (!ctx || ctx.state === 'closed') buildMaster(score, tape);
+    const t0 = ctx.currentTime + 0.08;
+    if (tape) noise(t0, T.end, {gain: .045, lp: 2400, hp: 120, attack: .4, release: 1.2, color: 'pink'});
+    SCORES[score](t0);
+    setTimeout(begin, 80);
+  } else {
+    begin();
+  }
+}
+document.getElementById('start').onclick = () => { ui.classList.add('hidden'); play(); };
+document.getElementById('replay').onclick = () => { if (ctx) { ctx.close(); ctx = null; } play(); };
+
+// DEBUG: ?t=SECONDS freezes every animation at that time; ?run=SCORE[&tape=1] schedules a score headless; ?mode=connect|keyturn.
+const q = new URLSearchParams(location.search);
+if (q.get('run')) { ui.classList.add('hidden'); try { play(q.get('run'), q.get('tape') === '1', q.get('mode') || undefined); console.log('scheduled', q.get('run'), MODE); } catch (e) { console.error('SCORE ERROR', q.get('run'), e); } }
+if (q.get('t') !== null) {
+  const seek = parseFloat(q.get('t'));
+  MODE = q.get('mode') || MODE; netStop();
+  ui.classList.add('hidden'); stage.classList.toggle('connect', MODE === 'connect'); stage.classList.add('play');
+  requestAnimationFrame(() => { document.getAnimations().forEach(a => { a.pause(); a.currentTime = seek * 1000; }); if (MODE === 'connect') renderNet(seek); });
+}
+
+/* ============================ EMBED MODE (dashboard loading screen) ============================ */
+if (q.get('embed') === '1' && !q.get('run') && q.get('t') === null) (function embed() {
+  const MSG = 'conductress-intro';
+  const parentWin = window.parent && window.parent !== window ? window.parent : null;
+  const post = msg => { if (parentWin) parentWin.postMessage(Object.assign({type: MSG}, msg), '*'); };
+  const scoreArg = q.get('score');
+  const score = SCORES[scoreArg] ? scoreArg : 'mute';         // anything unknown, including 'mute', is silent
+  const tape = q.get('tape') === '1';
+  const body = document.body;
+  body.classList.add('embed');
+  ui.classList.add('hidden');
+  MODE = 'connect';
+  stage.classList.add('connect');
+  let audioOn = false, done = false;
+
+  // Schedule the score from a fresh timeline zero 80 ms ahead, exactly as PRESS START does.
+  // A late join is not possible: an AudioContext that was refused autoplay sits at currentTime 0
+  // until the gesture resumes it, so "timeline zero N seconds ago" is a negative time and WebAudio
+  // rejects it. The SOUND click therefore restarts the whole sequence with the score instead.
+  function scheduleAudio() {
+    if (!ctx || ctx.state === 'closed') buildMaster(score, tape);
+    const t0 = ctx.currentTime + 0.08;
+    if (tape) noise(t0, T.end, {gain: .045, lp: 2400, hp: 120, attack: .4, release: 1.2, color: 'pink'});
+    SCORES[score](t0);
+    audioOn = true; body.classList.add('audio');
+  }
+  // 'done' is clock-locked to the visuals (netStart is set by begin()), not to setTimeout drift
+  function armDone() {
+    done = false;
+    (function tick() { if (done) return; if (netStart && (performance.now() - netStart) / 1000 >= T.embedDone) { done = true; post({event: 'done'}); return; } requestAnimationFrame(tick); })();
+  }
+  function start(withAudio) {
+    netStop(); stage.classList.remove('play'); void stage.offsetWidth;   // restart all keyframes
+    armDone();
+    if (withAudio) { scheduleAudio(); setTimeout(begin, 80); } else begin();
+  }
+
+  if (score !== 'mute') {
+    body.classList.add('wantsound');
+    let running = false;
+    try { buildMaster(score, tape); running = ctx.state === 'running'; } catch (e) { running = false; }
+    start(running);                                             // autoplay allowed: play with sound; else visuals only
+  } else {
+    start(false);
+  }
+
+  document.getElementById('soundhint').onclick = e => {
+    e.stopPropagation();
+    if (audioOn || score === 'mute') return;
+    const go = () => { post({event: 'restart'}); start(true); };
+    if (ctx && ctx.state === 'suspended') ctx.resume().then(go, go); else go();
+  };
+  // anywhere else: skip. The parent owns the fade; we just ask.
+  stage.addEventListener('click', () => post({event: 'skip'}));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') post({event: 'skip'}); });
+
+  window.addEventListener('message', e => {
+    if (parentWin && e.source !== parentWin) return;
+    const m = e.data;
+    if (!m || m.type !== MSG) return;
+    if (m.cmd === 'fade') {
+      body.classList.add('fading');
+      const ms = Math.max(0, +m.ms || 0);
+      if (ctx && mainOut) { const now = ctx.currentTime; mainOut.gain.cancelScheduledValues(now); mainOut.gain.setValueAtTime(mainOut.gain.value, now); mainOut.gain.linearRampToValueAtTime(0, now + ms / 1000); }
+    }
+  });
+
+  post({event: 'ready'});
+})();
+</script>
+</body>
+</html>

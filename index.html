@@ -59,7 +59,7 @@
     .zoom-controls, .header-links { display: flex; align-items: center; gap: 0.35rem; flex: 0 0 auto; white-space: nowrap; }
     .header-links { margin-left: auto; gap: 0.7rem; }
     .header-links a { color: var(--accent); font-size: 0.76rem; text-decoration: none; font-weight: 500; }
-    .header-links a:last-child { color: var(--muted); font-weight: 400; }
+    .header-links a:last-of-type { color: var(--muted); font-weight: 400; }
     .controls select, .controls button { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 0.35rem 0.65rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
     .zoom-btn { font-size: 0.8rem; padding: 3px 10px; cursor: pointer; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px; }
     .zoom-btn:hover { background: var(--border); }
@@ -73,6 +73,25 @@
     .selector-toggle.open .arrow { transform: rotate(180deg); }
     .selector-panel { display: none; position: absolute; top: calc(100% + 4px); left: 1rem; z-index: 200; width: min(680px, calc(100vw - 2rem)); max-height: min(70vh, 640px); background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.45); overflow: hidden; flex-direction: column; }
     .selector-panel.open { display: flex; }
+
+    /* Sign-on intro: full-screen iframe shown while the first render runs (see lib/intro-helpers.js).
+       It sits above the sticky header and comes down with a short fade once the charts are ready. */
+    #introOverlay { position: fixed; inset: 0; z-index: 1000; background: #000; opacity: 1; transition: opacity 0.5s ease-out; }
+    #introOverlay.fading { opacity: 0; pointer-events: none; }
+    #introOverlay iframe { width: 100%; height: 100%; border: 0; display: block; background: #000; }
+    .intro-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font-size: 0.8rem; line-height: 1; padding: 3px 7px; cursor: pointer; }
+    .intro-btn:hover, .intro-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--text); }
+    .intro-btn svg { display: block; }
+    .intro-btn .intro-icon-off, .intro-btn.muted .intro-icon-on { display: none; }
+    .intro-btn.muted .intro-icon-off { display: inline; }
+    .intro-settings { display: none; position: absolute; top: calc(100% + 4px); right: 1rem; z-index: 200; width: 260px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.45); padding: 0.75rem 0.9rem; font-size: 0.8rem; }
+    .intro-settings.open { display: block; }
+    .intro-settings h3 { font-size: 0.8rem; font-weight: 600; margin: 0 0 0.5rem; }
+    .intro-settings label { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.25rem 0; color: var(--text); cursor: pointer; }
+    .intro-settings label.disabled { color: var(--muted); cursor: default; }
+    .intro-settings select { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem 0.4rem; font-size: 0.78rem; }
+    .intro-settings .intro-note { color: var(--muted); font-size: 0.72rem; margin-top: 0.4rem; line-height: 1.35; }
+    .intro-settings .intro-actions { display: flex; justify-content: flex-end; margin-top: 0.6rem; }
     .chip-bar { display: flex; gap: 0.4rem; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center; flex: 0 0 auto; }
     .chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; }
     .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -215,6 +234,64 @@
   </style>
 </head>
 <body>
+  <!-- Sign-on intro overlay: first in the body so it covers the page before anything else paints.
+       Removed from the DOM once released; every load plays it unless prefs disable it or the
+       OS asks for reduced motion. -->
+  <div id="introOverlay" hidden></div>
+  <script src="lib/intro-helpers.js"></script>
+  <script>
+    // Overlay controller. The pure rules (prefs, URL, release) live in IntroHelpers; this is only wiring.
+    window.Intro = (function () {
+      const MSG = 'conductress-intro', FADE_MS = 500, READY_TIMEOUT_MS = 2000;
+      const overlay = document.getElementById('introOverlay');
+      const store = (() => { try { return window.localStorage; } catch (e) { return null; } })();
+      const reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      let prefs = IntroHelpers.readPrefs(store);
+      let frame = null, state = null, watchdog = null;
+
+      function post(msg) { if (frame && frame.contentWindow) frame.contentWindow.postMessage(Object.assign({type: MSG}, msg), '*'); }
+      function show(chartsReady) {
+        if (state && !state.released) return;             // already on screen
+        state = { chartsReady, introDone: false, skipped: false, released: false, frameReady: false };
+        frame = document.createElement('iframe');
+        frame.id = 'introFrame'; frame.title = 'Conductress sign-on animation';
+        frame.setAttribute('aria-label', 'Loading animation, click or press Escape to skip');
+        frame.src = IntroHelpers.introSrc(prefs);
+        overlay.replaceChildren(frame);
+        overlay.classList.remove('fading'); overlay.hidden = false;
+        // If intro.html never answers (404, blocked frame), do not hold the dashboard hostage.
+        watchdog = setTimeout(() => { if (state && !state.frameReady) skip(); }, READY_TIMEOUT_MS);
+      }
+      function maybeRelease() { if (IntroHelpers.shouldRelease(state)) release(); }
+      function skip() { if (!state || state.released) return; state.skipped = true; maybeRelease(); }
+      function release() {
+        state.released = true; clearTimeout(watchdog);
+        post({ cmd: 'fade', ms: FADE_MS });
+        overlay.classList.add('fading');
+        setTimeout(() => { overlay.hidden = true; overlay.replaceChildren(); frame = null; }, FADE_MS + 50);
+      }
+      window.addEventListener('message', e => {
+        if (!frame || e.source !== frame.contentWindow) return;
+        const m = e.data; if (!m || m.type !== MSG || !state) return;
+        if (m.event === 'ready') { state.frameReady = true; clearTimeout(watchdog); }
+        else if (m.event === 'done') { state.introDone = true; maybeRelease(); }
+        else if (m.event === 'skip') skip();
+        else if (m.event === 'restart') state.introDone = false;   // SOUND click replayed the sequence from zero
+      });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') skip(); });
+
+      if (IntroHelpers.shouldPlay(prefs, reducedMotion)) show(false);
+
+      return {
+        /** Called once the first render settles; the overlay fades at max(this, intro done). */
+        chartsReady() { if (state) { state.chartsReady = true; maybeRelease(); } },
+        /** Play again on demand (settings popover); charts are already up, so only the intro gates the fade. */
+        replay() { show(true); },
+        getPrefs() { return Object.assign({}, prefs); },
+        setPrefs(next) { prefs = IntroHelpers.writePrefs(store, Object.assign({}, prefs, next)); return Object.assign({}, prefs); },
+      };
+    })();
+  </script>
   <header>
     <div class="header-title">
       <img class="brand-mark" src="brand/conductress-mark.svg" alt="">
@@ -237,7 +314,31 @@
       <a href="notable.html">Notable Changes</a>
       <a href="compare.html">Compare Engines</a>
       <a href="status.html">Host Status ↗</a>
+      <button class="intro-btn" id="introSettingsBtn" onclick="toggleIntroSettings()" title="Sign-on intro settings" aria-label="Sign-on intro settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="introSettings">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+          <path d="M2 6h3l4-3v10l-4-3H2z" fill="currentColor" stroke="none"/>
+          <path class="intro-icon-on" d="M11 5.5a3.5 3.5 0 0 1 0 5M13 3.5a6 6 0 0 1 0 9"/>
+          <path class="intro-icon-off" d="M11 6l4 4M15 6l-4 4"/>
+        </svg>
+      </button>
     </nav>
+    <!-- Sign-on intro settings: sound is off by default; the browser still needs one click per load before audio can start -->
+    <div id="introSettings" class="intro-settings" role="dialog" aria-label="Sign-on intro settings">
+      <h3>Sign-on intro</h3>
+      <label><span>Play on load</span><input type="checkbox" id="introEnabled"></label>
+      <label><span>Sound</span><input type="checkbox" id="introSound"></label>
+      <label id="introScoreRow"><span>Score</span>
+        <select id="introScore">
+          <option value="launch">Launch</option>
+          <option value="turbine">Turbine</option>
+          <option value="fm">FM synth</option>
+          <option value="sid">SID chip</option>
+        </select>
+      </label>
+      <label id="introTapeRow"><span>VHS tape</span><input type="checkbox" id="introTape"></label>
+      <div class="intro-note">Browsers only start audio after a click, so with sound on the intro shows a SOUND button; clicking it restarts the sequence with the score. Click anywhere else or press Esc to skip.</div>
+      <div class="intro-actions"><button class="zoom-btn" onclick="replayIntro()">Replay intro</button></div>
+    </div>
     <!-- Workload selector: overlay anchored under the header, not part of the page flow -->
     <div id="selectorPanel" class="selector-panel" role="dialog" aria-label="Select workloads">
       <div class="chip-bar" id="chipBar"></div>
@@ -381,6 +482,46 @@
       setSelectorPanel(false);
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && isSelectorPanelOpen()) setSelectorPanel(false); });
+
+    // -------------------------------------------------------------------------
+    // Sign-on intro settings popover (prefs persist via Intro.setPrefs -> localStorage)
+    // -------------------------------------------------------------------------
+    function isIntroSettingsOpen() { return document.getElementById('introSettings').classList.contains('open'); }
+    function setIntroSettings(open) {
+      document.getElementById('introSettings').classList.toggle('open', open);
+      document.getElementById('introSettingsBtn').setAttribute('aria-expanded', String(open));
+      if (open) syncIntroSettingsForm();
+    }
+    function toggleIntroSettings() { setIntroSettings(!isIntroSettingsOpen()); }
+    function syncIntroSettingsForm() {
+      const p = Intro.getPrefs();
+      document.getElementById('introEnabled').checked = p.enabled;
+      document.getElementById('introSound').checked = p.sound;
+      document.getElementById('introScore').value = p.score;
+      document.getElementById('introTape').checked = p.tape;
+      document.getElementById('introScore').disabled = !p.sound;
+      document.getElementById('introTape').disabled = !p.sound;
+      document.getElementById('introScoreRow').classList.toggle('disabled', !p.sound);
+      document.getElementById('introTapeRow').classList.toggle('disabled', !p.sound);
+      document.getElementById('introSettingsBtn').classList.toggle('muted', !p.sound);
+    }
+    document.getElementById('introSettings').addEventListener('change', () => {
+      Intro.setPrefs({
+        enabled: document.getElementById('introEnabled').checked,
+        sound: document.getElementById('introSound').checked,
+        score: document.getElementById('introScore').value,
+        tape: document.getElementById('introTape').checked,
+      });
+      syncIntroSettingsForm();
+    });
+    function replayIntro() { setIntroSettings(false); Intro.replay(); }
+    document.addEventListener('mousedown', e => {
+      if (!isIntroSettingsOpen()) return;
+      if (e.target.closest('#introSettings') || e.target.closest('#introSettingsBtn')) return;
+      setIntroSettings(false);
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && isIntroSettingsOpen()) setIntroSettings(false); });
+    syncIntroSettingsForm();
 
     let selectorSort = { col: null, dir: 1 };
     function selectorItems() {
@@ -2072,7 +2213,9 @@
     // Store points for popup access
     let currentPoints = null, currentWorkload = null;
 
-    init();
+    // The intro overlay holds until the first render settles (and its own done mark); a failed
+    // init must still release it, so the hand-off rides `finally`.
+    init().catch(e => console.error('init failed', e)).finally(() => Intro.chartsReady());
   </script>
   <div id="commitPopup"></div>
   <div id="flameModal">

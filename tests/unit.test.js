@@ -2517,3 +2517,141 @@ describe('index.html release-marked axis wiring', () => {
     assert.ok((html.match(/updateVisibleRange\(\)/g) || []).length >= 4, 'definition + hash update + initial render + hash restore');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// intro-helpers.js — sign-on intro overlay: prefs, iframe URL, release rule
+// ═══════════════════════════════════════════════════════════════════════════
+
+const intro = require('../lib/intro-helpers.js');
+
+function memStorage(initial) {
+  const map = new Map(Object.entries(initial || {}));
+  return {
+    getItem: k => (map.has(k) ? map.get(k) : null),
+    setItem: (k, v) => { map.set(k, String(v)); },
+    dump: () => Object.fromEntries(map),
+  };
+}
+
+describe('intro prefs', () => {
+  it('defaults: enabled, sound OFF, launch score, no tape', () => {
+    assert.deepEqual(intro.readPrefs(memStorage()), { enabled: true, sound: false, score: 'launch', tape: false });
+    assert.equal(intro.DEFAULT_PREFS.sound, false, 'sound must default off for anyone else hitting the URL');
+  });
+
+  it('reads a stored preference back', () => {
+    const s = memStorage({ [intro.STORAGE_KEY]: JSON.stringify({ enabled: true, sound: true, score: 'sid', tape: true }) });
+    assert.deepEqual(intro.readPrefs(s), { enabled: true, sound: true, score: 'sid', tape: true });
+  });
+
+  it('sanitizes garbage: unknown score, non-boolean flags, junk JSON, throwing storage', () => {
+    assert.deepEqual(intro.sanitizePrefs({ score: 'wagner', sound: 'yes', enabled: 0, tape: null }),
+      { enabled: true, sound: false, score: 'launch', tape: false });
+    assert.deepEqual(intro.readPrefs(memStorage({ [intro.STORAGE_KEY]: '{not json' })), intro.DEFAULT_PREFS);
+    assert.deepEqual(intro.readPrefs(memStorage({ [intro.STORAGE_KEY]: '"a string"' })), intro.DEFAULT_PREFS);
+    assert.deepEqual(intro.readPrefs({ getItem() { throw new Error('denied'); } }), intro.DEFAULT_PREFS);
+    assert.deepEqual(intro.readPrefs(null), intro.DEFAULT_PREFS);
+  });
+
+  it('writePrefs persists the sanitized object under one key and round-trips', () => {
+    const s = memStorage();
+    const written = intro.writePrefs(s, { sound: true, score: 'turbine', bogus: 1 });
+    assert.deepEqual(written, { enabled: true, sound: true, score: 'turbine', tape: false });
+    assert.deepEqual(Object.keys(s.dump()), [intro.STORAGE_KEY]);
+    assert.deepEqual(intro.readPrefs(s), written);
+  });
+
+  it('writePrefs never throws on a full or denied storage', () => {
+    const out = intro.writePrefs({ setItem() { throw new Error('QuotaExceededError'); } }, { sound: true });
+    assert.equal(out.sound, true);
+  });
+});
+
+describe('intro shouldPlay / introSrc', () => {
+  it('plays when enabled and motion is not reduced', () => {
+    assert.equal(intro.shouldPlay(intro.DEFAULT_PREFS, false), true);
+    assert.equal(intro.shouldPlay(intro.DEFAULT_PREFS, true), false, 'prefers-reduced-motion must suppress the intro');
+    assert.equal(intro.shouldPlay({ ...intro.DEFAULT_PREFS, enabled: false }, false), false);
+    assert.equal(intro.shouldPlay(null, false), false);
+  });
+
+  it('sound off maps to the silent score regardless of the chosen score/tape', () => {
+    assert.equal(intro.introSrc({ sound: false, score: 'sid', tape: true }), 'intro.html?embed=1&score=mute');
+  });
+
+  it('sound on carries the score and tape flag', () => {
+    assert.equal(intro.introSrc({ sound: true, score: 'sid', tape: true }), 'intro.html?embed=1&score=sid&tape=1');
+    assert.equal(intro.introSrc({ sound: true, score: 'fm' }), 'intro.html?embed=1&score=fm');
+    assert.equal(intro.introSrc({ sound: true, score: 'nope' }), 'intro.html?embed=1&score=launch', 'unknown score falls back');
+  });
+
+  it('parseEmbedQuery is the inverse of introSrc', () => {
+    for (const prefs of [{ sound: true, score: 'turbine', tape: true }, { sound: true, score: 'fm' }, { sound: false, score: 'sid' }]) {
+      const url = intro.introSrc(prefs);
+      const q = intro.parseEmbedQuery(url.slice(url.indexOf('?')));
+      assert.equal(q.embed, true);
+      assert.equal(q.score, prefs.sound ? prefs.score : 'mute');
+      assert.equal(q.tape, !!(prefs.sound && prefs.tape));
+    }
+    assert.deepEqual(intro.parseEmbedQuery('?embed=1&score=evil'), { embed: true, score: null, tape: false });
+    assert.deepEqual(intro.parseEmbedQuery(''), { embed: false, score: null, tape: false });
+  });
+});
+
+describe('intro shouldRelease', () => {
+  const st = (o) => ({ chartsReady: false, introDone: false, skipped: false, released: false, ...o });
+  it('holds until BOTH charts ready and intro done', () => {
+    assert.equal(intro.shouldRelease(st()), false);
+    assert.equal(intro.shouldRelease(st({ chartsReady: true })), false, 'fast charts must wait for the intro');
+    assert.equal(intro.shouldRelease(st({ introDone: true })), false, 'a finished intro must wait for slow charts');
+    assert.equal(intro.shouldRelease(st({ chartsReady: true, introDone: true })), true);
+  });
+  it('skip releases immediately, once', () => {
+    assert.equal(intro.shouldRelease(st({ skipped: true })), true);
+    assert.equal(intro.shouldRelease(st({ skipped: true, released: true })), false);
+    assert.equal(intro.shouldRelease(st({ chartsReady: true, introDone: true, released: true })), false);
+    assert.equal(intro.shouldRelease(null), false);
+  });
+});
+
+describe('intro overlay wiring (index.html + intro.html)', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const introHtml = fs.readFileSync(path.join(root, 'intro.html'), 'utf8');
+
+  it('index.html loads the helper, mounts the overlay before the header, and gates release on init()', () => {
+    assert.ok(index.includes('lib/intro-helpers.js'));
+    assert.ok(index.indexOf('id="introOverlay"') < index.indexOf('<header>'), 'overlay must precede the header so it paints first');
+    assert.ok(index.includes('IntroHelpers.shouldPlay(prefs, reducedMotion)'));
+    assert.ok(index.includes('prefers-reduced-motion: reduce'), 'must honour reduced motion');
+    assert.ok(index.includes('IntroHelpers.shouldRelease(state)'));
+    assert.ok(/init\(\)\.catch\(.*\)\.finally\(\(\) => Intro\.chartsReady\(\)\)/.test(index), 'chartsReady must fire even when init fails');
+    assert.ok(index.includes('READY_TIMEOUT_MS'), 'a missing intro.html must not hold the dashboard');
+  });
+
+  it('index.html has the header settings button and popover fields', () => {
+    for (const id of ['introSettingsBtn', 'introSettings', 'introEnabled', 'introSound', 'introScore', 'introTape']) {
+      assert.ok(index.includes(`id="${id}"`), `missing #${id}`);
+    }
+    assert.ok(index.includes('Intro.setPrefs('), 'popover must persist through Intro.setPrefs');
+    assert.ok(index.includes('Intro.replay()'));
+  });
+
+  it('intro.html speaks the postMessage protocol the overlay expects', () => {
+    assert.ok(introHtml.includes("q.get('embed') === '1'"));
+    assert.ok(introHtml.includes("'conductress-intro'"), 'message type must match index.html');
+    assert.ok(index.includes("'conductress-intro'"));
+    for (const ev of ["{event: 'ready'}", "{event: 'done'}", "{event: 'skip'}"]) assert.ok(introHtml.includes(ev), `intro must post ${ev}`);
+    assert.ok(introHtml.includes("m.cmd === 'fade'"), 'intro must ride the parent fade');
+    assert.ok(introHtml.includes('embedDone'), 'done mark must be a named timeline constant');
+    assert.ok(introHtml.includes('id="soundhint"'), 'sound needs a gesture; the intro must offer a button');
+  });
+
+  it('intro.html is a valid standalone page and its script parses', () => {
+    assert.ok(introHtml.includes('lang="en"'));
+    const script = introHtml.match(/<script>([\s\S]*?)<\/script>/)[1];
+    assert.doesNotThrow(() => new Function(script));
+  });
+});
