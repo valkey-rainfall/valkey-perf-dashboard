@@ -1738,6 +1738,87 @@ describe('index.html perf-group wiring', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// scope-badge.js — "which workload are the detail charts about?" badge
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('scopeBadge', () => {
+  const scopeBadge = require('../lib/scope-badge.js');
+  const names = {
+    workload: id => ({ 'get-k16-v16-t7-p10': 'GET 16B', 'set-k16-v16-t7-p10': 'SET 16B' }[id] || id),
+    platform: id => ({ arm64: 'ARM G3', amd64: 'AMD' }[id] || id),
+  };
+  const colors = ['#aaa', '#bbb', '#ccc'];
+  const getArm = { engine: 'valkey', platform: 'arm64', workloadId: 'get-k16-v16-t7-p10' };
+  const setArm = { engine: 'valkey', platform: 'arm64', workloadId: 'set-k16-v16-t7-p10' };
+  const getAmd = { engine: 'valkey', platform: 'amd64', workloadId: 'get-k16-v16-t7-p10' };
+
+  it('returns null when nothing is selected', () => {
+    assert.equal(scopeBadge.scopeBadge(null, [], names, colors, 'workload'), null);
+  });
+
+  it('single selection: workload · platform, that selection\'s colour, no note', () => {
+    const b = scopeBadge.scopeBadge(getArm, [getArm], names, colors, 'workload');
+    assert.deepEqual(b, { text: 'GET 16B · ARM G3', color: '#aaa', note: null });
+  });
+
+  it('multi selection: colour follows the primary\'s position in the selection', () => {
+    const b = scopeBadge.scopeBadge(setArm, [getArm, setArm], names, colors, 'workload');
+    assert.equal(b.color, '#bbb');
+    assert.equal(b.text, 'SET 16B · ARM G3');
+  });
+
+  it('multi selection: workload-scoped sections carry the switch note', () => {
+    const b = scopeBadge.scopeBadge(getArm, [getArm, setArm], names, colors, 'workload');
+    assert.equal(b.note, scopeBadge.NOTE_WORKLOAD);
+    assert.match(b.note, /★/);
+  });
+
+  it('palette wraps when there are more selections than colours', () => {
+    const fourth = { engine: 'valkey', platform: 'arm64', workloadId: 'w4' };
+    const b = scopeBadge.scopeBadge(fourth, [getArm, setArm, getAmd, fourth], names, colors, 'workload');
+    assert.equal(b.color, '#aaa');
+  });
+
+  it('platform scope: text is the platform only; no note while one platform is selected', () => {
+    const b = scopeBadge.scopeBadge(setArm, [getArm, setArm], names, colors, 'platform');
+    assert.deepEqual(b, { text: 'ARM G3', color: '#bbb', note: null });
+  });
+
+  it('platform scope: note appears once the selection spans platforms', () => {
+    const b = scopeBadge.scopeBadge(getAmd, [getArm, getAmd], names, colors, 'platform');
+    assert.equal(b.text, 'AMD');
+    assert.equal(b.note, scopeBadge.NOTE_PLATFORM);
+  });
+
+  it('primary not in the selection list still renders (first palette colour)', () => {
+    const b = scopeBadge.scopeBadge(getAmd, [getArm], names, colors, 'workload');
+    assert.equal(b.color, '#aaa');
+    assert.equal(b.text, 'GET 16B · AMD');
+  });
+});
+
+describe('index.html scope-badge wiring', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  it('loads lib/scope-badge.js', () => {
+    assert.ok(html.includes('lib/scope-badge.js'));
+  });
+
+  it('every detail section heading has a badge and a note slot', () => {
+    for (const id of ['perfScope', 'perfScopeNote', 'latencyScope', 'latencyScopeNote', 'memoryScope', 'memoryScopeNote']) {
+      assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
+    }
+  });
+
+  it('badges are refreshed on render and cleared with the selection', () => {
+    assert.ok(html.includes('ScopeBadge.scopeBadge('), 'must build badges via the helper');
+    assert.ok((html.match(/updateScopeBadges\(\);/g) || []).length >= 2, 'called from render() and clearSelection()');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // freshness-helpers.js — release / HEAD anchors, commit age, roster completeness
 // Fixtures mirror live v3 series shapes read off the data server on
 // 2026-09-22: Redis (release-and-tip) throughput points carry `sample`,
