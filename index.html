@@ -126,6 +126,12 @@
     /* Help button */
     .help-btn { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--border); color: var(--muted); font-size: 0.7rem; font-weight: 600; cursor: pointer; border: none; vertical-align: middle; margin-left: 0.4rem; transition: background 0.15s; }
     .help-btn:hover { background: var(--accent); color: var(--text); }
+    /* Primary-scope badge: names the ★ workload (or platform) a detail section is about */
+    .scope-badge { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: 0.6rem; font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+    .scope-badge:empty { display: none; }
+    .scope-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex: none; }
+    .scope-note { margin-left: 0.6rem; font-size: 0.75rem; color: var(--muted); font-style: italic; }
+    .scope-note:empty { display: none; }
 
     /* Help modal */
     #helpModal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
@@ -246,7 +252,7 @@
 
   <!-- Perf Counters (skeleton: 4 placeholder slots) -->
   <div id="perfChartsSection">
-    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Performance Counters</h2><button class="help-btn" onclick="showHelp('perf')">?</button></div>
+    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Performance Counters</h2><button class="help-btn" onclick="showHelp('perf')">?</button><span class="scope-badge" id="perfScope"></span><span class="scope-note" id="perfScopeNote"></span></div>
     <div id="perfCharts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:0.75rem;">
       <div class="chart-panel chart-panel--perf"></div>
       <div class="chart-panel chart-panel--perf"></div>
@@ -258,13 +264,13 @@
 
   <!-- Latency Band Chart -->
   <div id="latencySection" style="display:none">
-    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 id="latencyHeader" style="margin:1.5rem 0 0.5rem">Request Latency</h2><button class="help-btn" onclick="showHelp('latency')">?</button></div>
+    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 id="latencyHeader" style="margin:1.5rem 0 0.5rem">Request Latency</h2><button class="help-btn" onclick="showHelp('latency')">?</button><span class="scope-badge" id="latencyScope" style="margin-top:1rem"></span><span class="scope-note" id="latencyScopeNote" style="margin-top:1rem"></span></div>
     <div class="chart-panel chart-panel--throughput" style="position:relative"><canvas id="latencyChart"></canvas></div>
     <div id="latencyInfo" class="info-row"></div>
   </div>
 
   <!-- Memory (2x2 grid for multiple workloads) -->
-  <div style="display:flex;align-items:center;"><h2 style="margin:1.5rem 0 0.5rem">Memory Overhead (per-struct breakdown, 5M keys)</h2><button class="help-btn" onclick="showHelp('memory')">?</button></div>
+  <div style="display:flex;align-items:center;"><h2 style="margin:1.5rem 0 0.5rem">Memory Overhead (per-struct breakdown, 5M keys)</h2><button class="help-btn" onclick="showHelp('memory')">?</button><span class="scope-badge" id="memoryScope" style="margin-top:1rem"></span><span class="scope-note" id="memoryScopeNote" style="margin-top:1rem"></span></div>
   <div id="memoryChartsGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:0.75rem;"></div>
   <div id="memoryInfo" class="info-row"></div>
 
@@ -285,6 +291,7 @@
   <script src="lib/latency-helpers.js"></script>
   <script src="lib/selector-helpers.js"></script>
   <script src="lib/selection-helpers.js"></script>
+  <script src="lib/scope-badge.js"></script>
   <script src="lib/axis-ticks.js"></script>
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
@@ -529,6 +536,7 @@
       buildChips();
       buildSelectorItems();
       updateSelectorSummary();
+      updateScopeBadges();
       updateHashState();
       // Clear charts
       if (chart) { chart.destroy(); chart = null; }
@@ -576,6 +584,32 @@
         el.textContent = `${PLATFORM_SHORT_LABELS[s.platform] || (PLATFORM_LABELS[s.platform]||s.platform).split('(')[0].trim()} · ${wl?.label || s.workloadId}`;
       } else {
         el.textContent = `${selectedWorkloads.length} workloads selected`;
+      }
+    }
+
+    // Detail sections (perf counters, latency, memory) follow the ★ primary
+    // workload, not the whole selection. Stamp each heading with which one,
+    // using the primary's throughput-chart colour so the swatch ties the
+    // detail charts to a specific line above. Logic in lib/scope-badge.js.
+    const SCOPE_BADGE_TARGETS = [
+      { badge: 'perfScope',    note: 'perfScopeNote',    scope: 'workload' },
+      { badge: 'latencyScope', note: 'latencyScopeNote', scope: 'workload' },
+      { badge: 'memoryScope',  note: 'memoryScopeNote',  scope: 'platform' },
+    ];
+    function updateScopeBadges() {
+      const names = {
+        workload: id => THROUGHPUT_WORKLOADS.find(w => w.id === id)?.label || id,
+        platform: id => PLATFORM_SHORT_LABELS[id] || (PLATFORM_LABELS[id] || id).split('(')[0].trim(),
+      };
+      for (const t of SCOPE_BADGE_TARGETS) {
+        const badgeEl = document.getElementById(t.badge), noteEl = document.getElementById(t.note);
+        if (!badgeEl || !noteEl) continue;
+        const b = ScopeBadge.scopeBadge(primaryWorkload, selectedWorkloads, names, MULTI_COLORS, t.scope);
+        if (!b) { badgeEl.replaceChildren(); noteEl.textContent = ''; continue; }
+        const sw = document.createElement('span'); sw.className = 'scope-swatch'; sw.style.background = b.color;
+        badgeEl.replaceChildren(sw, document.createTextNode(b.text));
+        badgeEl.title = 'Detail charts follow the ★ primary workload';
+        noteEl.textContent = b.note || '';
       }
     }
 
@@ -842,6 +876,7 @@
       document.getElementById('workload-label').textContent = selectedWorkloads.length > 1
         ? `${selectedWorkloads.length} workloads overlaid` + (spansPlatforms ? ` · detail charts: ${PLATFORM_SHORT_LABELS[platform] || platform}` : '')
         : 'Workload: ' + workload;
+      updateScopeBadges();
 
       // Update release button labels
       const releases = getVersionReleases(data);
