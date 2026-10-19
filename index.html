@@ -292,6 +292,7 @@
   <script src="lib/selector-helpers.js"></script>
   <script src="lib/selection-helpers.js"></script>
   <script src="lib/scope-badge.js"></script>
+  <script src="lib/scope-helpers.js"></script>
   <script src="lib/axis-ticks.js"></script>
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
@@ -730,7 +731,7 @@
           if (args.event.type === 'mouseout') { el.innerHTML = defaultContent || ''; return; }
           if (args.event.type !== 'mousemove') return;
           const pts = chart.getElementsAtEventForMode(args.event, 'index', { intersect: false }, false);
-          if (pts.length > 0) el.innerHTML = formatter(chart, pts[0].index);
+          if (pts.length > 0) el.innerHTML = formatter(chart, pts[0].index, pts[0].datasetIndex);
         }
       };
     }
@@ -1149,6 +1150,7 @@
       for (const group of perfGroups) {
         if (renderIsStale(gen)) return;
         const datasets = []; let maxIdx = 0; let colorIdx = 0;
+        const scopeBreaks = {}; // commit_index -> {from, to}; perf-scope changes in this group's series
         let cpuClickPts = null; // CPU points (with commit) for flamegraph drill-down
         const isTMA = group.id === 'tma' || group.id === 'tma-main' || group.id === 'tma-io';
         const isCPU = group.id === 'cpu-main' || group.id === 'cpu-io';
@@ -1232,13 +1234,21 @@
             popupPerfData[metricId] = pts;
             maxIdx = Math.max(maxIdx, pts.at(-1).commit_index);
             const color = CATEGORY_COLORS[metricId] || CHART_COLORS[colorIdx % CHART_COLORS.length];
-            datasets.push({
-              label: metricId, data: pts.map(p => ({x: p.commit_index, y: p.value})),
-              borderColor: color, backgroundColor: 'transparent',
-              fill: false,
-              pointRadius: 3, pointBackgroundColor: color, borderWidth: 1, tension: 0,
-              yAxisID: group.y_axes?.find(a => a.series.includes(metricId))?.id || 'left',
-            });
+            const yAxisID = group.y_axes?.find(a => a.series.includes(metricId))?.id || 'left';
+            // Counts from different privilege scopes (user vs user+kernel) are
+            // not comparable, so a series that changed scope is drawn as
+            // separate runs: no segment crosses the step, later scopes are
+            // dashed, and the legend names the scope. Logic in lib/scope-helpers.js.
+            for (const run of ScopeHelpers.scopeDatasets(metricId, pts)) {
+              datasets.push({
+                label: run.label, data: run.data, scope: run.scope, metricId,
+                borderColor: color, backgroundColor: 'transparent', borderDash: run.borderDash,
+                fill: false, hideFromLegend: !run.legend,
+                pointRadius: 3, pointBackgroundColor: color, borderWidth: 1, tension: 0,
+                yAxisID,
+              });
+            }
+            ScopeHelpers.scopeBoundaries(pts).forEach(b => { scopeBreaks[b.commit_index] = b; });
             colorIdx++;
           } catch { continue; }
         }
@@ -1261,18 +1271,31 @@
           }
         }
 
+        const scopeAnnotations = {};
+        Object.values(scopeBreaks).forEach((b, i) => {
+          scopeAnnotations[`scope${i}`] = {
+            type: 'line', xMin: b.commit_index, xMax: b.commit_index,
+            borderColor: 'rgba(245,158,11,0.7)', borderWidth: 1, borderDash: [2, 2],
+            label: { display: true, content: `counter scope: ${b.from} → ${b.to}`, position: 'end', backgroundColor: 'rgba(245,158,11,0.15)', color: '#b45309', font: { size: 9 }, padding: 2 },
+          };
+        });
         const ci = new Chart(div.querySelector('canvas').getContext('2d'), {
           type: 'line', data: { datasets },
-          plugins: [makeInfoPlugin('perfInfo', (_, idx) => {
+          plugins: [makeInfoPlugin('perfInfo', (_, idx, dsIdx) => {
             if (isCPU) {
               return datasets.map(ds => { const pt = ds.data[idx]; return (pt && pt.y > 0.05) ? infoItem(ds.label, pt.y.toFixed(1) + '%') : ''; }).filter(Boolean).join('<span class="info-sep"> · </span>');
             }
             if (isTMA) {
               return datasets.map((ds, i) => { const pt = ds.data[idx]; if (!pt) return ''; const prev = i > 0 ? datasets[i-1].data[idx]?.y || 0 : 0; return infoItem(ds.label, (pt.y - prev).toFixed(1) + '%'); }).filter(Boolean).join('<span class="info-sep"> · </span>');
             }
-            return datasets.map(ds => { const pt = ds.data[idx]; return pt ? infoItem(ds.label, pt.y.toFixed(2)) : ''; }).filter(Boolean).join('<span class="info-sep"> · </span>');
+            // Plain metrics may be split into several runs (one per counter
+            // scope) and metrics may have different point counts, so match on
+            // the hovered commit index rather than array position.
+            const x = datasets[dsIdx]?.data[idx]?.x;
+            if (x == null) return '';
+            return datasets.map(ds => { const pt = ds.data.find(p => p.x === x); return pt ? infoItem(ds.label, pt.y.toFixed(2)) : ''; }).filter(Boolean).join('<span class="info-sep"> · </span>');
           })],
-          options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: datasets.length > 1, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { enabled: false }, zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart:c}) => { syncZoom(c, c.scales.x.min, c.scales.x.max); updateHashState(); } } } }, scales },
+          options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: datasets.filter(d => !d.hideFromLegend).length > 1, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, filter: item => !datasets[item.datasetIndex]?.hideFromLegend } }, annotation: { annotations: scopeAnnotations }, tooltip: { enabled: false }, zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart:c}) => { syncZoom(c, c.scales.x.min, c.scales.x.max); updateHashState(); } } } }, scales },
         });
         // Click a CPU point to open the raw-stack flamegraph for that commit.
         if (isCPU && cpuClickPts) {
@@ -1773,8 +1796,13 @@
           if (!mp) continue;
           const prevMp = prevPoint ? pts.find(p => p.commit_index === prevPoint.commit_index) : null;
           let deltaStr = '';
-          if (prevMp) {
-            const d = mp.value - prevMp.value;
+          const sd = ScopeHelpers.scopedDelta(mp, prevMp);
+          if (sd && !sd.comparable) {
+            // Previous point was counted under a different privilege scope;
+            // the difference is the scope step, not this commit.
+            deltaStr = `<div class="cpop-perf-d cpop-delta-noise" title="Counter scope changed from ${sd.from} to ${sd.to}; not comparable to the previous point">scope → ${sd.to}</div>`;
+          } else if (sd) {
+            const d = sd.delta;
             const sign = d > 0 ? '+' : '';
             // For "insn/req" lower is better, for IPC higher is better
             const isGood = metricId === 'ipc' ? d > 0 : d < 0;

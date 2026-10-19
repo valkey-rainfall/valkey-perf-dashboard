@@ -1819,6 +1819,129 @@ describe('index.html scope-badge wiring', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// scope-helpers.js — perf-counter privilege scope (user vs user+kernel)
+// Fixture mirrors the shape of a v1 series that was extended past Conductress
+// PR #196: cycles/req/main on intel get-k16-v128-t7-p1 sat near 3500 counted
+// user-only and jumped to ~9500 once kernel cycles were included.
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('scope-helpers', () => {
+  const S = require('../lib/scope-helpers.js');
+  const pt = (idx, value, scope) => Object.assign({ commit_index: idx, value }, scope === undefined ? {} : { scope });
+  const stepped = [pt(1, 3500, 'user'), pt(2, 3520, 'user'), pt(3, 9500, 'user+kernel'), pt(4, 9480, 'user+kernel')];
+  const single = [pt(1, 3500, 'user'), pt(2, 3520, 'user')];
+
+  describe('pointScope', () => {
+    it('reads the tagged scope', () => assert.equal(S.pointScope(pt(1, 1, 'user+kernel')), 'user+kernel'));
+    it('untagged points are user-only, matching the exporter LEGACY_PERF_SCOPE', () => {
+      assert.equal(S.pointScope(pt(1, 1)), 'user');
+      assert.equal(S.LEGACY_SCOPE, 'user');
+    });
+  });
+
+  describe('splitByScope', () => {
+    it('single scope: one run with every point', () => {
+      const runs = S.splitByScope(single);
+      assert.equal(runs.length, 1);
+      assert.equal(runs[0].scope, 'user');
+      assert.equal(runs[0].points.length, 2);
+    });
+    it('splits at the step and keeps commit order', () => {
+      const runs = S.splitByScope(stepped);
+      assert.deepEqual(runs.map(r => [r.scope, r.points.map(p => p.commit_index)]),
+        [['user', [1, 2]], ['user+kernel', [3, 4]]]);
+    });
+    it('a scope that returns starts a new run (A,B,A -> three runs)', () => {
+      const runs = S.splitByScope([pt(1, 1, 'user'), pt(2, 2, 'user+kernel'), pt(3, 3, 'user')]);
+      assert.deepEqual(runs.map(r => r.scope), ['user', 'user+kernel', 'user']);
+    });
+    it('empty and missing input yield no runs', () => {
+      assert.deepEqual(S.splitByScope([]), []);
+      assert.deepEqual(S.splitByScope(null), []);
+    });
+  });
+
+  describe('scopesOf / scopeBoundaries', () => {
+    it('scopes in first-seen order', () => {
+      assert.deepEqual(S.scopesOf(stepped), ['user', 'user+kernel']);
+      assert.deepEqual(S.scopesOf([pt(1, 1, 'user'), pt(2, 2, 'user+kernel'), pt(3, 3, 'user')]), ['user', 'user+kernel']);
+    });
+    it('boundary sits on the first point of the new scope', () => {
+      assert.deepEqual(S.scopeBoundaries(stepped), [{ commit_index: 3, from: 'user', to: 'user+kernel' }]);
+    });
+    it('single-scope series has no boundaries', () => assert.deepEqual(S.scopeBoundaries(single), []));
+  });
+
+  describe('scopeDatasets', () => {
+    it('single scope renders exactly as before: plain label, solid line, in legend', () => {
+      const ds = S.scopeDatasets('cycles-per-req-main', single);
+      assert.equal(ds.length, 1);
+      assert.equal(ds[0].label, 'cycles-per-req-main');
+      assert.deepEqual(ds[0].borderDash, []);
+      assert.equal(ds[0].legend, true);
+      assert.deepEqual(ds[0].data, [{ x: 1, y: 3500 }, { x: 2, y: 3520 }]);
+    });
+    it('stepped series: one dataset per run, no point shared across the step', () => {
+      const ds = S.scopeDatasets('cycles-per-req-main', stepped);
+      assert.equal(ds.length, 2);
+      assert.deepEqual(ds.map(d => d.data.map(p => p.x)), [[1, 2], [3, 4]]);
+    });
+    it('stepped series: labels name the scope, later scope is dashed', () => {
+      const ds = S.scopeDatasets('cycles-per-req-main', stepped);
+      assert.equal(ds[0].label, 'cycles-per-req-main (user)');
+      assert.equal(ds[1].label, 'cycles-per-req-main (user+kernel)');
+      assert.deepEqual(ds[0].borderDash, []);
+      assert.ok(ds[1].borderDash.length > 0);
+    });
+    it('dash follows the scope, not the run position; repeat scope hidden from legend', () => {
+      const ds = S.scopeDatasets('ipc-main', [pt(1, 1, 'user'), pt(2, 2, 'user+kernel'), pt(3, 3, 'user')]);
+      assert.deepEqual(ds[2].borderDash, ds[0].borderDash, 'both user runs solid');
+      assert.notDeepEqual(ds[1].borderDash, ds[0].borderDash);
+      assert.deepEqual(ds.map(d => d.legend), [true, true, false]);
+    });
+  });
+
+  describe('scopedDelta', () => {
+    it('same scope: numeric delta', () => {
+      assert.deepEqual(S.scopedDelta(stepped[1], stepped[0]), { comparable: true, delta: 20 });
+    });
+    it('across the step: not comparable, names both scopes, no number', () => {
+      const d = S.scopedDelta(stepped[2], stepped[1]);
+      assert.equal(d.comparable, false);
+      assert.equal(d.from, 'user');
+      assert.equal(d.to, 'user+kernel');
+      assert.equal('delta' in d, false);
+    });
+    it('untagged previous point compares as user', () => {
+      assert.equal(S.scopedDelta(pt(2, 5, 'user'), pt(1, 4)).comparable, true);
+      assert.equal(S.scopedDelta(pt(2, 5, 'user+kernel'), pt(1, 4)).comparable, false);
+    });
+    it('missing point -> null', () => {
+      assert.equal(S.scopedDelta(stepped[0], null), null);
+      assert.equal(S.scopedDelta(null, stepped[0]), null);
+    });
+  });
+});
+
+describe('index.html scope-helpers wiring', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  it('loads lib/scope-helpers.js', () => assert.ok(html.includes('lib/scope-helpers.js')));
+  it('perf charts build datasets per scope run and mark boundaries', () => {
+    assert.ok(html.includes('ScopeHelpers.scopeDatasets('), 'datasets must come from the split helper');
+    assert.ok(html.includes('ScopeHelpers.scopeBoundaries('), 'boundaries drawn as annotations');
+  });
+  it('commit popup guards the perf delta with scopedDelta', () => {
+    assert.ok(html.includes('ScopeHelpers.scopedDelta('));
+  });
+  it('info-row formatter receives the hit dataset index', () => {
+    assert.ok(html.includes('formatter(chart, pts[0].index, pts[0].datasetIndex)'));
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // freshness-helpers.js — release / HEAD anchors, commit age, roster completeness
 // Fixtures mirror live v3 series shapes read off the data server on
 // 2026-09-22: Redis (release-and-tip) throughput points carry `sample`,
