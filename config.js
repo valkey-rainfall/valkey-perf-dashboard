@@ -227,17 +227,26 @@ const HELP_TEXT = {
 };
 
 // Help modal logic
-function showHelp(sectionId) {
-  const h = HELP_TEXT[sectionId]; if (!h) return;
+function openHelpModal(title, bodyHtml) {
   let modal = document.getElementById('helpModal');
   if (!modal) {
     modal = document.createElement('div'); modal.id = 'helpModal';
     modal.innerHTML = `<div class="help-backdrop" onclick="closeHelp()"></div><div class="help-content"><div class="help-header"><span class="help-title"></span><button class="help-close" onclick="closeHelp()">✕</button></div><div class="help-body"></div></div>`;
     document.body.appendChild(modal);
   }
-  modal.querySelector('.help-title').textContent = h.title;
-  modal.querySelector('.help-body').innerHTML = h.content;
+  modal.querySelector('.help-title').textContent = title;
+  modal.querySelector('.help-body').innerHTML = bodyHtml;
   modal.style.display = 'flex';
+}
+function showHelp(sectionId) {
+  const h = HELP_TEXT[sectionId]; if (!h) return;
+  openHelpModal(h.title, h.content);
+}
+// Per-metric help for one Performance Counters chart (lib/metric-help.js).
+function showMetricHelp(metricId) {
+  if (typeof MetricHelp === 'undefined') return;
+  const h = MetricHelp.helpFor(metricId); if (!h) return;
+  openHelpModal(h.title, MetricHelp.renderHelp(metricId));
 }
 function closeHelp() { const m = document.getElementById('helpModal'); if (m) m.style.display = 'none'; }
 
