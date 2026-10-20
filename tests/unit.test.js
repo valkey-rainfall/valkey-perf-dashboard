@@ -2854,6 +2854,16 @@ describe('intro releasePlan', () => {
   it('the score stays audible past Chrome\'s 7 s media-engagement threshold', () => {
     assert.ok(intro.AUDIO_TAIL_S > 7, `tail ${intro.AUDIO_TAIL_S}s`);
   });
+  it('the tail ends in a fade that reaches silence before the context is closed', () => {
+    const p = intro.audioFadePlan(2.5);
+    assert.equal(p.closeAt, 2.5 + intro.AUDIO_TAIL_S);
+    assert.ok(p.fadeStart < p.silentAt && p.silentAt < p.closeAt, 'fadeStart < silentAt < closeAt');
+    assert.ok(Math.abs((p.silentAt - p.fadeStart) - intro.AUDIO_FADE_S) < 1e-9, 'the ramp is the fade length');
+    assert.ok(Math.abs((p.closeAt - p.silentAt) - intro.AUDIO_SILENT_LEAD_S) < 1e-9, 'silence leads the close');
+    assert.ok(intro.AUDIO_FADE_S >= 1.5, 'gentle: at least 1.5 s');
+    assert.ok(p.silentAt - 2.5 > 7.5, 'still audible well past the 7 s engagement mark');
+    assert.ok(intro.AUDIO_TAIL_S * 1000 <= intro.AUDIO_TAIL_CAP_MS, 'the parent cap must not cut the fade');
+  });
 });
 
 describe('intro overlay wiring (index.html + intro.html)', () => {
@@ -2912,6 +2922,16 @@ describe('intro overlay wiring (index.html + intro.html)', () => {
     for (const gone of ['scoreVHS', 'scoreChip', 'scoreOrch', 'name="score"', 'id="crt"', 'id="scan"', 'id="vignette"', '.crt ', "q.get('crt')", 'function brass', 'function chip(']) {
       assert.ok(!introHtml.includes(gone), `${gone} should be gone`);
     }
+
+  it('intro.html ends the audio tail with an output-bus fade placed after the reverb, and closes only once silent', () => {
+    assert.ok(introHtml.includes('comp.connect(outBus); outBus.connect(ctx.destination)'), 'outBus gain must sit after the compressor/convolver sum');
+    assert.ok(introHtml.includes('function fadeOut('), 'one fade routine for the tail and for skips');
+    assert.ok(/fadeOut\(plan\.fadeStart, plan\.silentAt\)/.test(introHtml), 'the scheduled tail fade follows the helper plan');
+    assert.ok(/const endAt = plan\.closeAt/.test(introHtml), 'the context closes at the plan\'s closeAt, after silence');
+    assert.ok(introHtml.includes('H.audioFadePlan(t0)'), 'plan comes from the shared helper');
+    assert.ok(/fadeOut\(now, now \+ Math\.max\(\.05, ms \/ 1000\)\)/.test(introHtml), 'a skip fades the output bus, not the pre-reverb bus');
+    assert.ok(!/mainOut\.gain\.(cancelScheduledValues|linearRampToValueAtTime)/.test(introHtml), 'no fade may ride mainOut: the reverb would ring on after it');
+  });
   });
 
   it('intro.html draws full-bleed: viewBox unchanged, overflow visible, scenery outside the box, mask hex arrives with the C', () => {

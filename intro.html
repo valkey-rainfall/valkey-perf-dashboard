@@ -50,7 +50,8 @@
             Clicking anywhere else asks the parent to skip. The parent sends {cmd:'release',
             keepAudio, ms}: keepAudio lets a playing score finish under the dashboard (the score
             stays audible past 7 s so Chrome's media-engagement index counts the visit and learns to
-            allow autoplay here); otherwise the output gain rides the visual fade down.
+            allow autoplay here, then the output bus fades it to silence before the context closes);
+            otherwise the output bus rides the visual fade down, reverb included.
 
      DEBUG: ?t=2.5 pauses every animation at t=2.5s (Web Animations API) for frame capture.
             ?run=1 starts the sequence + schedules the score without a gesture (audio stays
@@ -388,7 +389,7 @@
 
 /* ============================ AUDIO CORE ============================ */
 const N = n => 440 * Math.pow(2, (n - 69) / 12);          // MIDI note -> Hz
-let ctx, mainOut;
+let ctx, mainOut, outBus;
 
 function impulse(seconds, decay) {                         // synthetic plate/hall IR
   const len = Math.ceil(ctx.sampleRate * seconds), buf = ctx.createBuffer(2, len, ctx.sampleRate);
@@ -397,14 +398,26 @@ function impulse(seconds, decay) {                         // synthetic plate/ha
   return buf;
 }
 
-// Cosmos bus: dry + a long convolver send, gentle limiter on the sum
+// Cosmos bus: dry + a long convolver send, gentle limiter on the sum, then an output bus.
+// Every fade (the end of the tail, a skip) rides the output bus (outBus): it sits after the convolver, so
+// the reverb goes down with the notes instead of ringing on after them.
 function buildOutput() {
   ctx = new (window.AudioContext || window.webkitAudioContext)();
   mainOut = ctx.createGain(); mainOut.gain.value = 0.55;
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.knee.value = 18; comp.ratio.value = 4; comp.attack.value = .005; comp.release.value = .25;
   const cv = ctx.createConvolver(); cv.buffer = impulse(5.5, 2.2);
   const wet = ctx.createGain(); wet.gain.value = .55;
-  mainOut.connect(comp); mainOut.connect(cv); cv.connect(wet); wet.connect(comp); comp.connect(ctx.destination);
+  outBus = ctx.createGain(); outBus.gain.value = 1;
+  mainOut.connect(comp); mainOut.connect(cv); cv.connect(wet); wet.connect(comp); comp.connect(outBus); outBus.connect(ctx.destination);
+}
+// Take the output bus to silence between two absolute context times: exponential to -60 dB (what
+// the ear reads as an even fade), then the last step to true zero.
+function fadeOut(from, to) {
+  const g = outBus.gain;
+  g.cancelScheduledValues(from);
+  g.setValueAtTime(Math.max(g.value, .001), from);
+  g.exponentialRampToValueAtTime(.001, Math.max(from + .01, to - .05));
+  g.linearRampToValueAtTime(0, to);
 }
 
 // noise: color 'white' | 'pink' (Kellet 3-pole approximation) | 'brown'
@@ -523,7 +536,6 @@ if (q.get('embed') === '1' && !q.get('run') && q.get('t') === null) (function em
   const parentWin = window.parent && window.parent !== window ? window.parent : null;
   const post = msg => { if (parentWin) parentWin.postMessage(Object.assign({type: MSG}, msg), '*'); };
   const opts = H ? H.parseEmbedQuery(location.search) : {sound: 'off'};
-  const tailS = H ? H.AUDIO_TAIL_S : 9.6;
   const body = document.body;
   body.classList.add('embed');
   let audioOn = false, done = false, visualStart = 0;
@@ -555,9 +567,12 @@ if (q.get('embed') === '1' && !q.get('run') && q.get('t') === null) (function em
     scoreCosmos(t0);
     audioOn = true; body.classList.add('audio');
     post({event: 'audio'});
-    // The score keeps its tail audible past 7 s (Chrome's media-engagement threshold); tell the
-    // parent when it is over so a frame kept alive for the tail can go.
-    const endAt = t0 + tailS;
+    // The score keeps its tail audible past 7 s (Chrome's media-engagement threshold), then the
+    // output bus fades it to silence and the context is closed only once it is already quiet; tell
+    // the parent when it is over so a frame kept alive for the tail can go.
+    const plan = H ? H.audioFadePlan(t0) : {fadeStart: t0 + 7.25, silentAt: t0 + 10.25, closeAt: t0 + 10.4};
+    fadeOut(plan.fadeStart, plan.silentAt);
+    const endAt = plan.closeAt;
     (function tick() {
       if (!ctx || ctx.state === 'closed') return;
       if (ctx.currentTime >= endAt) { try { ctx.close(); } catch (e) { /* already closed */ } post({event: 'audio-ended'}); return; }
@@ -605,9 +620,9 @@ if (q.get('embed') === '1' && !q.get('run') && q.get('t') === null) (function em
     if (!m || m.type !== MSG) return;
     if (m.cmd === 'release') {
       body.classList.add('released');
-      if (m.keepAudio || !ctx || !mainOut) return;            // the score finishes under the dashboard
+      if (m.keepAudio || !ctx || !outBus) return;             // the score finishes under the dashboard
       const ms = Math.max(0, +m.ms || 0), now = ctx.currentTime;
-      mainOut.gain.cancelScheduledValues(now); mainOut.gain.setValueAtTime(mainOut.gain.value, now); mainOut.gain.linearRampToValueAtTime(0, now + ms / 1000);
+      fadeOut(now, now + Math.max(.05, ms / 1000));        // a skip takes the reverb down with it
     }
   });
 
