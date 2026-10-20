@@ -2770,6 +2770,66 @@ describe('intro shouldRelease', () => {
   });
 });
 
+describe('intro starField (night sky)', () => {
+  const sky = intro.SKY;
+  it('is deterministic for a seed and sized by count', () => {
+    const a = intro.starField({count: 400}), b = intro.starField({count: 400});
+    assert.deepEqual(a.stars, b.stars);
+    assert.ok(a.stars.length >= 400 && a.stars.length <= 400 * 1.3 + 1, `${a.stars.length} stars for count 400 (+outer)`);
+    assert.notDeepEqual(intro.starField({count: 400, seed: 7}).stars, a.stars);
+    assert.ok(intro.starField({count: 3000}).stars.length > intro.starField({count: 1000}).stars.length);
+  });
+  it('places nothing over the sun, below the horizon or outside the scenery box', () => {
+    const f = intro.starField({count: 3000});
+    for (const s of f.stars) {
+      assert.ok(Math.hypot(s.x - sky.sun.x, s.y - sky.sun.y) >= sky.sun.r, `star on the sun at ${s.x},${s.y}`);
+      assert.ok(s.y < sky.horizon, `star below the horizon at ${s.y}`);
+      assert.ok(s.x >= sky.box.x0 && s.x <= sky.box.x1 && s.y >= sky.box.y0, 'inside the scenery box');
+    }
+  });
+  it('visibility: zero on the disc, washed out near the glow, growing with distance and height', () => {
+    assert.equal(intro.starVisibility(450, 110), 0);
+    assert.equal(intro.starVisibility(450, 196), 0);
+    assert.equal(intro.starVisibility(0, 300), 0, 'below the horizon');
+    const nearGlow = intro.starVisibility(650, 60), farUp = intro.starVisibility(650, -500), corner = intro.starVisibility(0, 0);
+    assert.ok(nearGlow < corner && corner < farUp, `near ${nearGlow} < corner ${corner} < far-up ${farUp}`);
+    assert.ok(intro.starVisibility(-400, 190) < intro.starVisibility(-400, -100), 'thinner just above the horizon');
+    assert.ok(intro.starVisibility(-400, -600) > 0.95, 'full high in the dark sky');
+  });
+  it('density and brightness grow away from the sunset', () => {
+    const f = intro.starField({count: 6000});
+    const inBox = (x0, x1, y0, y1) => f.stars.filter(s => s.x >= x0 && s.x < x1 && s.y >= y0 && s.y < y1);
+    // same x span: right beside the sun (glow rho ~0.36) vs high in the dark sky
+    const twilight = inBox(600, 760, 60, 160), dark = inBox(600, 760, -700, -600);
+    assert.ok(dark.length > 3 * twilight.length, `dark ${dark.length} vs twilight ${twilight.length}`);
+    const mean = l => l.reduce((n, s) => n + s.a, 0) / Math.max(1, l.length);
+    assert.ok(mean(dark) > mean(twilight), 'brighter where the sky is dark');
+  });
+  it('brightness ladder: most stars faint, few brilliant; size scales radii', () => {
+    const f = intro.starField({count: 6000});
+    const faint = f.stars.filter(s => s.r <= 0.4).length, bright = f.stars.filter(s => s.r >= 0.9).length;
+    assert.ok(faint > 0.7 * f.stars.length, `faint share ${faint / f.stars.length}`);
+    assert.ok(bright < 0.05 * f.stars.length && bright > 0, `bright share ${bright / f.stars.length}`);
+    const big = intro.starField({count: 500, size: 2});
+    assert.ok(Math.max(...big.stars.map(s => s.r)) >= 2.4);
+    for (const s of f.stars) { assert.ok(s.a >= 0.1 && s.a <= 1); assert.ok(['#fff6ea', '#dfe9ff', '#ffd9a8'].includes(s.fill)); }
+  });
+  it('groups the field into a few dozen dot paths', () => {
+    const f = intro.starField({count: 6000});
+    assert.ok(f.groups.length >= 20 && f.groups.length <= 80, `${f.groups.length} groups`);
+    const dots = f.groups.reduce((n, g) => n + (g.d.match(/M-?[\d.]+ -?[\d.]+h\.01/g) || []).length, 0);
+    assert.equal(dots, f.stars.length, 'every star is one dot');
+    for (const g of f.groups) assert.ok(g.fill && g.r > 0 && g.a > 0 && /^(M-?[\d.]+ -?[\d.]+h\.01)+$/.test(g.d));
+  });
+  it('wash override reaches further into the twilight; bad options fall back to defaults', () => {
+    const tight = intro.starField({count: 6000, wash: {from: 0.2, to: 0.6}}), wide = intro.starField({count: 6000, wash: {from: 0.5, to: 1.0}});
+    const twilight = f => f.stars.filter(s => s.x >= 100 && s.x < 800 && s.y >= -120 && s.y < 40).length;
+    assert.ok(twilight(tight) > twilight(wide));
+    assert.equal(intro.starField({count: NaN, size: -1}).stars.length, intro.starField().stars.length);
+    assert.equal(intro.starField({count: 0}).stars.length, 0);
+  });
+});
+
 describe('intro releasePlan', () => {
   const st = (o) => ({ skipped: false, audioOn: false, audioStartedAt: null, now: 0, ...o });
   it('CRT power-off normally, hard cut under reduced motion', () => {
@@ -2861,7 +2921,19 @@ describe('intro overlay wiring (index.html + intro.html)', () => {
     assert.ok(introHtml.includes('<rect x="-2700" y="-1400" width="6300" height="3200" fill="url(#sky)"/>'), 'sky covers the scenery box');
     assert.ok(introHtml.includes('<rect id="ground" x="-2700" y="196" width="6300" height="1604"'), 'ground covers the scenery box');
     assert.ok(/<radialGradient id="sky" gradientUnits="userSpaceOnUse"/.test(introHtml), 'sky gradient pinned so the bigger rect does not stretch it');
-    assert.ok((introHtml.match(/<circle cx="-?\d+" cy="-?\d+" r="[\d.]+" opacity="[\d.]+"\/>/g) || []).length > 300, 'extended starfield');
+    assert.ok(!/<circle cx="-?\d+" cy="-?\d+" r="[\d.]+" opacity="[\d.]+"\/>/.test(introHtml), 'no stored star circles: the field is generated');
+    assert.ok(/<g id="stars" class="anim" stroke-linecap="round"><\/g>/.test(introHtml), 'empty star group for starField to fill');
+    assert.ok(introHtml.indexOf('<g id="stars"') < introHtml.indexOf('<circle id="glow"'), 'the sun is drawn in front of the stars');
+    assert.ok(introHtml.includes('H.starField(opts)'), 'intro.html fills the sky from the shared generator');
+    assert.ok(/<linearGradient id="ruleg" gradientUnits="userSpaceOnUse" x1="60" y1="0" x2="840" y2="0">/.test(introHtml), 'rule gradient pinned in user space, opaque to both ends');
+    assert.ok(!/stop-color="#6d3bd8" stop-opacity="0"\/><stop offset="25%"/.test(introHtml), 'rule no longer fades out at its ends');
+    for (const id of ['hrule', 'hotrule']) {
+      assert.ok(new RegExp(`<g id="${id}"[^>]*>\\s*<line class="anim" x1="450" y1="196" x2="-2700" y2="196"\\/><line class="anim" x1="450" y1="196" x2="3600" y2="196"\\/>`).test(introHtml), `${id} runs from the vanishing point to both scenery edges`);
+    }
+    assert.ok(/#hrule line\{stroke-dasharray:3200;stroke-dashoffset:3200;animation-name:draw;animation-duration:3\.2s/.test(introHtml), 'rule halves draw with a dash covering their 3150 units');
+    assert.ok(/#hotrule line\{[^}]*animation-name:draw,coolhot/.test(introHtml), 'hot rule cools on the rays\' clock');
+    assert.ok(!introHtml.includes('@keyframes drawhot'), 'drawhot keyframes retired');
+    assert.ok(/<filter id="hotglow" filterUnits="userSpaceOnUse" x="-700" y="120" width="2400" height="900">/.test(introHtml), 'hot-grid filter region pinned (bbox-relative region left a black tile near the origin)');
     assert.ok((introHtml.match(/<path d="M-2700 196 /g) || []).length === 1 && /<path d="M900 196 /.test(introHtml), 'far mountain ranges both sides');
     assert.ok(introHtml.includes('stroke-dasharray:3600'), 'grid rays extended; dash covers the longest ray');
     assert.ok(/#hot line\{[^}]*animation-name:draw,coolhot/.test(introHtml), 'hot grid cools on its own 2.2 s clock');
