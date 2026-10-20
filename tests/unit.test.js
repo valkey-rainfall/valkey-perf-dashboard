@@ -2657,22 +2657,24 @@ function memStorage(initial) {
 }
 
 describe('intro prefs', () => {
-  it('defaults: enabled, sound AUTO, Cosmos score, CRT overlay off (brand-kit production defaults)', () => {
-    assert.deepEqual(intro.readPrefs(memStorage()), { enabled: true, sound: 'auto', score: 'cosmos', crt: false });
+  it('defaults: enabled, sound AUTO; nothing else to choose (one score, no CRT overlay)', () => {
+    assert.deepEqual(intro.readPrefs(memStorage()), { enabled: true, sound: 'auto' });
     assert.equal(intro.DEFAULT_PREFS.sound, 'auto', 'auto = sound only where the browser already allows it; nobody gets nagged');
+    assert.deepEqual(Object.keys(intro.DEFAULT_PREFS).sort(), ['enabled', 'sound']);
   });
 
   it('reads a stored preference back', () => {
-    const s = memStorage({ [intro.STORAGE_KEY]: JSON.stringify({ enabled: true, sound: 'on', score: 'orch', crt: true }) });
-    assert.deepEqual(intro.readPrefs(s), { enabled: true, sound: 'on', score: 'orch', crt: true });
+    const s = memStorage({ [intro.STORAGE_KEY]: JSON.stringify({ enabled: false, sound: 'on' }) });
+    assert.deepEqual(intro.readPrefs(s), { enabled: false, sound: 'on' });
   });
 
-  it('migrates the first-cut boolean sound pref: true -> on, false -> off; legacy tape/score dropped to defaults', () => {
-    assert.deepEqual(intro.sanitizePrefs({ enabled: true, sound: true, score: 'sid', tape: true }), { enabled: true, sound: 'on', score: 'cosmos', crt: false });
-    assert.deepEqual(intro.sanitizePrefs({ sound: false }), { enabled: true, sound: 'off', score: 'cosmos', crt: false });
+  it('migrates older stored shapes: boolean sound -> on/off; retired score/crt/tape keys dropped', () => {
+    assert.deepEqual(intro.sanitizePrefs({ enabled: true, sound: true, score: 'sid', tape: true }), { enabled: true, sound: 'on' });
+    assert.deepEqual(intro.sanitizePrefs({ sound: false }), { enabled: true, sound: 'off' });
+    assert.deepEqual(intro.sanitizePrefs({ enabled: true, sound: 'on', score: 'orch', crt: true }), { enabled: true, sound: 'on' }, 'PR #24 second-cut prefs');
   });
 
-  it('sanitizes garbage: unknown score, unknown sound mode, non-boolean flags, junk JSON, throwing storage', () => {
+  it('sanitizes garbage: unknown sound mode, non-boolean flags, junk JSON, throwing storage', () => {
     assert.deepEqual(intro.sanitizePrefs({ score: 'wagner', sound: 'loud', enabled: 0, crt: null }), intro.DEFAULT_PREFS);
     assert.deepEqual(intro.readPrefs(memStorage({ [intro.STORAGE_KEY]: '{not json' })), intro.DEFAULT_PREFS);
     assert.deepEqual(intro.readPrefs(memStorage({ [intro.STORAGE_KEY]: '"a string"' })), intro.DEFAULT_PREFS);
@@ -2683,9 +2685,10 @@ describe('intro prefs', () => {
   it('writePrefs persists the sanitized object under one key and round-trips', () => {
     const s = memStorage();
     const written = intro.writePrefs(s, { sound: 'on', score: 'vhs', bogus: 1 });
-    assert.deepEqual(written, { enabled: true, sound: 'on', score: 'vhs', crt: false });
+    assert.deepEqual(written, { enabled: true, sound: 'on' });
     assert.deepEqual(Object.keys(s.dump()), [intro.STORAGE_KEY]);
     assert.deepEqual(intro.readPrefs(s), written);
+    assert.ok(!s.dump()[intro.STORAGE_KEY].includes('score'), 'a retired key is not written back');
   });
 
   it('writePrefs never throws on a full or denied storage', () => {
@@ -2702,21 +2705,21 @@ describe('intro shouldPlay / introSrc / parseEmbedQuery', () => {
     assert.equal(intro.shouldPlay(null, false), false);
   });
 
-  it('introSrc carries score, sound mode and the CRT flag', () => {
-    assert.equal(intro.introSrc(intro.DEFAULT_PREFS), 'intro.html?embed=1&score=cosmos&sound=auto');
-    assert.equal(intro.introSrc({ sound: 'on', score: 'vhs', crt: true }), 'intro.html?embed=1&score=vhs&sound=on&crt=1');
-    assert.equal(intro.introSrc({ sound: 'off', score: 'chip' }), 'intro.html?embed=1&score=chip&sound=off');
-    assert.equal(intro.introSrc({ sound: true, score: 'nope' }), 'intro.html?embed=1&score=cosmos&sound=on', 'legacy boolean + unknown score');
+  it('introSrc carries the sound mode and nothing else', () => {
+    assert.equal(intro.introSrc(intro.DEFAULT_PREFS), 'intro.html?embed=1&sound=auto');
+    assert.equal(intro.introSrc({ sound: 'on', score: 'vhs', crt: true }), 'intro.html?embed=1&sound=on', 'retired keys do not reach the URL');
+    assert.equal(intro.introSrc({ sound: 'off' }), 'intro.html?embed=1&sound=off');
+    assert.equal(intro.introSrc({ sound: true }), 'intro.html?embed=1&sound=on', 'legacy boolean');
   });
 
   it('parseEmbedQuery is the inverse of introSrc, and an undecided URL stays silent', () => {
-    for (const prefs of [{ sound: 'auto', score: 'orch', crt: true }, { sound: 'on', score: 'vhs' }, { sound: 'off', score: 'chip' }]) {
+    for (const prefs of [{ sound: 'auto' }, { sound: 'on' }, { sound: 'off' }]) {
       const url = intro.introSrc(prefs);
       const q = intro.parseEmbedQuery(url.slice(url.indexOf('?')));
-      assert.deepEqual(q, { embed: true, score: prefs.score, sound: prefs.sound, crt: !!prefs.crt });
+      assert.deepEqual(q, { embed: true, sound: prefs.sound });
     }
-    assert.deepEqual(intro.parseEmbedQuery('?embed=1&score=evil&sound=loud'), { embed: true, score: 'cosmos', sound: 'off', crt: false });
-    assert.deepEqual(intro.parseEmbedQuery(''), { embed: false, score: 'cosmos', sound: 'off', crt: false });
+    assert.deepEqual(intro.parseEmbedQuery('?embed=1&score=evil&sound=loud&crt=1'), { embed: true, sound: 'off' });
+    assert.deepEqual(intro.parseEmbedQuery(''), { embed: false, sound: 'off' });
   });
 });
 
@@ -2742,6 +2745,13 @@ describe('intro soundDecision', () => {
     assert.equal(intro.soundMode('whatever'), 'auto');
     assert.deepEqual(intro.soundDecision(undefined, false), { start: false, offer: false }, 'undefined = auto = silent when refused');
   });
+  it('autoplayStatus explains the verdict in one line, per mode', () => {
+    assert.equal(intro.autoplayStatus(null), '', 'nothing to say before the intro has answered');
+    assert.match(intro.autoplayStatus({ allowed: true, mode: 'auto' }), /allowed sound without a click/);
+    assert.match(intro.autoplayStatus({ allowed: false, mode: 'on' }), /refused.*SOUND button/);
+    assert.match(intro.autoplayStatus({ allowed: false, mode: 'auto' }), /refused.*ran silent/);
+    assert.match(intro.autoplayStatus({ allowed: false, mode: 'off' }), /sound off/);
+  });
 });
 
 describe('intro shouldRelease', () => {
@@ -2763,27 +2773,26 @@ describe('intro shouldRelease', () => {
 describe('intro releasePlan', () => {
   const st = (o) => ({ skipped: false, audioOn: false, audioStartedAt: null, now: 0, ...o });
   it('CRT power-off normally, hard cut under reduced motion', () => {
-    assert.equal(intro.releasePlan(st(), false, 'cosmos').transition, 'crt');
-    assert.equal(intro.releasePlan(st(), true, 'cosmos').transition, 'cut');
+    assert.equal(intro.releasePlan(st(), false).transition, 'crt');
+    assert.equal(intro.releasePlan(st(), true).transition, 'cut');
   });
   it('silent run: nothing to keep, frame goes with the picture', () => {
-    assert.deepEqual(intro.releasePlan(st(), false, 'cosmos'), { transition: 'crt', keepAudio: false, tailMs: 0 });
+    assert.deepEqual(intro.releasePlan(st(), false), { transition: 'crt', keepAudio: false, tailMs: 0 });
   });
-  it('a playing score finishes under the dashboard: tail = per-score end minus elapsed, capped', () => {
-    const p = intro.releasePlan(st({ audioOn: true, audioStartedAt: 1000, now: 6800 }), false, 'cosmos');
+  it('a playing score finishes under the dashboard: tail = score end minus elapsed, capped', () => {
+    const p = intro.releasePlan(st({ audioOn: true, audioStartedAt: 1000, now: 6800 }), false);
     assert.equal(p.keepAudio, true);
-    assert.equal(p.tailMs, intro.AUDIO_TAIL_S.cosmos * 1000 - 5800);
-    assert.equal(intro.releasePlan(st({ audioOn: true, audioStartedAt: 0, now: 0 }), false, 'chip').tailMs, intro.AUDIO_TAIL_S.chip * 1000);
-    assert.equal(intro.releasePlan(st({ audioOn: true, audioStartedAt: 0, now: 20000 }), false, 'orch').tailMs, 0, 'already past the tail');
-    assert.equal(intro.releasePlan(st({ audioOn: true }), false, 'nope').tailMs, intro.AUDIO_TAIL_S.cosmos * 1000, 'unknown score uses the default tail');
-    assert.ok(intro.releasePlan(st({ audioOn: true }), false, 'cosmos').tailMs <= intro.AUDIO_TAIL_CAP_MS);
+    assert.equal(p.tailMs, intro.AUDIO_TAIL_S * 1000 - 5800);
+    assert.equal(intro.releasePlan(st({ audioOn: true, audioStartedAt: 0, now: 0 }), false).tailMs, intro.AUDIO_TAIL_S * 1000);
+    assert.equal(intro.releasePlan(st({ audioOn: true, audioStartedAt: 0, now: 20000 }), false).tailMs, 0, 'already past the tail');
+    assert.ok(intro.releasePlan(st({ audioOn: true }), false).tailMs <= intro.AUDIO_TAIL_CAP_MS);
   });
   it('skip cuts the audio with the picture (the user said enough)', () => {
-    const p = intro.releasePlan(st({ audioOn: true, skipped: true, audioStartedAt: 0, now: 2000 }), false, 'vhs');
+    const p = intro.releasePlan(st({ audioOn: true, skipped: true, audioStartedAt: 0, now: 2000 }), false);
     assert.deepEqual(p, { transition: 'crt', keepAudio: false, tailMs: 0 });
   });
-  it('every score stays audible past Chrome\'s 7 s media-engagement threshold', () => {
-    for (const s of intro.SCORES) assert.ok(intro.AUDIO_TAIL_S[s] > 7, `${s} tail ${intro.AUDIO_TAIL_S[s]}s`);
+  it('the score stays audible past Chrome\'s 7 s media-engagement threshold', () => {
+    assert.ok(intro.AUDIO_TAIL_S > 7, `tail ${intro.AUDIO_TAIL_S}s`);
   });
 });
 
@@ -2800,7 +2809,7 @@ describe('intro overlay wiring (index.html + intro.html)', () => {
     assert.ok(index.includes('IntroHelpers.shouldPlay(prefs, reducedMotion)'));
     assert.ok(index.includes('prefers-reduced-motion: reduce'), 'must honour reduced motion');
     assert.ok(index.includes('IntroHelpers.shouldRelease(state)'));
-    assert.ok(index.includes('IntroHelpers.releasePlan(state, reducedMotion, state.score)'));
+    assert.ok(index.includes('IntroHelpers.releasePlan(state, reducedMotion)'));
     assert.ok(/init\(\)\.catch\(.*\)\.finally\(\(\) => Intro\.chartsReady\(\)\)/.test(index), 'chartsReady must fire even when init fails');
     assert.ok(index.includes('READY_TIMEOUT_MS'), 'a missing intro.html must not hold the dashboard');
     assert.ok(index.includes(`setAttribute('allow', 'autoplay')`), 'the frame needs the autoplay right delegated');
@@ -2812,14 +2821,16 @@ describe('intro overlay wiring (index.html + intro.html)', () => {
     }
   });
 
-  it('index.html has the header settings button and popover fields', () => {
-    for (const id of ['introSettingsBtn', 'introSettings', 'introEnabled', 'introSound', 'introScore', 'introCrt', 'introSoundNote']) {
+  it('index.html popover: play-on-load, sound mode, verdict line; no score or CRT controls', () => {
+    for (const id of ['introSettingsBtn', 'introSettings', 'introEnabled', 'introSound', 'introSoundNote', 'introAutoplayStatus']) {
       assert.ok(index.includes(`id="${id}"`), `missing #${id}`);
     }
+    for (const id of ['introScore', 'introCrt', 'introScoreRow', 'introCrtRow']) assert.ok(!index.includes(id), `${id} should be gone`);
     for (const mode of intro.SOUND_MODES) assert.ok(index.includes(`<option value="${mode}">`), `sound select lacks ${mode}`);
-    for (const score of intro.SCORES) assert.ok(index.includes(`<option value="${score}">`), `score select lacks ${score}`);
     assert.ok(index.includes('Intro.setPrefs('), 'popover must persist through Intro.setPrefs');
     assert.ok(index.includes('Intro.replay()'));
+    assert.ok(index.includes("m.event === 'autoplay'"), 'the browser verdict must be recorded');
+    assert.ok(index.includes('IntroHelpers.autoplayStatus(Intro.lastAutoplay())'), 'and shown in the popover');
   });
 
   it('intro.html is the Conductress sign-on and speaks the postMessage protocol the overlay expects', () => {
@@ -2828,12 +2839,47 @@ describe('intro overlay wiring (index.html + intro.html)', () => {
     assert.ok(introHtml.includes('lib/intro-helpers.js'), 'embed mode shares the pure rules with the parent');
     assert.ok(introHtml.includes("'conductress-intro'"), 'message type must match index.html');
     assert.ok(index.includes("'conductress-intro'"));
-    for (const ev of ["{event: 'ready'}", "{event: 'audio'}", "{event: 'done'}", "{event: 'skip'}", "{event: 'restart'}", "{event: 'audio-ended'}"]) assert.ok(introHtml.includes(ev), `intro must post ${ev}`);
+    for (const ev of ["{event: 'ready'}", "{event: 'autoplay', allowed, mode: opts.sound}", "{event: 'audio'}", "{event: 'done'}", "{event: 'skip'}", "{event: 'restart'}", "{event: 'audio-ended'}"]) assert.ok(introHtml.includes(ev), `intro must post ${ev}`);
     assert.ok(introHtml.includes("m.cmd === 'release'"), 'intro must honour the parent release');
     assert.ok(introHtml.includes('getAutoplayPolicy'), 'must ask the browser first where it can');
-    assert.ok(introHtml.includes('embedDone'), 'done mark must be a named timeline constant');
+    assert.ok(introHtml.includes('embedDone: 5.8'), 'done mark must be a named timeline constant at the end of the hold');
     assert.ok(introHtml.includes('id="soundhint"'), 'sound=on needs a gesture fallback; the intro must offer a button');
     assert.ok(!/\bmaster\b/i.test(introHtml), 'inclusive-language check');
+  });
+
+  it('intro.html carries one score and no CRT overlay', () => {
+    assert.ok(introHtml.includes('function scoreCosmos'));
+    for (const gone of ['scoreVHS', 'scoreChip', 'scoreOrch', 'name="score"', 'id="crt"', 'id="scan"', 'id="vignette"', '.crt ', "q.get('crt')", 'function brass', 'function chip(']) {
+      assert.ok(!introHtml.includes(gone), `${gone} should be gone`);
+    }
+  });
+
+  it('intro.html draws full-bleed: viewBox unchanged, overflow visible, scenery outside the box, mask hex arrives with the C', () => {
+    assert.ok(introHtml.includes('viewBox="0 0 900 340"'), 'every transform-origin depends on the core box');
+    assert.ok(/svg#art\{[^}]*overflow:visible/.test(introHtml), 'the root svg must paint outside its box');
+    assert.ok(/svg#art\{[^}]*width:min\(100vw,177\.7vh\)/.test(introHtml), 'core sized to the viewport width, height-capped');
+    assert.ok(introHtml.includes('<rect x="-2700" y="-1400" width="6300" height="3200" fill="url(#sky)"/>'), 'sky covers the scenery box');
+    assert.ok(introHtml.includes('<rect id="ground" x="-2700" y="196" width="6300" height="1604"'), 'ground covers the scenery box');
+    assert.ok(/<radialGradient id="sky" gradientUnits="userSpaceOnUse"/.test(introHtml), 'sky gradient pinned so the bigger rect does not stretch it');
+    assert.ok((introHtml.match(/<circle cx="-?\d+" cy="-?\d+" r="[\d.]+" opacity="[\d.]+"\/>/g) || []).length > 300, 'extended starfield');
+    assert.ok((introHtml.match(/<path d="M-2700 196 /g) || []).length === 1 && /<path d="M900 196 /.test(introHtml), 'far mountain ranges both sides');
+    assert.ok(introHtml.includes('stroke-dasharray:3600'), 'grid rays extended; dash covers the longest ray');
+    assert.ok(/#hot line\{[^}]*animation-name:draw,coolhot/.test(introHtml), 'hot grid cools on its own 2.2 s clock');
+    assert.ok(/#lead,#leadmask\{animation-name:snap/.test(introHtml), 'the mask hex snaps in with the C (no sky-coloured hole on frame one)');
+    assert.ok(/<g id="leadmask" class="anim" clip-path="url\(#leadclip\)">\s*<rect[^>]*fill="url\(#sky\)"\/>\s*<circle class="anim" cx="450" cy="110" r="150" fill="#ff7a3d"\/>/.test(introHtml), 'mask = sky + glow clipped to the hex');
+    assert.ok(!/<g clip-path="url\(#leadclip\)"><rect width="900" height="340"/.test(introHtml), 'the always-on mask is gone');
+  });
+
+  it('intro.html text lands in one go and holds: whole-word slam, no typing, cursor rests', () => {
+    assert.ok(/#word \.w\{[^}]*animation-name:slam[^}]*animation-delay:2\.70s/.test(introHtml), 'one slam on the word group');
+    assert.ok(!/#word \.g:nth-child/.test(introHtml), 'no per-letter stagger');
+    assert.equal((introHtml.match(/<g class="w anim"/g) || []).length, 1);
+    assert.ok(!introHtml.includes('typein') && !introHtml.includes('typecur'), 'no typing keyframes');
+    assert.ok(/#sub\s*\{animation-name:fadein/.test(introHtml), 'subtitle appears whole');
+    assert.ok(/<rect id="cursor" class="anim" x="600"/.test(introHtml), 'cursor parked after the last letter');
+    const wordAt = 2.70, subAt = parseFloat(introHtml.match(/#sub\s*\{[^}]*animation-delay:([\d.]+)s/)[1]);
+    assert.ok(subAt >= wordAt + 0.3 && subAt <= wordAt + 0.5, `subtitle lands as the slam settles (${subAt})`);
+    assert.ok(5.8 - subAt >= 2.5, 'at least 2.5 s of full text on screen before the done mark');
   });
 
   it('intro.html is a valid standalone page and its script parses', () => {

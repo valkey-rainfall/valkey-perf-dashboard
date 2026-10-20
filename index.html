@@ -100,7 +100,6 @@
     .intro-settings.open { display: block; }
     .intro-settings h3 { font-size: 0.8rem; font-weight: 600; margin: 0 0 0.5rem; }
     .intro-settings label { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.25rem 0; color: var(--text); cursor: pointer; }
-    .intro-settings label.disabled { color: var(--muted); cursor: default; }
     .intro-settings select { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem 0.4rem; font-size: 0.78rem; }
     .intro-settings .intro-note { color: var(--muted); font-size: 0.72rem; margin-top: 0.4rem; line-height: 1.35; }
     .intro-settings .intro-actions { display: flex; justify-content: flex-end; margin-top: 0.6rem; }
@@ -259,7 +258,7 @@
       const store = (() => { try { return window.localStorage; } catch (e) { return null; } })();
       const reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
       let prefs = IntroHelpers.readPrefs(store);
-      let frame = null, state = null, watchdog = null, tailTimer = null;
+      let frame = null, state = null, watchdog = null, tailTimer = null, lastAutoplay = null;
 
       function post(msg) { if (frame && frame.contentWindow) frame.contentWindow.postMessage(Object.assign({type: MSG}, msg), '*'); }
       function teardown() {
@@ -269,7 +268,7 @@
       function show(chartsReady) {
         if (state && !state.released) return;             // already on screen
         if (frame) teardown();                            // a frame lingering for its audio tail yields to the replay
-        state = { chartsReady, introDone: false, skipped: false, released: false, frameReady: false, audioOn: false, audioStartedAt: null, score: prefs.score };
+        state = { chartsReady, introDone: false, skipped: false, released: false, frameReady: false, audioOn: false, audioStartedAt: null };
         frame = document.createElement('iframe');
         frame.id = 'introFrame'; frame.title = 'Conductress sign-on animation';
         frame.setAttribute('aria-label', 'Loading animation, click or press Escape to skip');
@@ -286,7 +285,7 @@
       function release() {
         state.released = true; clearTimeout(watchdog);
         state.now = performance.now();
-        const plan = IntroHelpers.releasePlan(state, reducedMotion, state.score);
+        const plan = IntroHelpers.releasePlan(state, reducedMotion);
         const visualMs = plan.transition === 'cut' ? 0 : CRT_MS;
         post({ cmd: 'release', keepAudio: plan.keepAudio, ms: visualMs });
         overlay.classList.add(plan.transition === 'cut' ? 'cut' : 'closing');
@@ -301,6 +300,7 @@
         if (!frame || e.source !== frame.contentWindow) return;
         const m = e.data; if (!m || m.type !== MSG || !state) return;
         if (m.event === 'ready') { state.frameReady = true; clearTimeout(watchdog); }
+        else if (m.event === 'autoplay') lastAutoplay = { allowed: !!m.allowed, mode: m.mode };   // what the browser decided; shown in the popover
         else if (m.event === 'audio') { state.audioOn = true; state.audioStartedAt = performance.now(); }
         else if (m.event === 'done') { state.introDone = true; maybeRelease(); }
         else if (m.event === 'skip') skip();
@@ -318,6 +318,8 @@
         replay() { show(true); },
         getPrefs() { return Object.assign({}, prefs); },
         setPrefs(next) { prefs = IntroHelpers.writePrefs(store, Object.assign({}, prefs, next)); return Object.assign({}, prefs); },
+        /** The browser's autoplay verdict from the most recent run ({allowed, mode}), or null before the intro has answered. */
+        lastAutoplay() { return lastAutoplay ? Object.assign({}, lastAutoplay) : null; },
       };
     })();
   </script>
@@ -352,7 +354,8 @@
       </button>
     </nav>
     <!-- Sign-on intro settings. Sound defaults to "auto": with sound only when the browser already
-         lets audio start without a click (it learns that from habit), silent otherwise, never a nag. -->
+         lets audio start without a click (it learns that from habit), silent otherwise, never a nag.
+         The score is always Cosmos and there is no CRT overlay (Rain, Oct 19 2026). -->
     <div id="introSettings" class="intro-settings" role="dialog" aria-label="Sign-on intro settings">
       <h3>Sign-on intro</h3>
       <label><span>Play on load</span><input type="checkbox" id="introEnabled"></label>
@@ -363,16 +366,8 @@
           <option value="off">Off</option>
         </select>
       </label>
-      <label id="introScoreRow"><span>Score</span>
-        <select id="introScore">
-          <option value="cosmos">Cosmos</option>
-          <option value="orch">Orchestra</option>
-          <option value="vhs">VHS fanfare</option>
-          <option value="chip">Chiptune</option>
-        </select>
-      </label>
-      <label id="introCrtRow"><span>CRT overlay</span><input type="checkbox" id="introCrt"></label>
       <div class="intro-note" id="introSoundNote"></div>
+      <div class="intro-note" id="introAutoplayStatus"></div>
       <div class="intro-actions"><button class="zoom-btn" onclick="replayIntro()">Replay intro</button></div>
     </div>
     <!-- Workload selector: overlay anchored under the header, not part of the page flow -->
@@ -532,7 +527,7 @@
     function toggleIntroSettings() { setIntroSettings(!isIntroSettingsOpen()); }
     const INTRO_SOUND_NOTES = {
       auto: 'Plays with sound only when your browser already allows audio without a click (Chrome learns this from habit; Firefox and Safari have a per-site autoplay setting). Otherwise silent, no button.',
-      on: 'Always tries. When the browser refuses, the intro shows a SOUND button; clicking it restarts the sequence with the score. Enough of those and Chrome starts allowing it on its own.',
+      on: 'Always tries. When the browser refuses, the intro shows a SOUND button; clicking it restarts the sequence with the score. Chrome starts allowing it on its own once enough visits have played sound for 7 s or more.',
       off: 'Never builds an audio context.',
     };
     function syncIntroSettingsForm() {
@@ -540,19 +535,14 @@
       const sound = p.sound !== 'off';
       document.getElementById('introEnabled').checked = p.enabled;
       document.getElementById('introSound').value = p.sound;
-      document.getElementById('introScore').value = p.score;
-      document.getElementById('introCrt').checked = p.crt;
-      document.getElementById('introScore').disabled = !sound;
-      document.getElementById('introScoreRow').classList.toggle('disabled', !sound);
       document.getElementById('introSoundNote').textContent = INTRO_SOUND_NOTES[p.sound] + ' Click anywhere or press Esc to skip.';
+      document.getElementById('introAutoplayStatus').textContent = IntroHelpers.autoplayStatus(Intro.lastAutoplay());
       document.getElementById('introSettingsBtn').classList.toggle('muted', !sound);
     }
     document.getElementById('introSettings').addEventListener('change', () => {
       Intro.setPrefs({
         enabled: document.getElementById('introEnabled').checked,
         sound: document.getElementById('introSound').value,
-        score: document.getElementById('introScore').value,
-        crt: document.getElementById('introCrt').checked,
       });
       syncIntroSettingsForm();
     });
