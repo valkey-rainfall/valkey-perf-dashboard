@@ -1732,8 +1732,11 @@ describe('index.html perf-group wiring', () => {
     assert.ok(html.includes('lib/perf-groups.js'), 'index.html must include the perf-groups script');
   });
 
-  it('orders perf groups via the helper rather than inline', () => {
-    assert.ok(html.includes('PerfGroups.orderPerfGroups'), 'must call PerfGroups.orderPerfGroups');
+  it('orders perf metrics via the helper chain rather than inline', () => {
+    // index.html -> MetricSelector.buildCatalog -> PerfGroups.orderPerfGroups
+    assert.ok(html.includes('MetricSelector.buildCatalog('), 'must build the metric catalog via the helper');
+    const ms = fs.readFileSync(path.join(__dirname, '..', 'lib', 'metric-selector.js'), 'utf8');
+    assert.ok(ms.includes('.orderPerfGroups(groups)'), 'catalog must be ordered by PerfGroups');
   });
 });
 
@@ -2329,7 +2332,11 @@ describe('index.html latency + render-race wiring', () => {
   it('stamps renders with a generation and re-checks it after awaits', () => {
     assert.ok(html.includes('const gen = ++renderGeneration;'));
     const checks = (html.match(/if \(renderIsStale\(gen\)\) return;/g) || []).length;
-    assert.ok(checks >= 12, `expected staleness checks after every await, found ${checks}`);
+    assert.ok(checks >= 9, `expected staleness checks after every await, found ${checks}`);
+    // The perf section has its own generation (a metric change redraws it
+    // alone); its loop checks both through one closure after each await.
+    assert.ok(html.includes('const stale = () => renderIsStale(gen) || perfGen !== perfRenderGeneration;'));
+    assert.ok(html.includes('if (stale()) return;'));
     for (const fn of ['renderMemory(platform, data, gen)', 'renderPerfCharts(platform, gen)', 'renderLatency(platform, gen)']) {
       assert.ok(html.includes(fn), `${fn} must receive the generation`);
     }
@@ -2979,5 +2986,288 @@ describe('intro overlay wiring (index.html + intro.html)', () => {
     const scripts = [...introHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
     assert.ok(scripts.length >= 1);
     for (const s of scripts) assert.doesNotThrow(() => new Function(s));
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// metric-selector.js — Performance Counters metric selection model
+// Fixture mirrors the live platform manifests (identical across intel/arm64/
+// amd64): process-wide base groups plus per-thread -main/-io variants.
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('metric-selector', () => {
+  const MS = require('../lib/metric-selector.js');
+  const scopeBadgeLib = require('../lib/scope-badge.js');
+  const G = (id, title, series, axes) => ({ id, title, series, y_axes: axes });
+  const groups = [
+    G('throughput', 'Throughput', ['throughput'], [{ id: 'left', label: 'requests/sec', series: ['throughput'] }]),
+    G('efficiency', 'Execution Efficiency', ['ipc', 'instructions-per-req', 'cycles-per-req'], []),
+    G('cpu-main', 'CPU Profile — Main Thread', ['cpu-main'], [{ id: 'left', label: '% of samples', series: ['cpu-main'] }]),
+    G('cpu-io', 'CPU Profile — IO Threads', ['cpu-io'], [{ id: 'left', label: '% of samples', series: ['cpu-io'] }]),
+    G('efficiency-main', 'Execution Efficiency — Main Thread', ['ipc-main', 'instructions-per-req-main', 'cycles-per-req-main'],
+      [{ id: 'left', label: 'IPC', series: ['ipc-main'] }, { id: 'right', label: 'per request', series: ['instructions-per-req-main', 'cycles-per-req-main'] }]),
+    G('efficiency-io', 'Execution Efficiency — IO Threads', ['ipc-io', 'instructions-per-req-io', 'cycles-per-req-io'], []),
+    G('cache-main', 'Cache Pressure — Main Thread', ['icache-mpki-main', 'llc-mpki-main'], [{ id: 'left', label: 'misses per 1K instructions', series: ['icache-mpki-main', 'llc-mpki-main'] }]),
+    G('tma-main', 'Pipeline Breakdown (TMA) — Main Thread', ['tma-retiring-pct-main', 'tma-fe-bound-pct-main'], [{ id: 'left', label: '% of pipeline slots', series: ['tma-retiring-pct-main', 'tma-fe-bound-pct-main'] }]),
+    G('kernel-main', 'Kernel Interaction — Main Thread', ['syscalls-per-req-main', 'context-switches-per-sec-main'],
+      [{ id: 'left', label: 'syscalls/request', series: ['syscalls-per-req-main'] }, { id: 'right', label: 'context switches/s', series: ['context-switches-per-sec-main'] }]),
+    G('mystery-main', 'Mystery — Main Thread', ['widgets-per-req-main'], [{ id: 'left', label: 'widgets', series: ['widgets-per-req-main'] }]),
+  ];
+  const catalog = MS.buildCatalog(groups);
+  const ids = catalog.map(e => e.id);
+
+  describe('buildCatalog', () => {
+    it('hides process-wide base groups and follows PerfGroups display order', () => {
+      assert.ok(!ids.includes('ipc'), 'base efficiency group hidden');
+      assert.ok(!ids.includes('throughput'));
+      assert.equal(ids[0], 'ipc-main', 'efficiency-main leads');
+      assert.ok(ids.indexOf('cpu-main') > ids.indexOf('cycles-per-req-main'));
+      assert.ok(ids.indexOf('cache-main') < 0 && ids.indexOf('icache-mpki-main') > ids.indexOf('cpu-io'));
+      assert.equal(ids.at(-1), 'widgets-per-req-main', 'unknown group sorts last, not dropped');
+    });
+
+    it('one line entry per series, with thread, human label and a specific axis label', () => {
+      const e = catalog.find(x => x.id === 'instructions-per-req-main');
+      assert.equal(e.kind, 'line');
+      assert.equal(e.thread, 'main');
+      assert.equal(e.label, 'Instructions / request');
+      assert.equal(e.title, 'Instructions / request — Main thread');
+      assert.equal(e.group, 'efficiency-main');
+      assert.equal(e.axisLabel, 'instructions per request', 'not the manifest\'s shared "per request"');
+      assert.equal(catalog.find(x => x.id === 'ipc-io').title, 'IPC — IO threads');
+    });
+
+    it('falls back to the manifest axis label and a humanized id for unknown metrics', () => {
+      const e = catalog.find(x => x.id === 'widgets-per-req-main');
+      assert.equal(e.label, 'widgets / req');
+      assert.equal(e.axisLabel, 'widgets');
+    });
+
+    it('CPU-profile and TMA groups become single panel entries keyed by group id', () => {
+      const cpu = catalog.find(x => x.id === 'cpu-main');
+      assert.equal(cpu.kind, 'cpu'); assert.equal(cpu.title, 'CPU Profile — Main Thread'); assert.equal(cpu.axisLabel, '% of samples');
+      const tma = catalog.find(x => x.id === 'tma-main');
+      assert.equal(tma.kind, 'tma');
+      assert.ok(!ids.includes('tma-retiring-pct-main'), 'TMA components are not individually selectable');
+    });
+
+    it('tolerates a missing or malformed manifest', () => {
+      assert.deepEqual(MS.buildCatalog(undefined), []);
+      assert.deepEqual(MS.buildCatalog([{ id: 'efficiency-main' }]), []);
+    });
+
+    it('groupedCatalog keeps catalog order and group membership', () => {
+      const g = MS.groupedCatalog(catalog);
+      assert.deepEqual(g.map(x => x.group), ['efficiency-main', 'efficiency-io', 'cpu-main', 'cpu-io', 'cache-main', 'tma-main', 'kernel-main', 'mystery-main']);
+      assert.equal(g[0].entries.length, 3);
+      assert.equal(g[0].groupTitle, 'Execution Efficiency — Main Thread');
+    });
+  });
+
+  describe('selection operations (pure, order-preserving)', () => {
+    const sel = ['ipc-main', 'cpu-main', 'llc-mpki-main'];
+
+    it('sanitize drops unknown ids and duplicates but keeps order', () => {
+      assert.deepEqual(MS.sanitize(['llc-mpki-main', 'nope', 'ipc-main', 'llc-mpki-main', 'ipc'], catalog), ['llc-mpki-main', 'ipc-main']);
+      assert.deepEqual(MS.sanitize(null, catalog), []);
+    });
+
+    it('add appends once; remove filters; toggle flips; inputs are not mutated', () => {
+      const added = MS.addMetric(sel, 'ipc-io');
+      assert.deepEqual(added, [...sel, 'ipc-io']);
+      assert.deepEqual(MS.addMetric(sel, 'ipc-main'), sel);
+      assert.deepEqual(MS.removeMetric(sel, 'cpu-main'), ['ipc-main', 'llc-mpki-main']);
+      assert.deepEqual(MS.toggleMetric(sel, 'cpu-main'), ['ipc-main', 'llc-mpki-main']);
+      assert.deepEqual(MS.toggleMetric(sel, 'ipc-io'), [...sel, 'ipc-io']);
+      assert.deepEqual(sel, ['ipc-main', 'cpu-main', 'llc-mpki-main']);
+    });
+
+    it('move shifts by delta and clamps at the ends', () => {
+      assert.deepEqual(MS.moveMetric(sel, 'llc-mpki-main', -1), ['ipc-main', 'llc-mpki-main', 'cpu-main']);
+      assert.deepEqual(MS.moveMetric(sel, 'ipc-main', -1), sel, 'already first');
+      assert.deepEqual(MS.moveMetric(sel, 'ipc-main', 5), ['cpu-main', 'llc-mpki-main', 'ipc-main'], 'clamped to last');
+      assert.deepEqual(MS.moveMetric(sel, 'missing', 1), sel);
+    });
+
+    it('addGroup appends the unselected members of a group in catalog order', () => {
+      assert.deepEqual(MS.addGroup(['cycles-per-req-main'], catalog, 'efficiency-main'),
+        ['cycles-per-req-main', 'ipc-main', 'instructions-per-req-main']);
+      assert.deepEqual(MS.addGroup(sel, catalog, 'nope'), sel);
+    });
+
+    it('sameSelection is order-sensitive', () => {
+      assert.ok(MS.sameSelection(['a', 'b'], ['a', 'b']));
+      assert.ok(!MS.sameSelection(['a', 'b'], ['b', 'a']));
+      assert.ok(!MS.sameSelection(['a'], ['a', 'b']));
+      assert.ok(!MS.sameSelection(null, []));
+    });
+  });
+
+  describe('presets', () => {
+    const builtins = MS.builtinPresets(catalog);
+    const byName = Object.fromEntries(builtins.map(p => [p.name, p]));
+
+    it('Default is the efficiency-main trio and All is the whole catalog', () => {
+      assert.deepEqual(byName.Default.metrics, MS.DEFAULT_METRICS);
+      assert.deepEqual(byName.All.metrics, ids);
+      assert.ok(builtins.every(p => p.builtin === true));
+    });
+
+    it('thread presets hold only line metrics of that thread; Profiles holds the stacked panels', () => {
+      assert.deepEqual(byName['Main thread'].metrics, ['ipc-main', 'instructions-per-req-main', 'cycles-per-req-main', 'icache-mpki-main', 'llc-mpki-main', 'syscalls-per-req-main', 'context-switches-per-sec-main', 'widgets-per-req-main']);
+      assert.deepEqual(byName['IO threads'].metrics, ['ipc-io', 'instructions-per-req-io', 'cycles-per-req-io']);
+      assert.deepEqual(byName.Profiles.metrics, ['cpu-main', 'cpu-io', 'tma-main']);
+      assert.deepEqual(byName.Kernel.metrics, ['syscalls-per-req-main', 'context-switches-per-sec-main']);
+    });
+
+    it('presets with no members on this manifest are omitted', () => {
+      const small = MS.builtinPresets(MS.buildCatalog(groups.filter(g => g.id === 'efficiency-main')));
+      assert.deepEqual(small.map(p => p.name), ['Default', 'Main thread', 'All']);
+    });
+
+    it('savePreset adds, replaces by name case-insensitively, trims, and refuses empties', () => {
+      let list = MS.savePreset([], '  Work  ', ['ipc-main']);
+      assert.deepEqual(list, [{ name: 'Work', metrics: ['ipc-main'] }]);
+      list = MS.savePreset(list, 'work', ['cpu-main']);
+      assert.deepEqual(list, [{ name: 'work', metrics: ['cpu-main'] }], 'replaced in place; the re-save\'s spelling wins');
+      assert.deepEqual(MS.savePreset(list, '', ['x']), list);
+      assert.deepEqual(MS.savePreset(list, 'Empty', []), list);
+      assert.equal(MS.savePreset(list, 'x'.repeat(80), ['a'])[1].name.length, 40, 'name capped');
+    });
+
+    it('deletePreset and matchingPreset', () => {
+      const list = [{ name: 'A', metrics: ['ipc-main'] }, { name: 'B', metrics: ['ipc-main', 'ipc-io'] }];
+      assert.deepEqual(MS.deletePreset(list, 'a'), [list[1]]);
+      assert.equal(MS.matchingPreset(['ipc-main', 'ipc-io'], [...builtins, ...list]), 'B');
+      assert.equal(MS.matchingPreset(['ipc-io', 'ipc-main'], list), null, 'order matters');
+      assert.equal(MS.matchingPreset(MS.DEFAULT_METRICS, builtins), 'Default');
+    });
+
+    it('summaryLabel names a matching preset, else counts', () => {
+      assert.equal(MS.summaryLabel(MS.DEFAULT_METRICS, builtins), 'Metrics: Default');
+      assert.equal(MS.summaryLabel(['ipc-main'], builtins), '1 metric');
+      assert.equal(MS.summaryLabel(['ipc-main', 'cpu-io'], builtins), '2 metrics');
+      assert.equal(MS.summaryLabel([], builtins), '0 metrics');
+    });
+  });
+
+  describe('persistence', () => {
+    const fakeStore = (init = {}) => { const m = { ...init }; return { getItem: k => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, _m: m }; };
+
+    it('selection round-trips through storage; malformed or missing storage reads as null', () => {
+      const st = fakeStore();
+      assert.ok(MS.writeSelection(st, ['ipc-main', 'cpu-io']));
+      assert.deepEqual(MS.readSelection(st), ['ipc-main', 'cpu-io']);
+      assert.equal(MS.readSelection(fakeStore()), null);
+      assert.equal(MS.readSelection(fakeStore({ [MS.STORAGE_SELECTION]: '{not json' })), null);
+      assert.equal(MS.readSelection(fakeStore({ [MS.STORAGE_SELECTION]: '"ipc-main"' })), null);
+      assert.deepEqual(MS.readSelection(fakeStore({ [MS.STORAGE_SELECTION]: '["a", 3, null]' })), ['a']);
+      assert.equal(MS.readSelection(null), null);
+      assert.equal(MS.writeSelection(null, ['a']), false);
+    });
+
+    it('a throwing store (private mode quota) is swallowed', () => {
+      const bad = { getItem() { throw new Error('nope'); }, setItem() { throw new Error('nope'); } };
+      assert.equal(MS.readSelection(bad), null);
+      assert.equal(MS.writeSelection(bad, ['a']), false);
+      assert.deepEqual(MS.readPresets(bad), []);
+    });
+
+    it('presets round-trip and malformed entries are dropped', () => {
+      const st = fakeStore();
+      MS.writePresets(st, [{ name: 'Work', metrics: ['ipc-main'] }]);
+      assert.deepEqual(MS.readPresets(st), [{ name: 'Work', metrics: ['ipc-main'] }]);
+      const dirty = fakeStore({ [MS.STORAGE_PRESETS]: JSON.stringify([{ name: 'ok', metrics: ['a', 1] }, { name: 7, metrics: ['a'] }, { name: 'nometrics' }, { name: '', metrics: ['a'] }, null]) });
+      assert.deepEqual(MS.readPresets(dirty), [{ name: 'ok', metrics: ['a'] }]);
+    });
+
+    it('hash encode/decode', () => {
+      assert.equal(MS.encodeMetrics(['ipc-main', 'cpu-io']), 'ipc-main,cpu-io');
+      assert.deepEqual(MS.decodeMetrics('ipc-main, cpu-io,,'), ['ipc-main', 'cpu-io']);
+      assert.deepEqual(MS.decodeMetrics(null), []);
+    });
+
+    it('hashValue is null for the default selection so plain URLs stay short', () => {
+      assert.equal(MS.hashValue(MS.DEFAULT_METRICS, catalog), null);
+      assert.equal(MS.hashValue(['ipc-main'], catalog), 'ipc-main');
+      assert.equal(MS.hashValue(['cycles-per-req-main', 'ipc-main', 'instructions-per-req-main'], catalog), 'cycles-per-req-main,ipc-main,instructions-per-req-main', 'reordered default is not the default');
+    });
+
+    it('resolveInitialSelection: hash beats storage beats default, each validated against the catalog', () => {
+      assert.deepEqual(MS.resolveInitialSelection('cpu-main,bogus', ['ipc-io'], catalog), { selection: ['cpu-main'], source: 'hash' });
+      assert.deepEqual(MS.resolveInitialSelection('bogus', ['ipc-io', 'gone'], catalog), { selection: ['ipc-io'], source: 'storage' });
+      assert.deepEqual(MS.resolveInitialSelection(null, null, catalog), { selection: MS.DEFAULT_METRICS, source: 'default' });
+      assert.deepEqual(MS.resolveInitialSelection(null, ['gone'], catalog), { selection: MS.DEFAULT_METRICS, source: 'default' });
+    });
+  });
+
+  describe('scope badge for the perf section', () => {
+    const names = { workload: id => id.toUpperCase(), platform: id => id };
+    const a = { engine: 'valkey', platform: 'arm64', workloadId: 'get' }, b = { engine: 'valkey', platform: 'arm64', workloadId: 'set' };
+    it("'perf' scope keeps the primary badge but explains that lines overlay every workload", () => {
+      const one = scopeBadgeLib.scopeBadge(a, [a], names, ['#1'], 'perf');
+      assert.deepEqual(one, { text: 'GET · arm64', color: '#1', note: null });
+      const two = scopeBadgeLib.scopeBadge(b, [a, b], names, ['#1', '#2'], 'perf');
+      assert.equal(two.color, '#2');
+      assert.equal(two.note, scopeBadgeLib.NOTE_PERF);
+      assert.match(two.note, /every selected workload/);
+      assert.match(two.note, /★ primary only/);
+    });
+  });
+});
+
+describe('index.html metric-selector wiring', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const cfg = fs.readFileSync(path.join(__dirname, '..', 'config.js'), 'utf8');
+
+  it('loads lib/metric-selector.js after lib/perf-groups.js (it reads the PerfGroups global)', () => {
+    const a = html.indexOf('lib/perf-groups.js'), b = html.indexOf('lib/metric-selector.js');
+    assert.ok(a > 0 && b > a);
+  });
+
+  it('heading carries the Metrics toggle and an overlay panel with preset bar and list', () => {
+    for (const id of ['metricToggle', 'metricSummary', 'metricPanel', 'metricPresetBar', 'metricList']) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
+    assert.ok(html.includes('class="selector-panel metric-panel"'), 'reuses the workload selector shell');
+    assert.ok(html.includes("aria-controls=\"metricPanel\""));
+  });
+
+  it('selection is restored at init (hash > storage > default), persisted, and carried in the hash', () => {
+    assert.ok(html.includes('MetricSelector.resolveInitialSelection(hashState.metrics'));
+    assert.ok(html.includes("metrics: params.get('metrics')"));
+    assert.ok(html.includes('MetricSelector.hashValue(metricSelection, metricCatalog)'));
+    assert.ok((html.match(/MetricSelector\.writeSelection\(metricStore/g) || []).length >= 2, 'written at init and on change');
+    assert.ok(html.includes('MetricSelector.readPresets(metricStore)'));
+    assert.ok(html.includes('MetricSelector.writePresets(metricStore'));
+  });
+
+  it('renderer draws one chart per selected metric with one line per workload in throughput colours', () => {
+    const body = html.slice(html.indexOf('async function renderPerfCharts('), html.indexOf('// Latency band chart'));
+    assert.ok(body.includes('MetricSelector.sanitize(metricSelection, metricCatalog)'));
+    assert.ok(body.includes('selectedWorkloads.map((sel, si) =>'), 'fetches every selected workload');
+    assert.ok(body.includes('MULTI_COLORS[si % MULTI_COLORS.length]'), 'colour = position in the selection');
+    assert.ok(body.includes('SelectionHelpers.seriesLabel(sel, selectedWorkloads, names)'), 'platform shown only when the selection spans platforms');
+    assert.ok(body.includes('ScopeHelpers.scopeDatasets(wlLabel, pts)'), 'scope runs carry over per line');
+    assert.ok(body.includes('getSelectionKey(sel) === primaryKey) popupPerfData[entry.id] = pts'), 'commit popup deltas stay primary-only');
+    assert.ok(body.includes("entry.kind === 'cpu'") && body.includes("entry.id === 'cpu-io' ? 'io' : 'main'"), 'flamegraph panels survive as panel metrics');
+    assert.ok(body.includes('platforms differ, not directly comparable'));
+    assert.ok(body.includes('class="perf-empty"'), 'empty selection shows a hint, not a blank section');
+    assert.ok(!body.includes('PerfGroups.orderPerfGroups('), 'group iteration replaced by the selection');
+  });
+
+  it('a metric change redraws only the perf section, with its own staleness generation', () => {
+    assert.ok(html.includes('renderPerfCharts(primaryWorkload.platform, renderGeneration)'));
+    assert.ok(html.includes('perfGen !== perfRenderGeneration'));
+  });
+
+  it('perf badge uses the perf scope and the help text mentions the selector', () => {
+    assert.ok(html.includes("note: 'perfScopeNote',    scope: 'perf'"));
+    assert.ok(cfg.includes('Metrics ▼') && cfg.includes('<code>metrics=</code>'));
+  });
+
+  it('panel closes on outside click and Escape like the workload selector', () => {
+    assert.ok(html.includes("e.target.closest('#metricPanel') || e.target.closest('#metricToggle')"));
+    assert.ok(html.includes("if (e.key === 'Escape' && isMetricPanelOpen()) setMetricPanel(false)"));
   });
 });

@@ -161,6 +161,25 @@
     .scope-badge:empty { display: none; }
     .scope-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex: none; }
     .scope-note { margin-left: 0.6rem; font-size: 0.75rem; color: var(--muted); font-style: italic; }
+    /* Metric selector (Performance Counters): same overlay shell as the workload selector, anchored under its own heading row */
+    .section-head { display: flex; align-items: center; margin-bottom: 0.5rem; position: relative; flex-wrap: wrap; gap: 0 0.2rem; }
+    .section-head .selector-toggle { margin-left: auto; }
+    .metric-panel { left: auto; right: 0; width: min(620px, calc(100vw - 2rem)); }
+    .metric-table td { white-space: normal; }
+    .metric-table td.mi-ctl { width: 1%; white-space: nowrap; text-align: right; }
+    .metric-table .mi-btn { background: none; border: 1px solid transparent; border-radius: 3px; color: var(--muted); cursor: pointer; font-size: 0.75rem; padding: 0 4px; line-height: 1.3; }
+    .metric-table .mi-btn:hover { border-color: var(--border); color: var(--text); background: var(--bg); }
+    .metric-table .mi-btn:disabled { opacity: 0.25; cursor: default; }
+    .metric-table .mi-btn.mi-remove:hover { color: var(--danger); }
+    .metric-table tr.metric-group td { padding: 0.5rem 0.6rem 0.2rem; color: var(--text); font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+    .metric-table tr.metric-group td:hover .group-add { visibility: visible; }
+    .metric-table tr.metric-group .group-add { float: right; font-weight: 500; color: var(--accent); visibility: hidden; }
+    .metric-table .mi-group { color: var(--muted); font-size: 0.72rem; }
+    .chip.chip-user { padding-right: 4px; }
+    .chip .chip-x { margin-left: 5px; opacity: 0.6; padding: 0 3px; border-radius: 8px; }
+    .chip .chip-x:hover { opacity: 1; background: rgba(0,0,0,0.25); }
+    .chip.chip-save { border-style: dashed; }
+    .perf-empty { grid-column: 1 / -1; padding: 1.5rem; text-align: center; color: var(--muted); font-size: 0.85rem; border: 1px dashed var(--border); border-radius: 8px; }
     .scope-note:empty { display: none; }
 
     /* Help modal */
@@ -384,7 +403,17 @@
 
   <!-- Perf Counters (skeleton: 4 placeholder slots) -->
   <div id="perfChartsSection">
-    <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Performance Counters</h2><button class="help-btn" onclick="showHelp('perf')">?</button><span class="scope-badge" id="perfScope"></span><span class="scope-note" id="perfScopeNote"></span></div>
+    <div class="section-head"><h2 style="margin:0">Performance Counters</h2><button class="help-btn" onclick="showHelp('perf')">?</button><span class="scope-badge" id="perfScope"></span><span class="scope-note" id="perfScopeNote"></span>
+      <button class="selector-toggle" id="metricToggle" onclick="toggleMetricPanel()" aria-haspopup="dialog" aria-expanded="false" aria-controls="metricPanel" title="Choose which perf-counter metrics to chart, and in what order">
+        <span id="metricSummary">Metrics</span>
+        <span class="arrow" style="font-size:0.7rem;">▼</span>
+      </button>
+      <!-- Metric selector: overlay anchored under this heading, same shell as the workload selector -->
+      <div id="metricPanel" class="selector-panel metric-panel" role="dialog" aria-label="Select metrics">
+        <div class="chip-bar" id="metricPresetBar"></div>
+        <div class="selector-list" id="metricList"></div>
+      </div>
+    </div>
     <div id="perfCharts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:0.75rem;">
       <div class="chart-panel chart-panel--perf"></div>
       <div class="chart-panel chart-panel--perf"></div>
@@ -420,6 +449,7 @@
   <script src="lib/epoch-helpers.js"></script>
   <script src="lib/point-helpers.js"></script>
   <script src="lib/perf-groups.js"></script>
+  <script src="lib/metric-selector.js"></script>
   <script src="lib/latency-helpers.js"></script>
   <script src="lib/selector-helpers.js"></script>
   <script src="lib/selection-helpers.js"></script>
@@ -514,6 +544,139 @@
       setSelectorPanel(false);
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && isSelectorPanelOpen()) setSelectorPanel(false); });
+
+    // -------------------------------------------------------------------------
+    // Metric selector (Performance Counters). The model (catalog, ordering,
+    // presets, persistence rules) lives in lib/metric-selector.js; this is
+    // only DOM wiring. The selection is global, not per platform: all
+    // platform manifests publish the same per-thread metric set, and a
+    // selection that silently changed when you starred a workload on another
+    // platform would be more confusing than a dropped metric.
+    // -------------------------------------------------------------------------
+    const metricStore = (() => { try { return window.localStorage; } catch (e) { return null; } })();
+    let metricSelection = [];      // ordered metric ids (render order)
+    let metricCatalog = [];        // from the primary platform's manifest
+    let userMetricPresets = MetricSelector.readPresets(metricStore);
+
+    function currentPerfManifest() {
+      const plat = primaryWorkload?.platform;
+      return (typeof PLATFORM_MANIFESTS !== 'undefined' && plat && PLATFORM_MANIFESTS[plat]) || manifest;
+    }
+    function refreshMetricCatalog() {
+      metricCatalog = MetricSelector.buildCatalog(currentPerfManifest()?.groups || []);
+    }
+    function allMetricPresets() { return [...MetricSelector.builtinPresets(metricCatalog), ...userMetricPresets]; }
+
+    function setMetricPanel(open) {
+      const panel = document.getElementById('metricPanel');
+      const toggle = document.getElementById('metricToggle');
+      panel.classList.toggle('open', open);
+      toggle.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      if (open) buildMetricPanel();
+    }
+    function isMetricPanelOpen() { return document.getElementById('metricPanel').classList.contains('open'); }
+    function toggleMetricPanel() { setMetricPanel(!isMetricPanelOpen()); }
+    document.addEventListener('mousedown', e => {
+      if (!isMetricPanelOpen()) return;
+      if (e.target.closest('#metricPanel') || e.target.closest('#metricToggle')) return;
+      setMetricPanel(false);
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && isMetricPanelOpen()) setMetricPanel(false); });
+
+    function updateMetricSummary() {
+      document.getElementById('metricSummary').textContent = MetricSelector.summaryLabel(metricSelection, allMetricPresets());
+    }
+
+    // Apply a new selection: persist, reflect in the URL, redraw the perf
+    // section only (throughput/memory/latency are unaffected).
+    function setMetricSelection(next) {
+      metricSelection = MetricSelector.sanitize(next, metricCatalog);
+      MetricSelector.writeSelection(metricStore, metricSelection);
+      updateMetricSummary();
+      updateHashState();
+      if (isMetricPanelOpen()) buildMetricPanel();
+      if (primaryWorkload) renderPerfCharts(primaryWorkload.platform, renderGeneration);
+    }
+
+    function buildMetricPanel() {
+      const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+      const byId = {}; metricCatalog.forEach(e => { byId[e.id] = e; });
+      const selected = metricSelection.map(id => byId[id]).filter(Boolean);
+      const selectedSet = new Set(metricSelection);
+
+      // Presets: built-ins first, then the user's own (deletable), then "Save as…".
+      const bar = document.getElementById('metricPresetBar'); bar.innerHTML = '';
+      const presets = allMetricPresets();
+      const active = MetricSelector.matchingPreset(metricSelection, presets);
+      presets.forEach((p, i) => {
+        if (i === MetricSelector.builtinPresets(metricCatalog).length) bar.appendChild(Object.assign(document.createElement('span'), { style: 'width:1px;height:16px;background:var(--border)' }));
+        const chip = document.createElement('span');
+        chip.className = `chip${p.name === active ? ' active' : ''}${p.builtin ? '' : ' chip-user'}`;
+        chip.title = p.metrics.map(id => byId[id]?.label || id).join(', ');
+        chip.textContent = p.name;
+        chip.onclick = () => setMetricSelection(p.metrics);
+        if (!p.builtin) {
+          const x = document.createElement('span'); x.className = 'chip-x'; x.textContent = '✕'; x.title = `Delete preset "${p.name}"`;
+          x.onclick = (ev) => { ev.stopPropagation(); userMetricPresets = MetricSelector.deletePreset(userMetricPresets, p.name); MetricSelector.writePresets(metricStore, userMetricPresets); buildMetricPanel(); updateMetricSummary(); };
+          chip.appendChild(x);
+        }
+        bar.appendChild(chip);
+      });
+      const save = document.createElement('span');
+      save.className = 'chip chip-save'; save.textContent = 'Save as…';
+      save.title = metricSelection.length ? 'Save the current selection and order as a named preset' : 'Select some metrics first';
+      save.onclick = () => {
+        if (!metricSelection.length) return;
+        const activeUser = presets.find(p => p.name === active && !p.builtin);
+        const name = (window.prompt('Preset name', activeUser ? activeUser.name : '') || '').trim();
+        if (!name) return;
+        if (MetricSelector.builtinPresets(metricCatalog).some(p => p.name.toLowerCase() === name.toLowerCase())) { window.alert(`"${name}" is a built-in preset; pick another name.`); return; }
+        userMetricPresets = MetricSelector.savePreset(userMetricPresets, name, metricSelection);
+        MetricSelector.writePresets(metricStore, userMetricPresets);
+        buildMetricPanel(); updateMetricSummary();
+      };
+      bar.appendChild(save);
+
+      // Selected (ordered = chart order) then Available, grouped by manifest group.
+      const list = document.getElementById('metricList'); list.innerHTML = '';
+      const table = document.createElement('table'); table.className = 'selector-table metric-table';
+      const sectionHtml = (label, action) =>
+        `<tr class="selector-section"><td colspan="3">${label}${action ? `<span class="section-action" data-action="${action.id}">${action.label}</span>` : ''}</td></tr>`;
+      const selRow = (e, i) =>
+        `<tr class="selector-row selected" data-id="${esc(e.id)}"><td class="si-sel-col"><span class="si-check">✓</span></td>` +
+        `<td>${esc(e.title)}${e.groupTitle !== e.title ? ` <span class="mi-group">· ${esc(e.groupTitle)}</span>` : ''}</td>` +
+        `<td class="mi-ctl"><button class="mi-btn" data-move="-1" title="Move up"${i === 0 ? ' disabled' : ''}>↑</button>` +
+        `<button class="mi-btn" data-move="1" title="Move down"${i === selected.length - 1 ? ' disabled' : ''}>↓</button>` +
+        `<button class="mi-btn mi-remove" data-remove title="Remove">✕</button></td></tr>`;
+      const availRow = e =>
+        `<tr class="selector-row" data-id="${esc(e.id)}"><td class="si-sel-col"><span class="si-check"></span></td><td colspan="2">${esc(e.title)}</td></tr>`;
+      let availHtml = '';
+      for (const g of MetricSelector.groupedCatalog(metricCatalog)) {
+        const rest = g.entries.filter(e => !selectedSet.has(e.id));
+        if (!rest.length) continue;
+        availHtml += `<tr class="metric-group" data-group="${esc(g.group)}" title="Add every metric in this group"><td colspan="3">${esc(g.groupTitle)}<span class="group-add">+ add ${rest.length === 1 ? 'it' : 'all ' + rest.length}</span></td></tr>` + rest.map(availRow).join('');
+      }
+      table.innerHTML = '<tbody>' +
+        sectionHtml(`Selected (${selected.length}) — chart order`, selected.length ? { id: 'clear-metrics', label: '✕ Clear' } : null) +
+        (selected.length ? selected.map(selRow).join('') : '<tr class="selector-empty"><td colspan="3">No metrics selected — pick some below.</td></tr>') +
+        sectionHtml('Available') +
+        (availHtml || '<tr class="selector-empty"><td colspan="3">Every metric is selected.</td></tr>') +
+        '</tbody>';
+
+      table.querySelectorAll('.section-action[data-action="clear-metrics"]').forEach(el => el.addEventListener('click', () => setMetricSelection([])));
+      table.querySelectorAll('tr.selector-row').forEach(tr => {
+        const id = tr.dataset.id;
+        tr.addEventListener('click', e => {
+          const btn = e.target.closest('button');
+          if (btn?.dataset.move) return setMetricSelection(MetricSelector.moveMetric(metricSelection, id, +btn.dataset.move));
+          if (btn?.hasAttribute('data-remove')) return setMetricSelection(MetricSelector.removeMetric(metricSelection, id));
+          setMetricSelection(MetricSelector.toggleMetric(metricSelection, id));
+        });
+      });
+      table.querySelectorAll('tr.metric-group').forEach(tr => tr.addEventListener('click', () => setMetricSelection(MetricSelector.addGroup(metricSelection, metricCatalog, tr.dataset.group))));
+      list.appendChild(table);
+    }
 
     // -------------------------------------------------------------------------
     // Sign-on intro settings popover (prefs persist via Intro.setPrefs -> localStorage)
@@ -765,7 +928,7 @@
     // using the primary's throughput-chart colour so the swatch ties the
     // detail charts to a specific line above. Logic in lib/scope-badge.js.
     const SCOPE_BADGE_TARGETS = [
-      { badge: 'perfScope',    note: 'perfScopeNote',    scope: 'workload' },
+      { badge: 'perfScope',    note: 'perfScopeNote',    scope: 'perf' },
       { badge: 'latencyScope', note: 'latencyScopeNote', scope: 'workload' },
       { badge: 'memoryScope',  note: 'memoryScopeNote',  scope: 'platform' },
     ];
@@ -826,6 +989,7 @@
         platform: params.get('platform'),
         workload: params.get('workload'),
         workloads: params.get('workloads'),
+        metrics: params.get('metrics'),
         zoom: params.get('zoom')?.split(',').map(Number),
         commit: params.get('commit'),
         epoch: EpochHelpers.parseEpochFromHash(params),
@@ -845,6 +1009,10 @@
       } else if (selectedWorkloads.length > 1) {
         params.set('workloads', SelectionHelpers.encodeWorkloads(selectedWorkloads, plat));
       }
+      // Metric selection travels with the link so a shared view shows the same
+      // charts; omitted when it is the default to keep ordinary URLs short.
+      const metricsParam = MetricSelector.hashValue(metricSelection, metricCatalog);
+      if (metricsParam) params.set('metrics', metricsParam);
       EpochHelpers.writeEpochToHash(params, activeEpoch);
       if (chart && chart.options.scales.x.min > 0) {
         const min = Math.round(chart.options.scales.x.min);
@@ -985,6 +1153,13 @@
         : [{ engine, platform, workloadId: hashState.workload || DEFAULT_WORKLOAD }];
       selectedWorkloads.push(...restored);
       primaryWorkload = selectedWorkloads[0] || null;
+
+      // Metric selection: a `metrics=` link wins, then what this browser last
+      // used, then the default trio. Stored so the next plain load keeps it.
+      refreshMetricCatalog();
+      metricSelection = MetricSelector.resolveInitialSelection(hashState.metrics, MetricSelector.readSelection(metricStore), metricCatalog).selection;
+      MetricSelector.writeSelection(metricStore, metricSelection);
+      updateMetricSummary();
 
       // Build UI
       buildChips();
@@ -1307,54 +1482,87 @@
     // Perf charts (including TMA as 100% stacked area)
     // =========================================================================
 
+    // One chart per selected metric (lib/metric-selector.js owns the selection),
+    // one line per selected workload in throughput-chart colours. CPU-profile
+    // and TMA panels are stacked breakdowns, so they draw the ★ primary only.
+    let perfRenderGeneration = 0;
     async function renderPerfCharts(platform, gen) {
+      // A metric-selection change redraws this section alone, so it needs its
+      // own generation on top of the page-wide one.
+      const perfGen = ++perfRenderGeneration;
+      const stale = () => renderIsStale(gen) || perfGen !== perfRenderGeneration;
       perfChartInstances.forEach(c => c.destroy()); perfChartInstances = [];
       popupPerfData = {};
-      const platformManifest = (typeof PLATFORM_MANIFESTS !== 'undefined' && PLATFORM_MANIFESTS[platform]) || manifest;
-      if (!platformManifest || !platformManifest.groups) return;
+      refreshMetricCatalog();
+      const platformManifest = currentPerfManifest();
       const container = document.getElementById('perfCharts'); container.innerHTML = '';
+      const section = document.getElementById('perfChartsSection');
+      const metrics = MetricSelector.sanitize(metricSelection, metricCatalog);
+      if (!platformManifest || !platformManifest.groups || !primaryWorkload) return;
+      if (!metrics.length) {
+        container.innerHTML = '<div class="perf-empty">No metrics selected — open <b>Metrics ▼</b> above to pick some.</div>';
+        section.style.opacity = '1';
+        return;
+      }
+      const byId = {}; metricCatalog.forEach(e => { byId[e.id] = e; });
       const workloadId = getWorkloadId();
-      // Filter + order the perf/CPU chart groups (decision-first, main/io pairs
-      // adjacent). Logic lives in lib/perf-groups.js so it is unit-tested.
-      const perfGroups = PerfGroups.orderPerfGroups(platformManifest.groups);
+      const primaryKey = getSelectionKey(primaryWorkload);
+      const multiWorkload = selectedWorkloads.length > 1;
+      const multiPlatform = new Set(selectedWorkloads.map(s => s.platform)).size > 1;
+      const names = {
+        workload: id => THROUGHPUT_WORKLOADS.find(w => w.id === id)?.label || id,
+        platform: id => PLATFORM_SHORT_LABELS[id] || PLATFORM_LABELS[id] || id,
+        engine: id => ENGINES.find(e => e.id === id)?.label || id,
+      };
+      const fmtVal = v => v >= 100 ? Math.round(v).toLocaleString() : v.toFixed(2);
+
+      async function fetchSeries(plat, fileId, metricId) {
+        try {
+          const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, plat, fileId, metricId, activeEpoch));
+          if (!r.ok) return null;
+          const sd = await r.json();
+          const pts = (sd.points || []).slice().sort((a, b) => a.commit_index - b.commit_index);
+          return pts.length ? { sd, pts } : null;
+        } catch { return null; }
+      }
+      // Kick off every fetch now; charts are then drawn in selection order as
+      // each metric's data lands.
+      function loadMetric(entry) {
+        if (entry.kind === 'line') {
+          return Promise.all(selectedWorkloads.map((sel, si) =>
+            fetchSeries(sel.platform, getWorkloadFileId(sel), entry.id).then(r => ({ sel, si, r }))));
+        }
+        if (entry.kind === 'cpu') return fetchSeries(platform, workloadId, entry.id);
+        const group = platformManifest.groups.find(g => g.id === entry.group);
+        return Promise.all((group?.series || []).map(metricId =>
+          fetchSeries(platform, workloadId, metricId).then(r => ({ metricId, r }))));
+      }
+      const loads = metrics.map(id => loadMetric(byId[id]));
       let hasAny = false;
 
-      for (const group of perfGroups) {
-        if (renderIsStale(gen)) return;
-        const datasets = []; let maxIdx = 0; let colorIdx = 0;
-        const scopeBreaks = {}; // commit_index -> {from, to}; perf-scope changes in this group's series
-        let cpuClickPts = null; // CPU points (with commit) for flamegraph drill-down
-        const isTMA = group.id === 'tma' || group.id === 'tma-main' || group.id === 'tma-io';
-        const isCPU = group.id === 'cpu-main' || group.id === 'cpu-io';
+      for (let mi = 0; mi < metrics.length; mi++) {
+        const entry = byId[metrics[mi]];
+        const loaded = await loads[mi];
+        if (stale()) return;
+        const datasets = []; let maxIdx = 0;
+        const scopeBreaks = {}; // commit_index -> {from, to}
+        let cpuClickPts = null;
+        const isCPU = entry.kind === 'cpu', isTMA = entry.kind === 'tma';
 
         if (isCPU) {
-          // Single series file per CPU chart; each point has a `breakdown` dict
-          // (category -> %). Render as a 100%-normalized stacked area (like memory).
-          let cpuPts = null, categories = null;
-          try {
-            const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, workloadId, group.id, activeEpoch));
-            if (renderIsStale(gen)) return;
-            if (r.ok) {
-              const sd = await r.json();
-              if (renderIsStale(gen)) return;
-              const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
-              if (pts.length) {
-                cpuPts = pts;
-                cpuClickPts = pts; // for flamegraph drill-down on click
-                // Use the file's declared category order; fall back to union of keys.
-                categories = sd.metadata?.categories
-                  || [...new Set(pts.flatMap(p => Object.keys(p.breakdown || {})))];
-                maxIdx = Math.max(maxIdx, pts.at(-1).commit_index);
-              }
-            }
-          } catch { /* sparse: leave datasets empty */ }
-          if (cpuPts) {
+          // Single series file; each point has a `breakdown` dict (category -> %).
+          // Rendered as a 100%-normalized stacked area (like memory).
+          if (loaded) {
+            const { sd, pts } = loaded;
+            cpuClickPts = pts;
+            maxIdx = pts.at(-1).commit_index;
+            const categories = sd.metadata?.categories || [...new Set(pts.flatMap(p => Object.keys(p.breakdown || {})))];
             // Drop categories that are zero across all points to reduce legend clutter.
-            const active = categories.filter(cat => cpuPts.some(p => (p.breakdown?.[cat] || 0) > 0.05));
+            const active = categories.filter(cat => pts.some(p => (p.breakdown?.[cat] || 0) > 0.05));
             active.forEach((cat, i) => {
               const color = CATEGORY_COLORS[cat] || CHART_COLORS[i % CHART_COLORS.length];
               datasets.push({
-                label: cat, data: cpuPts.map(p => ({ x: p.commit_index, y: p.breakdown?.[cat] || 0 })),
+                label: cat, data: pts.map(p => ({ x: p.commit_index, y: p.breakdown?.[cat] || 0 })),
                 borderColor: color, backgroundColor: color + '99',
                 fill: i === 0 ? 'origin' : '-1',
                 pointRadius: 0, borderWidth: 1, tension: 0,
@@ -1362,24 +1570,11 @@
             });
           }
         } else if (isTMA) {
-          // Fetch all TMA series, then build cumulative stacked area (like memory breakdown)
-          const rawSeries = [];
-          for (const metricId of group.series) {
-            try {
-              const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, workloadId, metricId, activeEpoch));
-              if (renderIsStale(gen)) return;
-              if (!r.ok) continue;
-              const sd = await r.json();
-              if (renderIsStale(gen)) return;
-              const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
-              if (!pts.length) continue;
-              maxIdx = Math.max(maxIdx, pts.at(-1).commit_index);
-              rawSeries.push({ metricId, pts });
-            } catch { continue; }
-          }
-          // Build cumulative datasets: each dataset y = sum of this + all previous
+          // Cumulative stacked area: dataset i's y = sum of series 0..i.
+          const rawSeries = loaded.filter(x => x.r).map(x => ({ metricId: x.metricId, pts: x.r.pts }));
           for (let i = 0; i < rawSeries.length; i++) {
             const { metricId, pts } = rawSeries[i];
+            maxIdx = Math.max(maxIdx, pts.at(-1).commit_index);
             const color = CATEGORY_COLORS[metricId] || CHART_COLORS[i % CHART_COLORS.length];
             const cumData = pts.map((p, pi) => {
               let cumY = 0;
@@ -1394,42 +1589,38 @@
             });
           }
         } else {
-        for (const metricId of group.series) {
-          try {
-            const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, workloadId, metricId, activeEpoch));
-            if (renderIsStale(gen)) return;
-            if (!r.ok) continue;
-            const sd = await r.json();
-            if (renderIsStale(gen)) return;
-            const pts = sd.points.sort((a, b) => a.commit_index - b.commit_index);
-            if (!pts.length) continue;
-            popupPerfData[metricId] = pts;
+          for (const { sel, si, r } of loaded) {
+            if (!r) continue;
+            const pts = r.pts;
+            // Colour = the workload's position in the selection, exactly as the
+            // throughput chart and the selector swatches index it.
+            const color = MULTI_COLORS[si % MULTI_COLORS.length];
+            if (getSelectionKey(sel) === primaryKey) popupPerfData[entry.id] = pts;
             maxIdx = Math.max(maxIdx, pts.at(-1).commit_index);
-            const color = CATEGORY_COLORS[metricId] || CHART_COLORS[colorIdx % CHART_COLORS.length];
-            const yAxisID = group.y_axes?.find(a => a.series.includes(metricId))?.id || 'left';
+            const wlLabel = SelectionHelpers.seriesLabel(sel, selectedWorkloads, names);
             // Counts from different privilege scopes (user vs user+kernel) are
             // not comparable, so a series that changed scope is drawn as
-            // separate runs: no segment crosses the step, later scopes are
-            // dashed, and the legend names the scope. Logic in lib/scope-helpers.js.
-            for (const run of ScopeHelpers.scopeDatasets(metricId, pts)) {
+            // separate runs (lib/scope-helpers.js): later scopes dashed, no
+            // segment crossing the step.
+            for (const run of ScopeHelpers.scopeDatasets(wlLabel, pts)) {
               datasets.push({
-                label: run.label, data: run.data, scope: run.scope, metricId,
+                label: run.label, data: run.data, scope: run.scope, metricId: entry.id,
                 borderColor: color, backgroundColor: 'transparent', borderDash: run.borderDash,
                 fill: false, hideFromLegend: !run.legend,
                 pointRadius: 3, pointBackgroundColor: color, borderWidth: 1, tension: 0,
-                yAxisID,
+                yAxisID: 'left',
               });
             }
             ScopeHelpers.scopeBoundaries(pts).forEach(b => { scopeBreaks[b.commit_index] = b; });
-            colorIdx++;
-          } catch { continue; }
-        }
+          }
         }
         if (!datasets.length) continue; hasAny = true;
 
         const div = document.createElement('div'); div.className = 'chart-panel chart-panel--perf';
         const helpBtn = (isTMA || isCPU) ? `<button class="help-btn" onclick="showHelp('${isCPU ? 'cpu' : 'tma'}')" style="margin-left:0.3rem">?</button>` : '';
-        div.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem">${group.title}${helpBtn}</div><canvas></canvas>`;
+        const scopeNote = (isTMA || isCPU) && multiWorkload ? ' <span style="font-style:italic">· ★ primary only</span>'
+          : (!isTMA && !isCPU && multiPlatform) ? ' <span style="font-style:italic">· platforms differ, not directly comparable</span>' : '';
+        div.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem">${entry.title}${helpBtn}${scopeNote}</div><canvas></canvas>`;
         container.appendChild(div);
 
         const scales = { x: xAxisOpts(maxIdx, currentData && currentData.landmarks) };
@@ -1438,9 +1629,7 @@
         } else if (isTMA) {
           scales.y = { title: { display: true, text: '%', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'var(--border)' } };
         } else {
-          for (const axis of (group.y_axes || [{id:'left',label:'',series:[]}])) {
-            scales[axis.id] = { position: axis.id === 'right' ? 'right' : 'left', title: { display: true, text: axis.label, color: '#64748b' }, ticks: { color: '#64748b', callback: v => v >= 1000 ? (v/1000).toPrecision(3)+'k' : v >= 10 ? Math.round(v) : v.toPrecision(3) }, grid: { color: axis.id === 'left' ? 'var(--border)' : 'transparent' } };
-          }
+          scales.left = { position: 'left', title: { display: true, text: entry.axisLabel, color: '#64748b' }, ticks: { color: '#64748b', callback: v => v >= 1000 ? (v/1000).toPrecision(3)+'k' : v >= 10 ? Math.round(v) : v.toPrecision(3) }, grid: { color: 'var(--border)' } };
         }
 
         const scopeAnnotations = {};
@@ -1460,12 +1649,11 @@
             if (isTMA) {
               return datasets.map((ds, i) => { const pt = ds.data[idx]; if (!pt) return ''; const prev = i > 0 ? datasets[i-1].data[idx]?.y || 0 : 0; return infoItem(ds.label, (pt.y - prev).toFixed(1) + '%'); }).filter(Boolean).join('<span class="info-sep"> · </span>');
             }
-            // Plain metrics may be split into several runs (one per counter
-            // scope) and metrics may have different point counts, so match on
-            // the hovered commit index rather than array position.
+            // Lines may be split into several scope runs and workloads may have
+            // different point counts, so match on the hovered commit index.
             const x = datasets[dsIdx]?.data[idx]?.x;
             if (x == null) return '';
-            return datasets.map(ds => { const pt = ds.data.find(p => p.x === x); return pt ? infoItem(ds.label, pt.y.toFixed(2)) : ''; }).filter(Boolean).join('<span class="info-sep"> · </span>');
+            return datasets.map(ds => { const pt = ds.data.find(p => p.x === x); return pt ? infoItem(ds.label, fmtVal(pt.y)) : ''; }).filter(Boolean).join('<span class="info-sep"> · </span>');
           })],
           options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: datasets.filter(d => !d.hideFromLegend).length > 1, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, filter: item => !datasets[item.datasetIndex]?.hideFromLegend } }, annotation: { annotations: scopeAnnotations }, tooltip: { enabled: false }, zoom: { zoom: { drag: { enabled: true, backgroundColor: 'rgba(100,100,100,0.15)' }, mode: 'x', onZoomComplete: ({chart:c}) => { syncZoom(c, c.scales.x.min, c.scales.x.max); updateHashState(); } } } }, scales },
         });
@@ -1476,12 +1664,13 @@
             if (!els.length) return;
             const point = pts[els[0].index];
             if (point) openFlamegraph(platform, workloadId, point, threadKind);
-          })(cpuClickPts, group.id === 'cpu-io' ? 'io' : 'main');
+          })(cpuClickPts, entry.id === 'cpu-io' ? 'io' : 'main');
           div.querySelector('canvas').style.cursor = 'pointer';
         }
         perfChartInstances.push(ci); allCharts.push(ci);
       }
-      document.getElementById('perfChartsSection').style.opacity = hasAny ? '1' : '0.3';
+      if (!hasAny) container.innerHTML = '<div class="perf-empty">No data for the selected metrics on this workload.</div>';
+      section.style.opacity = hasAny ? '1' : '0.3';
     }
 
     // =========================================================================

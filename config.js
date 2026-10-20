@@ -147,6 +147,7 @@ const HELP_TEXT = {
     title: 'Performance Counters',
     content: `
       <p><strong>What they measure:</strong> Hardware PMU counters collected via <code>perf stat</code> during the benchmark run, normalized per instruction or per request.</p>
+      <p><strong>Choosing charts:</strong> the <strong>Metrics ▼</strong> button picks which metrics to chart and in what order. Each metric gets its own chart with one line per selected workload, in the same colours as the throughput chart, so you can compare IPC (say) across workloads directly. Presets save a named subset; the selection is remembered in this browser and carried in the page URL (<code>metrics=</code>) so a link shows the same charts. CPU-profile and TMA panels are stacked breakdowns, so they show the ★ primary workload only. Metrics from different platforms are not directly comparable.</p>
       <p><strong>Metrics:</strong></p>
       <ul>
         <li><strong>IPC</strong> (Instructions Per Cycle) — CPU efficiency. Higher = better. Valkey typically 2.4–3.4 depending on platform.</li>
