@@ -55,6 +55,27 @@ than one, red at least one sweep has no such point. Expanding the count lists ea
 sweep. "Current HEAD" for a release-and-tip engine is its newest tip point; for a
 history engine it stays the median of the last five points.
 
+## Sign-on intro
+
+The Performance History page opens on the Conductress sign-on animation
+(`intro.html`, the brand kit's production cut) while the first render runs, and
+releases it at max(charts ready, sequence done at 5.8 s) with a CRT power-off:
+the picture collapses to a line, the line to a dot, and the black lifts. Click
+anywhere or press Esc to skip. Under `prefers-reduced-motion` the intro does not
+play on load, and an explicit replay ends in a hard cut.
+
+The speaker button in the header opens the settings (persisted client-side in
+`localStorage['conductress.intro']`): play on load, sound mode, score, CRT overlay,
+replay. Sound has three modes. `auto` (default) asks the browser whether audio may
+start without a gesture (`navigator.getAutoplayPolicy` where it exists, else an
+AudioContext resume probe) and plays the score only if so, otherwise silent with no
+button. `on` always tries and, when refused, offers a SOUND button that restarts
+the sequence with the score. `off` never builds an AudioContext. Every score stays
+audible past 7 s and a playing score finishes under the dashboard, so Chrome's
+media-engagement index counts the visit and learns to allow autoplay on this site;
+Firefox and Safari have per-site autoplay permissions instead. The pure rules live
+in `lib/intro-helpers.js`.
+
 ## Tests
 
 The test suite uses Node.js 22's built-in test runner and has no third-party dependencies:

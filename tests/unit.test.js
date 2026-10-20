@@ -2519,7 +2519,7 @@ describe('index.html release-marked axis wiring', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// intro-helpers.js — sign-on intro overlay: prefs, iframe URL, release rule
+// intro-helpers.js — sign-on intro overlay: prefs, iframe URL, sound decision, release
 // ═══════════════════════════════════════════════════════════════════════════
 
 const intro = require('../lib/intro-helpers.js');
@@ -2534,19 +2534,23 @@ function memStorage(initial) {
 }
 
 describe('intro prefs', () => {
-  it('defaults: enabled, sound OFF, launch score, no tape', () => {
-    assert.deepEqual(intro.readPrefs(memStorage()), { enabled: true, sound: false, score: 'launch', tape: false });
-    assert.equal(intro.DEFAULT_PREFS.sound, false, 'sound must default off for anyone else hitting the URL');
+  it('defaults: enabled, sound AUTO, Cosmos score, CRT overlay off (brand-kit production defaults)', () => {
+    assert.deepEqual(intro.readPrefs(memStorage()), { enabled: true, sound: 'auto', score: 'cosmos', crt: false });
+    assert.equal(intro.DEFAULT_PREFS.sound, 'auto', 'auto = sound only where the browser already allows it; nobody gets nagged');
   });
 
   it('reads a stored preference back', () => {
-    const s = memStorage({ [intro.STORAGE_KEY]: JSON.stringify({ enabled: true, sound: true, score: 'sid', tape: true }) });
-    assert.deepEqual(intro.readPrefs(s), { enabled: true, sound: true, score: 'sid', tape: true });
+    const s = memStorage({ [intro.STORAGE_KEY]: JSON.stringify({ enabled: true, sound: 'on', score: 'orch', crt: true }) });
+    assert.deepEqual(intro.readPrefs(s), { enabled: true, sound: 'on', score: 'orch', crt: true });
   });
 
-  it('sanitizes garbage: unknown score, non-boolean flags, junk JSON, throwing storage', () => {
-    assert.deepEqual(intro.sanitizePrefs({ score: 'wagner', sound: 'yes', enabled: 0, tape: null }),
-      { enabled: true, sound: false, score: 'launch', tape: false });
+  it('migrates the first-cut boolean sound pref: true -> on, false -> off; legacy tape/score dropped to defaults', () => {
+    assert.deepEqual(intro.sanitizePrefs({ enabled: true, sound: true, score: 'sid', tape: true }), { enabled: true, sound: 'on', score: 'cosmos', crt: false });
+    assert.deepEqual(intro.sanitizePrefs({ sound: false }), { enabled: true, sound: 'off', score: 'cosmos', crt: false });
+  });
+
+  it('sanitizes garbage: unknown score, unknown sound mode, non-boolean flags, junk JSON, throwing storage', () => {
+    assert.deepEqual(intro.sanitizePrefs({ score: 'wagner', sound: 'loud', enabled: 0, crt: null }), intro.DEFAULT_PREFS);
     assert.deepEqual(intro.readPrefs(memStorage({ [intro.STORAGE_KEY]: '{not json' })), intro.DEFAULT_PREFS);
     assert.deepEqual(intro.readPrefs(memStorage({ [intro.STORAGE_KEY]: '"a string"' })), intro.DEFAULT_PREFS);
     assert.deepEqual(intro.readPrefs({ getItem() { throw new Error('denied'); } }), intro.DEFAULT_PREFS);
@@ -2555,19 +2559,19 @@ describe('intro prefs', () => {
 
   it('writePrefs persists the sanitized object under one key and round-trips', () => {
     const s = memStorage();
-    const written = intro.writePrefs(s, { sound: true, score: 'turbine', bogus: 1 });
-    assert.deepEqual(written, { enabled: true, sound: true, score: 'turbine', tape: false });
+    const written = intro.writePrefs(s, { sound: 'on', score: 'vhs', bogus: 1 });
+    assert.deepEqual(written, { enabled: true, sound: 'on', score: 'vhs', crt: false });
     assert.deepEqual(Object.keys(s.dump()), [intro.STORAGE_KEY]);
     assert.deepEqual(intro.readPrefs(s), written);
   });
 
   it('writePrefs never throws on a full or denied storage', () => {
-    const out = intro.writePrefs({ setItem() { throw new Error('QuotaExceededError'); } }, { sound: true });
-    assert.equal(out.sound, true);
+    const out = intro.writePrefs({ setItem() { throw new Error('QuotaExceededError'); } }, { sound: 'on' });
+    assert.equal(out.sound, 'on');
   });
 });
 
-describe('intro shouldPlay / introSrc', () => {
+describe('intro shouldPlay / introSrc / parseEmbedQuery', () => {
   it('plays when enabled and motion is not reduced', () => {
     assert.equal(intro.shouldPlay(intro.DEFAULT_PREFS, false), true);
     assert.equal(intro.shouldPlay(intro.DEFAULT_PREFS, true), false, 'prefers-reduced-motion must suppress the intro');
@@ -2575,26 +2579,45 @@ describe('intro shouldPlay / introSrc', () => {
     assert.equal(intro.shouldPlay(null, false), false);
   });
 
-  it('sound off maps to the silent score regardless of the chosen score/tape', () => {
-    assert.equal(intro.introSrc({ sound: false, score: 'sid', tape: true }), 'intro.html?embed=1&score=mute');
+  it('introSrc carries score, sound mode and the CRT flag', () => {
+    assert.equal(intro.introSrc(intro.DEFAULT_PREFS), 'intro.html?embed=1&score=cosmos&sound=auto');
+    assert.equal(intro.introSrc({ sound: 'on', score: 'vhs', crt: true }), 'intro.html?embed=1&score=vhs&sound=on&crt=1');
+    assert.equal(intro.introSrc({ sound: 'off', score: 'chip' }), 'intro.html?embed=1&score=chip&sound=off');
+    assert.equal(intro.introSrc({ sound: true, score: 'nope' }), 'intro.html?embed=1&score=cosmos&sound=on', 'legacy boolean + unknown score');
   });
 
-  it('sound on carries the score and tape flag', () => {
-    assert.equal(intro.introSrc({ sound: true, score: 'sid', tape: true }), 'intro.html?embed=1&score=sid&tape=1');
-    assert.equal(intro.introSrc({ sound: true, score: 'fm' }), 'intro.html?embed=1&score=fm');
-    assert.equal(intro.introSrc({ sound: true, score: 'nope' }), 'intro.html?embed=1&score=launch', 'unknown score falls back');
-  });
-
-  it('parseEmbedQuery is the inverse of introSrc', () => {
-    for (const prefs of [{ sound: true, score: 'turbine', tape: true }, { sound: true, score: 'fm' }, { sound: false, score: 'sid' }]) {
+  it('parseEmbedQuery is the inverse of introSrc, and an undecided URL stays silent', () => {
+    for (const prefs of [{ sound: 'auto', score: 'orch', crt: true }, { sound: 'on', score: 'vhs' }, { sound: 'off', score: 'chip' }]) {
       const url = intro.introSrc(prefs);
       const q = intro.parseEmbedQuery(url.slice(url.indexOf('?')));
-      assert.equal(q.embed, true);
-      assert.equal(q.score, prefs.sound ? prefs.score : 'mute');
-      assert.equal(q.tape, !!(prefs.sound && prefs.tape));
+      assert.deepEqual(q, { embed: true, score: prefs.score, sound: prefs.sound, crt: !!prefs.crt });
     }
-    assert.deepEqual(intro.parseEmbedQuery('?embed=1&score=evil'), { embed: true, score: null, tape: false });
-    assert.deepEqual(intro.parseEmbedQuery(''), { embed: false, score: null, tape: false });
+    assert.deepEqual(intro.parseEmbedQuery('?embed=1&score=evil&sound=loud'), { embed: true, score: 'cosmos', sound: 'off', crt: false });
+    assert.deepEqual(intro.parseEmbedQuery(''), { embed: false, score: 'cosmos', sound: 'off', crt: false });
+  });
+});
+
+describe('intro soundDecision', () => {
+  it('auto: sound only when the browser allows autoplay; otherwise silent and no button', () => {
+    assert.deepEqual(intro.soundDecision('auto', true), { start: true, offer: false });
+    assert.deepEqual(intro.soundDecision('auto', false), { start: false, offer: false });
+  });
+  it('on: sound when allowed; otherwise offer the SOUND (restart) button', () => {
+    assert.deepEqual(intro.soundDecision('on', true), { start: true, offer: false });
+    assert.deepEqual(intro.soundDecision('on', false), { start: false, offer: true });
+  });
+  it('off: never, whatever the browser says', () => {
+    assert.deepEqual(intro.soundDecision('off', true), { start: false, offer: false });
+    assert.deepEqual(intro.soundDecision('off', false), { start: false, offer: false });
+    assert.equal(intro.wantsAudio('off'), false);
+    assert.equal(intro.wantsAudio('auto'), true);
+    assert.equal(intro.wantsAudio('on'), true);
+  });
+  it('legacy booleans and garbage map through soundMode', () => {
+    assert.equal(intro.soundMode(true), 'on');
+    assert.equal(intro.soundMode(false), 'off');
+    assert.equal(intro.soundMode('whatever'), 'auto');
+    assert.deepEqual(intro.soundDecision(undefined, false), { start: false, offer: false }, 'undefined = auto = silent when refused');
   });
 });
 
@@ -2614,6 +2637,33 @@ describe('intro shouldRelease', () => {
   });
 });
 
+describe('intro releasePlan', () => {
+  const st = (o) => ({ skipped: false, audioOn: false, audioStartedAt: null, now: 0, ...o });
+  it('CRT power-off normally, hard cut under reduced motion', () => {
+    assert.equal(intro.releasePlan(st(), false, 'cosmos').transition, 'crt');
+    assert.equal(intro.releasePlan(st(), true, 'cosmos').transition, 'cut');
+  });
+  it('silent run: nothing to keep, frame goes with the picture', () => {
+    assert.deepEqual(intro.releasePlan(st(), false, 'cosmos'), { transition: 'crt', keepAudio: false, tailMs: 0 });
+  });
+  it('a playing score finishes under the dashboard: tail = per-score end minus elapsed, capped', () => {
+    const p = intro.releasePlan(st({ audioOn: true, audioStartedAt: 1000, now: 6800 }), false, 'cosmos');
+    assert.equal(p.keepAudio, true);
+    assert.equal(p.tailMs, intro.AUDIO_TAIL_S.cosmos * 1000 - 5800);
+    assert.equal(intro.releasePlan(st({ audioOn: true, audioStartedAt: 0, now: 0 }), false, 'chip').tailMs, intro.AUDIO_TAIL_S.chip * 1000);
+    assert.equal(intro.releasePlan(st({ audioOn: true, audioStartedAt: 0, now: 20000 }), false, 'orch').tailMs, 0, 'already past the tail');
+    assert.equal(intro.releasePlan(st({ audioOn: true }), false, 'nope').tailMs, intro.AUDIO_TAIL_S.cosmos * 1000, 'unknown score uses the default tail');
+    assert.ok(intro.releasePlan(st({ audioOn: true }), false, 'cosmos').tailMs <= intro.AUDIO_TAIL_CAP_MS);
+  });
+  it('skip cuts the audio with the picture (the user said enough)', () => {
+    const p = intro.releasePlan(st({ audioOn: true, skipped: true, audioStartedAt: 0, now: 2000 }), false, 'vhs');
+    assert.deepEqual(p, { transition: 'crt', keepAudio: false, tailMs: 0 });
+  });
+  it('every score stays audible past Chrome\'s 7 s media-engagement threshold', () => {
+    for (const s of intro.SCORES) assert.ok(intro.AUDIO_TAIL_S[s] > 7, `${s} tail ${intro.AUDIO_TAIL_S[s]}s`);
+  });
+});
+
 describe('intro overlay wiring (index.html + intro.html)', () => {
   const fs = require('node:fs');
   const path = require('node:path');
@@ -2627,31 +2677,46 @@ describe('intro overlay wiring (index.html + intro.html)', () => {
     assert.ok(index.includes('IntroHelpers.shouldPlay(prefs, reducedMotion)'));
     assert.ok(index.includes('prefers-reduced-motion: reduce'), 'must honour reduced motion');
     assert.ok(index.includes('IntroHelpers.shouldRelease(state)'));
+    assert.ok(index.includes('IntroHelpers.releasePlan(state, reducedMotion, state.score)'));
     assert.ok(/init\(\)\.catch\(.*\)\.finally\(\(\) => Intro\.chartsReady\(\)\)/.test(index), 'chartsReady must fire even when init fails');
     assert.ok(index.includes('READY_TIMEOUT_MS'), 'a missing intro.html must not hold the dashboard');
+    assert.ok(index.includes(`setAttribute('allow', 'autoplay')`), 'the frame needs the autoplay right delegated');
+  });
+
+  it('index.html has the CRT power-off transition and the hard-cut class', () => {
+    for (const k of ['intro-collapse-y', 'intro-collapse-x', 'intro-lift', '#introOverlay.closing', '#introOverlay.cut', '#introOverlay.tail']) {
+      assert.ok(index.includes(k), `missing ${k}`);
+    }
   });
 
   it('index.html has the header settings button and popover fields', () => {
-    for (const id of ['introSettingsBtn', 'introSettings', 'introEnabled', 'introSound', 'introScore', 'introTape']) {
+    for (const id of ['introSettingsBtn', 'introSettings', 'introEnabled', 'introSound', 'introScore', 'introCrt', 'introSoundNote']) {
       assert.ok(index.includes(`id="${id}"`), `missing #${id}`);
     }
+    for (const mode of intro.SOUND_MODES) assert.ok(index.includes(`<option value="${mode}">`), `sound select lacks ${mode}`);
+    for (const score of intro.SCORES) assert.ok(index.includes(`<option value="${score}">`), `score select lacks ${score}`);
     assert.ok(index.includes('Intro.setPrefs('), 'popover must persist through Intro.setPrefs');
     assert.ok(index.includes('Intro.replay()'));
   });
 
-  it('intro.html speaks the postMessage protocol the overlay expects', () => {
+  it('intro.html is the Conductress sign-on and speaks the postMessage protocol the overlay expects', () => {
+    assert.ok(introHtml.includes('CONDUCTRESS — sign-on'));
     assert.ok(introHtml.includes("q.get('embed') === '1'"));
+    assert.ok(introHtml.includes('lib/intro-helpers.js'), 'embed mode shares the pure rules with the parent');
     assert.ok(introHtml.includes("'conductress-intro'"), 'message type must match index.html');
     assert.ok(index.includes("'conductress-intro'"));
-    for (const ev of ["{event: 'ready'}", "{event: 'done'}", "{event: 'skip'}"]) assert.ok(introHtml.includes(ev), `intro must post ${ev}`);
-    assert.ok(introHtml.includes("m.cmd === 'fade'"), 'intro must ride the parent fade');
+    for (const ev of ["{event: 'ready'}", "{event: 'audio'}", "{event: 'done'}", "{event: 'skip'}", "{event: 'restart'}", "{event: 'audio-ended'}"]) assert.ok(introHtml.includes(ev), `intro must post ${ev}`);
+    assert.ok(introHtml.includes("m.cmd === 'release'"), 'intro must honour the parent release');
+    assert.ok(introHtml.includes('getAutoplayPolicy'), 'must ask the browser first where it can');
     assert.ok(introHtml.includes('embedDone'), 'done mark must be a named timeline constant');
-    assert.ok(introHtml.includes('id="soundhint"'), 'sound needs a gesture; the intro must offer a button');
+    assert.ok(introHtml.includes('id="soundhint"'), 'sound=on needs a gesture fallback; the intro must offer a button');
+    assert.ok(!/\bmaster\b/i.test(introHtml), 'inclusive-language check');
   });
 
   it('intro.html is a valid standalone page and its script parses', () => {
     assert.ok(introHtml.includes('lang="en"'));
-    const script = introHtml.match(/<script>([\s\S]*?)<\/script>/)[1];
-    assert.doesNotThrow(() => new Function(script));
+    const scripts = [...introHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+    assert.ok(scripts.length >= 1);
+    for (const s of scripts) assert.doesNotThrow(() => new Function(s));
   });
 });

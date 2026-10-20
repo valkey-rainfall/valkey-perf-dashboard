@@ -75,10 +75,22 @@
     .selector-panel.open { display: flex; }
 
     /* Sign-on intro: full-screen iframe shown while the first render runs (see lib/intro-helpers.js).
-       It sits above the sticky header and comes down with a short fade once the charts are ready. */
-    #introOverlay { position: fixed; inset: 0; z-index: 1000; background: #000; opacity: 1; transition: opacity 0.5s ease-out; }
-    #introOverlay.fading { opacity: 0; pointer-events: none; }
+       It sits above the sticky header and leaves with a CRT power-off once the charts are ready:
+       the picture collapses to a bright horizontal line (260 ms), the line shrinks to a dot
+       (200 ms), and the black lifts off the dashboard (260 ms, overlapping). ~620 ms total, one
+       gentle brightening, no flicker. Under prefers-reduced-motion the release is a hard cut.
+       After the picture is gone the frame may linger invisibly so a playing score can finish. */
+    #introOverlay { position: fixed; inset: 0; z-index: 1000; background: #000; }
+    #introOverlay .intro-pic { position: absolute; inset: 0; transform-origin: 50% 50%; }
     #introOverlay iframe { width: 100%; height: 100%; border: 0; display: block; background: #000; }
+    #introOverlay.closing { animation: intro-lift 260ms ease-in 360ms both; }
+    #introOverlay.closing .intro-pic { animation: intro-collapse-y 260ms cubic-bezier(.7,0,.9,.4) both, intro-collapse-x 200ms ease-in 260ms both; }
+    #introOverlay.closing .intro-pic::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: #fff6ea; opacity: 0; animation: intro-glow 460ms ease-out both; }
+    #introOverlay.cut, #introOverlay.tail { visibility: hidden; pointer-events: none; }
+    @keyframes intro-collapse-y { from { transform: scaleY(1); filter: brightness(1); } 70% { filter: brightness(1.45); } to { transform: scaleY(0.006); filter: brightness(1.7); } }
+    @keyframes intro-collapse-x { from { transform: scaleY(0.006) scaleX(1); } to { transform: scaleY(0.006) scaleX(0); } }
+    @keyframes intro-glow { 0% { opacity: 0; } 55% { opacity: .18; } 100% { opacity: .55; } }
+    @keyframes intro-lift { from { background: #000; } to { background: transparent; } }
     .intro-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font-size: 0.8rem; line-height: 1; padding: 3px 7px; cursor: pointer; }
     .intro-btn:hover, .intro-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--text); }
     .intro-btn svg { display: block; }
@@ -240,25 +252,32 @@
   <div id="introOverlay" hidden></div>
   <script src="lib/intro-helpers.js"></script>
   <script>
-    // Overlay controller. The pure rules (prefs, URL, release) live in IntroHelpers; this is only wiring.
+    // Overlay controller. The pure rules (prefs, URL, sound, release) live in IntroHelpers; this is only wiring.
     window.Intro = (function () {
-      const MSG = 'conductress-intro', FADE_MS = 500, READY_TIMEOUT_MS = 2000;
+      const MSG = 'conductress-intro', CRT_MS = 620, READY_TIMEOUT_MS = 2000;
       const overlay = document.getElementById('introOverlay');
       const store = (() => { try { return window.localStorage; } catch (e) { return null; } })();
       const reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
       let prefs = IntroHelpers.readPrefs(store);
-      let frame = null, state = null, watchdog = null;
+      let frame = null, state = null, watchdog = null, tailTimer = null;
 
       function post(msg) { if (frame && frame.contentWindow) frame.contentWindow.postMessage(Object.assign({type: MSG}, msg), '*'); }
+      function teardown() {
+        clearTimeout(tailTimer); tailTimer = null;
+        overlay.hidden = true; overlay.className = ''; overlay.replaceChildren(); frame = null;
+      }
       function show(chartsReady) {
         if (state && !state.released) return;             // already on screen
-        state = { chartsReady, introDone: false, skipped: false, released: false, frameReady: false };
+        if (frame) teardown();                            // a frame lingering for its audio tail yields to the replay
+        state = { chartsReady, introDone: false, skipped: false, released: false, frameReady: false, audioOn: false, audioStartedAt: null, score: prefs.score };
         frame = document.createElement('iframe');
         frame.id = 'introFrame'; frame.title = 'Conductress sign-on animation';
         frame.setAttribute('aria-label', 'Loading animation, click or press Escape to skip');
+        frame.setAttribute('allow', 'autoplay');          // Chrome only lets a frame autoplay when the parent extends the right
         frame.src = IntroHelpers.introSrc(prefs);
-        overlay.replaceChildren(frame);
-        overlay.classList.remove('fading'); overlay.hidden = false;
+        const pic = document.createElement('div'); pic.className = 'intro-pic'; pic.appendChild(frame);
+        overlay.replaceChildren(pic);
+        overlay.className = ''; overlay.hidden = false;
         // If intro.html never answers (404, blocked frame), do not hold the dashboard hostage.
         watchdog = setTimeout(() => { if (state && !state.frameReady) skip(); }, READY_TIMEOUT_MS);
       }
@@ -266,26 +285,36 @@
       function skip() { if (!state || state.released) return; state.skipped = true; maybeRelease(); }
       function release() {
         state.released = true; clearTimeout(watchdog);
-        post({ cmd: 'fade', ms: FADE_MS });
-        overlay.classList.add('fading');
-        setTimeout(() => { overlay.hidden = true; overlay.replaceChildren(); frame = null; }, FADE_MS + 50);
+        state.now = performance.now();
+        const plan = IntroHelpers.releasePlan(state, reducedMotion, state.score);
+        const visualMs = plan.transition === 'cut' ? 0 : CRT_MS;
+        post({ cmd: 'release', keepAudio: plan.keepAudio, ms: visualMs });
+        overlay.classList.add(plan.transition === 'cut' ? 'cut' : 'closing');
+        const afterPicture = () => {
+          if (!plan.keepAudio) { teardown(); return; }
+          overlay.classList.add('tail');                  // invisible, click-through; the score finishes under the dashboard
+          tailTimer = setTimeout(teardown, plan.tailMs);
+        };
+        if (visualMs) setTimeout(afterPicture, visualMs + 30); else afterPicture();
       }
       window.addEventListener('message', e => {
         if (!frame || e.source !== frame.contentWindow) return;
         const m = e.data; if (!m || m.type !== MSG || !state) return;
         if (m.event === 'ready') { state.frameReady = true; clearTimeout(watchdog); }
+        else if (m.event === 'audio') { state.audioOn = true; state.audioStartedAt = performance.now(); }
         else if (m.event === 'done') { state.introDone = true; maybeRelease(); }
         else if (m.event === 'skip') skip();
         else if (m.event === 'restart') state.introDone = false;   // SOUND click replayed the sequence from zero
+        else if (m.event === 'audio-ended') { if (state.released) teardown(); }
       });
       document.addEventListener('keydown', e => { if (e.key === 'Escape') skip(); });
 
       if (IntroHelpers.shouldPlay(prefs, reducedMotion)) show(false);
 
       return {
-        /** Called once the first render settles; the overlay fades at max(this, intro done). */
+        /** Called once the first render settles; the overlay releases at max(this, intro done). */
         chartsReady() { if (state) { state.chartsReady = true; maybeRelease(); } },
-        /** Play again on demand (settings popover); charts are already up, so only the intro gates the fade. */
+        /** Play again on demand (settings popover); charts are already up, so only the intro gates the release. */
         replay() { show(true); },
         getPrefs() { return Object.assign({}, prefs); },
         setPrefs(next) { prefs = IntroHelpers.writePrefs(store, Object.assign({}, prefs, next)); return Object.assign({}, prefs); },
@@ -322,21 +351,28 @@
         </svg>
       </button>
     </nav>
-    <!-- Sign-on intro settings: sound is off by default; the browser still needs one click per load before audio can start -->
+    <!-- Sign-on intro settings. Sound defaults to "auto": with sound only when the browser already
+         lets audio start without a click (it learns that from habit), silent otherwise, never a nag. -->
     <div id="introSettings" class="intro-settings" role="dialog" aria-label="Sign-on intro settings">
       <h3>Sign-on intro</h3>
       <label><span>Play on load</span><input type="checkbox" id="introEnabled"></label>
-      <label><span>Sound</span><input type="checkbox" id="introSound"></label>
-      <label id="introScoreRow"><span>Score</span>
-        <select id="introScore">
-          <option value="launch">Launch</option>
-          <option value="turbine">Turbine</option>
-          <option value="fm">FM synth</option>
-          <option value="sid">SID chip</option>
+      <label><span>Sound</span>
+        <select id="introSound">
+          <option value="auto">Auto</option>
+          <option value="on">On</option>
+          <option value="off">Off</option>
         </select>
       </label>
-      <label id="introTapeRow"><span>VHS tape</span><input type="checkbox" id="introTape"></label>
-      <div class="intro-note">Browsers only start audio after a click, so with sound on the intro shows a SOUND button; clicking it restarts the sequence with the score. Click anywhere else or press Esc to skip.</div>
+      <label id="introScoreRow"><span>Score</span>
+        <select id="introScore">
+          <option value="cosmos">Cosmos</option>
+          <option value="orch">Orchestra</option>
+          <option value="vhs">VHS fanfare</option>
+          <option value="chip">Chiptune</option>
+        </select>
+      </label>
+      <label id="introCrtRow"><span>CRT overlay</span><input type="checkbox" id="introCrt"></label>
+      <div class="intro-note" id="introSoundNote"></div>
       <div class="intro-actions"><button class="zoom-btn" onclick="replayIntro()">Replay intro</button></div>
     </div>
     <!-- Workload selector: overlay anchored under the header, not part of the page flow -->
@@ -493,24 +529,29 @@
       if (open) syncIntroSettingsForm();
     }
     function toggleIntroSettings() { setIntroSettings(!isIntroSettingsOpen()); }
+    const INTRO_SOUND_NOTES = {
+      auto: 'Plays with sound only when your browser already allows audio without a click (Chrome learns this from habit; Firefox and Safari have a per-site autoplay setting). Otherwise silent, no button.',
+      on: 'Always tries. When the browser refuses, the intro shows a SOUND button; clicking it restarts the sequence with the score. Enough of those and Chrome starts allowing it on its own.',
+      off: 'Never builds an audio context.',
+    };
     function syncIntroSettingsForm() {
       const p = Intro.getPrefs();
+      const sound = p.sound !== 'off';
       document.getElementById('introEnabled').checked = p.enabled;
-      document.getElementById('introSound').checked = p.sound;
+      document.getElementById('introSound').value = p.sound;
       document.getElementById('introScore').value = p.score;
-      document.getElementById('introTape').checked = p.tape;
-      document.getElementById('introScore').disabled = !p.sound;
-      document.getElementById('introTape').disabled = !p.sound;
-      document.getElementById('introScoreRow').classList.toggle('disabled', !p.sound);
-      document.getElementById('introTapeRow').classList.toggle('disabled', !p.sound);
-      document.getElementById('introSettingsBtn').classList.toggle('muted', !p.sound);
+      document.getElementById('introCrt').checked = p.crt;
+      document.getElementById('introScore').disabled = !sound;
+      document.getElementById('introScoreRow').classList.toggle('disabled', !sound);
+      document.getElementById('introSoundNote').textContent = INTRO_SOUND_NOTES[p.sound] + ' Click anywhere or press Esc to skip.';
+      document.getElementById('introSettingsBtn').classList.toggle('muted', !sound);
     }
     document.getElementById('introSettings').addEventListener('change', () => {
       Intro.setPrefs({
         enabled: document.getElementById('introEnabled').checked,
-        sound: document.getElementById('introSound').checked,
+        sound: document.getElementById('introSound').value,
         score: document.getElementById('introScore').value,
-        tape: document.getElementById('introTape').checked,
+        crt: document.getElementById('introCrt').checked,
       });
       syncIntroSettingsForm();
     });
