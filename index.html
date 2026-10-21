@@ -195,6 +195,7 @@
     .help-body ul { margin: 0.4rem 0 0.8rem 1.2rem; }
     .help-body li { margin-bottom: 0.3rem; }
     .help-body code { background: var(--bg); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem; }
+    .help-body .help-note { color: var(--muted); font-size: 0.78rem; border-top: 1px solid var(--border); padding-top: 0.6rem; margin-top: 0.8rem; }
 
     /* Commit detail popup */
     #commitPopup { display: none; position: fixed; z-index: 900; max-width: 420px; width: 90%; }
@@ -450,6 +451,7 @@
   <script src="lib/point-helpers.js"></script>
   <script src="lib/perf-groups.js"></script>
   <script src="lib/metric-selector.js"></script>
+  <script src="lib/metric-help.js"></script>
   <script src="lib/latency-helpers.js"></script>
   <script src="lib/selector-helpers.js"></script>
   <script src="lib/selection-helpers.js"></script>
@@ -1619,10 +1621,18 @@
         if (!datasets.length) continue; hasAny = true;
 
         const div = document.createElement('div'); div.className = 'chart-panel chart-panel--perf';
-        const helpBtn = (isTMA || isCPU) ? `<button class="help-btn" onclick="showHelp('${isCPU ? 'cpu' : 'tma'}')" style="margin-left:0.3rem">?</button>` : '';
+        // Panels keep their section help; each line metric gets its own "?" (lib/metric-help.js), attached below.
+        const helpBtn = (isTMA || isCPU) ? `<button class="help-btn" onclick="showHelp('${isCPU ? 'cpu' : 'tma'}')" style="margin-left:0.3rem">?</button>`
+          : MetricHelp.hasHelp(entry.id) ? '<button class="help-btn metric-help-btn" style="margin-left:0.3rem">?</button>' : '';
         const scopeNote = (isTMA || isCPU) && multiWorkload ? ' <span style="font-style:italic">· ★ primary only</span>'
           : (!isTMA && !isCPU && multiPlatform) ? ' <span style="font-style:italic">· platforms differ, not directly comparable</span>' : '';
         div.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem">${entry.title}${helpBtn}${scopeNote}</div><canvas></canvas>`;
+        const metricHelpBtn = div.querySelector('.metric-help-btn');
+        if (metricHelpBtn) {
+          metricHelpBtn.title = `How to read ${entry.title}`;
+          metricHelpBtn.setAttribute('aria-label', `Help: ${entry.title}`);
+          metricHelpBtn.addEventListener('click', () => showMetricHelp(entry.id));
+        }
         container.appendChild(div);
 
         const scales = { x: xAxisOpts(maxIdx, currentData && currentData.landmarks) };

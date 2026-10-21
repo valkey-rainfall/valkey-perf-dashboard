@@ -3289,3 +3289,101 @@ describe('index.html metric-selector wiring', () => {
     assert.ok(html.includes("if (e.key === 'Escape' && isMetricPanelOpen()) setMetricPanel(false)"));
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// metric-help: per-chart "?" text for the Performance Counters line metrics.
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('metric-help', () => {
+  const MH = require('../lib/metric-help.js');
+  const MS = require('../lib/metric-selector.js');
+  const fs = require('node:fs');
+  const path = require('node:path');
+
+  it('covers every named line metric the selector knows, for both threads', () => {
+    for (const base of Object.keys(MS.METRIC_NAMES)) {
+      assert.ok(MH.hasHelp(`${base}-main`), `no help for ${base}-main`);
+      assert.ok(MH.hasHelp(`${base}-io`), `no help for ${base}-io`);
+    }
+  });
+
+  it('covers every line metric in the live manifests, and no panel metric', () => {
+    // Snapshot of the per-thread series ids the three platform manifests publish (all identical).
+    const live = ['ipc', 'instructions-per-req', 'cycles-per-req', 'icache-mpki', 'llc-mpki', 'frontend-stall-pct', 'backend-stall-pct', 'branch-mpki', 'syscalls-per-req', 'context-switches-per-sec'];
+    for (const b of live) assert.ok(MH.hasHelp(`${b}-main`) && MH.hasHelp(`${b}-io`), b);
+    for (const id of ['cpu-main', 'cpu-io', 'tma-main', 'tma-io', 'tma-retiring-pct-main', 'throughput', 'widgets-per-req-main', '', null, undefined]) {
+      assert.ok(!MH.hasHelp(id), `unexpected help for ${id}`);
+      assert.equal(MH.helpFor(id), null);
+      assert.equal(MH.renderHelp(id), null);
+    }
+  });
+
+  it('every entry has the full shape: formula, direction, moves, read, layout class', () => {
+    for (const [base, h] of Object.entries(MH.HELP)) {
+      assert.ok(typeof h.name === 'string' && h.name.length >= 3, `${base}.name`);
+      for (const k of ['formula', 'moves', 'read']) assert.ok(typeof h[k] === 'string' && h[k].length > 20, `${base}.${k}`);
+      assert.ok(['lower', 'higher'].includes(h.direction), `${base}.direction`);
+      assert.ok(Object.keys(MH.LAYOUT).includes(h.layout), `${base}.layout`);
+    }
+  });
+
+  it('layout classes match the default-set rationale', () => {
+    assert.equal(MH.HELP['instructions-per-req'].layout, 'immune', 'the arbiter');
+    assert.equal(MH.HELP['cycles-per-req'].layout, 'exposed');
+    assert.equal(MH.HELP['icache-mpki'].layout, 'tell');
+    assert.equal(MH.HELP['branch-mpki'].layout, 'tell');
+    assert.equal(MH.HELP['llc-mpki'].layout, 'immune', 'data side');
+    assert.equal(MH.HELP.ipc.direction, 'higher');
+    assert.ok(Object.values(MH.HELP).filter(h => h.direction === 'higher').length === 1, 'only IPC is higher-is-better');
+  });
+
+  it('helpFor adds the thread title and thread text; base ids get neither', () => {
+    const m = MH.helpFor('icache-mpki-main');
+    assert.equal(m.title, 'Icache MPKI — Main thread');
+    assert.equal(m.thread, 'main');
+    assert.ok(m.threadText.startsWith('Main thread'));
+    assert.equal(m.directionText, 'Lower is better.');
+    assert.equal(m.layoutText, MH.LAYOUT.tell);
+    const io = MH.helpFor('ipc-io');
+    assert.equal(io.title, 'IPC — IO threads');
+    assert.ok(io.threadText.includes('busy-wait'), 'IO text carries the spin caveat');
+    assert.equal(io.directionText, 'Higher is better.');
+    const bare = MH.helpFor('ipc');
+    assert.equal(bare.title, 'IPC'); assert.equal(bare.thread, null); assert.equal(bare.threadText, null);
+  });
+
+  it('renderHelp emits the labelled paragraphs, escapes, and ends with the scope note', () => {
+    const html = MH.renderHelp('cycles-per-req-main');
+    for (const label of ['What it is:', 'What moves it:', 'How to read a change:', 'Layout noise:', 'Thread:']) assert.ok(html.includes(`<strong>${label}</strong>`), label);
+    assert.ok(html.includes('÷ IPC') && html.includes('Lower is better.'));
+    assert.ok(html.trim().endsWith('</p>') && html.includes(`<p class="help-note">${MH.SCOPE_NOTE}</p>`));
+    assert.ok(!MH.renderHelp('ipc').includes('<strong>Thread:</strong>'));
+    assert.ok(!/<(?!\/?(p|strong)\b)/.test(html), 'no tags beyond p/strong (content is text, not markup)');
+  });
+
+  describe('index.html / config.js wiring', () => {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    const cfg = fs.readFileSync(path.join(__dirname, '..', 'config.js'), 'utf8');
+
+    it('script is loaded after the metric selector', () => {
+      const a = html.indexOf('lib/metric-selector.js'), b = html.indexOf('lib/metric-help.js');
+      assert.ok(a > 0 && b > a);
+    });
+
+    it('each line-metric card gets a "?" bound by DOM listener; panels keep section help', () => {
+      const body = html.slice(html.indexOf('async function renderPerfCharts('), html.indexOf('// Latency band chart'));
+      assert.ok(body.includes("MetricHelp.hasHelp(entry.id) ? '<button class=\"help-btn metric-help-btn\""));
+      assert.ok(body.includes("metricHelpBtn.addEventListener('click', () => showMetricHelp(entry.id))"));
+      assert.ok(body.includes('metricHelpBtn.title = `How to read ${entry.title}`'));
+      assert.ok(body.includes("showHelp('${isCPU ? 'cpu' : 'tma'}')"), 'CPU/TMA panels unchanged');
+    });
+
+    it('showMetricHelp reuses the section help modal', () => {
+      assert.ok(cfg.includes('function openHelpModal(title, bodyHtml)'));
+      assert.ok(cfg.includes('function showMetricHelp(metricId)'));
+      assert.ok(cfg.includes('openHelpModal(h.title, MetricHelp.renderHelp(metricId))'));
+      assert.ok(cfg.includes('openHelpModal(h.title, h.content)'), 'showHelp goes through the same path');
+      assert.ok(html.includes('.help-body .help-note'));
+    });
+  });
+});
