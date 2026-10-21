@@ -66,6 +66,7 @@
       <span style="color:var(--muted);font-size:0.85rem;">Pinpointed throughput &amp; memory changes across all platforms and workloads — newest first</span>
     </div>
     <a href="index.html" class="primary-link" style="margin-left:auto;">← Dashboard</a>
+    <a href="ab.html">Commit A/B</a>
     <a href="compare.html">Compare Engines</a>
     <a href="status.html">Host Status ↗</a>
   </header>
@@ -76,6 +77,7 @@
 
   <script src="config.js"></script>
   <script src="lib/epoch-helpers.js"></script>
+  <script src="lib/ab-helpers.js"></script>
   <script>
     // Filter state
     const filters = { platform: null, metric: null, direction: null };
@@ -196,6 +198,7 @@
             </div>
             <div class="card-meta">
               <a href="https://github.com/valkey-io/valkey/commit/${g.commit}" target="_blank">${short}</a>${g.pr ? ` · <a href="https://github.com/valkey-io/valkey/pull/${g.pr}" target="_blank">PR #${g.pr}</a>` : ''}
+              · <a href="${AbHelpers.linkForCommit({ commit: g.commit, epoch: activeEpoch })}" title="Open the Commit A/B table: this commit against its parent, every workload × platform × counter">⚖ A/B table</a>
               · ${entries.length} sweep${entries.length > 1 ? 's' : ''}
             </div>
             <div class="delta-chips">${entries.map(e => deltaChip({...e, commit: g.commit})).join('')}</div>
