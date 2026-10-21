@@ -3387,3 +3387,264 @@ describe('metric-help', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// lib/ab-helpers.js -- commit A/B attribution (ab.html)
+// ---------------------------------------------------------------------------
+describe('ab-helpers', () => {
+  const AB = require('../lib/ab-helpers.js');
+  const stats = { welchPValue: compare.welchPValue };
+
+  // Deterministic wobble in [-1, 1] with no short period, so adjacent ratios
+  // vary (a repeating pattern would make the MAD degenerate to zero).
+  function wobble(i) { return (Math.sin(i * 12.9898 + 78.233) + Math.sin(i * 7.2331 + 1.7) + Math.sin(i * 3.1711 + 0.4)) / 3; }
+
+  // A perf series: 40 points on even commit indices 100..178, steady at 1000
+  // with ±0.3% wobble, then a +5% step at index 160 (point 30).
+  function perfSeries(opts) {
+    opts = opts || {};
+    const pts = [];
+    for (let i = 0; i < 40; i++) {
+      const idx = 100 + i * 2;
+      let v = 1000 * (1 + wobble(i) * 0.003);
+      if (opts.stepAt != null && idx >= opts.stepAt) v *= 1 + (opts.stepPct || 0.05);
+      const p = { commit: 'c' + String(idx).padStart(3, '0') + 'abcdef', commit_index: idx, date: '2026-01-01', value: v, scope: opts.scope || 'user+kernel', pr: 4000 + idx };
+      if (opts.scopeAt != null && idx >= opts.scopeAt) p.scope = 'user+kernel-late';
+      pts.push(p);
+    }
+    return { metadata: { metric: 'instructions-per-req-main' }, points: pts };
+  }
+  function tpSeries(wl, opts) {
+    opts = opts || {};
+    const pts = [];
+    for (let i = 0; i < 40; i++) {
+      const idx = 100 + i * 2;
+      let rps = 2000000 * (1 + wobble(i) * 0.002);
+      if (opts.stepAt != null && idx >= opts.stepAt) rps *= 1 + (opts.stepPct || 0.05);
+      pts.push({ commit: 'c' + String(idx).padStart(3, '0') + 'abcdef', commit_index: idx, date: '2026-01-01', results: { [wl]: { rps, cv: 0.5, reps: 8 } }, pr: 4000 + idx });
+    }
+    return { points: pts, workloads: [wl] };
+  }
+
+  it('direction: higher for throughput, IPC, TMA retiring; lower otherwise', () => {
+    assert.equal(AB.direction('throughput'), 'higher');
+    assert.equal(AB.direction('ipc-main'), 'higher');
+    assert.equal(AB.direction('ipc'), 'higher');
+    assert.equal(AB.direction('tma-retiring-pct-io'), 'higher');
+    for (const id of ['cycles-per-req-main', 'instructions-per-req-io', 'icache-mpki-main', 'branch-mpki-main', 'llc-mpki-io', 'frontend-stall-pct-main', 'tma-be-bound-pct-main', 'syscalls-per-req-main', 'context-switches-per-sec-io']) {
+      assert.equal(AB.direction(id), 'lower', id);
+    }
+  });
+
+  it('normalizePoints flattens perf and throughput points to one shape, sorted, skipping unmeasured', () => {
+    const perf = AB.normalizePoints(perfSeries(), 'instructions-per-req-main');
+    assert.equal(perf.length, 40);
+    assert.deepEqual(Object.keys(perf[0]).sort(), ['commit', 'commit_index', 'cv', 'date', 'pr', 'pr_title', 'reps', 'scope', 'value']);
+    assert.equal(perf[0].cv, null);
+    const tp = AB.normalizePoints(tpSeries('get-x'), 'throughput', 'get-x');
+    assert.equal(tp.length, 40); assert.equal(tp[0].cv, 0.5); assert.equal(tp[0].reps, 8);
+    assert.equal(AB.normalizePoints(tpSeries('get-x'), 'throughput', 'other-wl').length, 0, 'wrong workload key yields nothing');
+    const unsorted = { points: [{ commit: 'b', commit_index: 5, value: 1 }, { commit: 'a', commit_index: 2, value: 1 }, { commit: 'z', commit_index: 3 }] };
+    assert.deepEqual(AB.normalizePoints(unsorted, 'ipc-main').map(p => p.commit_index), [2, 5], 'sorted, no-value point dropped');
+    assert.equal(AB.normalizePoints({ points: [{ commit: 'u', commit_index: 1, value: 2 }] }, 'ipc-main')[0].scope, 'user', 'legacy scope default');
+    assert.deepEqual(AB.normalizePoints(null, 'ipc-main'), []);
+  });
+
+  it('buildCommitIndex merges lists, maps pr -> index, reports conflicts', () => {
+    const a = AB.normalizePoints(perfSeries(), 'instructions-per-req-main');
+    const b = AB.normalizePoints(tpSeries('get-x'), 'throughput', 'get-x').slice(0, 10);
+    b.push({ commit: 'zzz9999', commit_index: 999, value: 1, pr: 9 });
+    const idx = AB.buildCommitIndex([a, b]);
+    assert.equal(Object.keys(idx.bySha).length, 41);
+    assert.equal(idx.byPr[4160], 160);
+    assert.equal(idx.byIndex[999].commit, 'zzz9999');
+    assert.deepEqual(idx.conflicts, []);
+    const bad = AB.buildCommitIndex([a, [{ commit: a[0].commit, commit_index: 777, value: 1 }]]);
+    assert.equal(bad.conflicts.length, 1);
+    assert.equal(bad.bySha[a[0].commit], 100, 'first index wins');
+  });
+
+  it('resolveSha: prefix match, not-found, ambiguous, empty', () => {
+    const idx = AB.buildCommitIndex([AB.normalizePoints(perfSeries(), 'x')]);
+    assert.deepEqual(AB.resolveSha(idx, 'c160'), { ok: true, commit: 'c160abcdef', commit_index: 160 });
+    assert.equal(AB.resolveSha(idx, 'C160ABC').ok, true, 'case-insensitive');
+    assert.equal(AB.resolveSha(idx, 'deadbeef').reason, 'not-found');
+    const amb = AB.resolveSha(idx, 'c1');
+    assert.equal(amb.reason, 'ambiguous'); assert.ok(amb.matches.length > 1);
+    assert.equal(AB.resolveSha(idx, '  ').reason, 'empty');
+  });
+
+  it('resolvePr: B is the PR commit, A is its parent index', () => {
+    const idx = AB.buildCommitIndex([AB.normalizePoints(perfSeries(), 'x')]);
+    const r = AB.resolvePr(idx, '4160');
+    assert.equal(r.ok, true); assert.equal(r.commit_index, 160); assert.equal(r.a_index, 159); assert.equal(r.commit, 'c160abcdef');
+    assert.equal(AB.resolvePr(idx, 1).reason, 'not-found');
+    assert.equal(AB.resolvePr(idx, 'abc').reason, 'empty');
+  });
+
+  it('nearestMeasured and pickEndpoints honour sides, drift, and the (A, B] rule', () => {
+    const pts = AB.normalizePoints(perfSeries(), 'x'); // even indices 100..178
+    assert.equal(AB.nearestMeasured(pts, 161, 'at-or-before').commit_index, 160);
+    assert.equal(AB.nearestMeasured(pts, 161, 'at-or-after').commit_index, 162);
+    assert.equal(AB.nearestMeasured(pts, 99, 'at-or-before'), null);
+    assert.equal(AB.nearestMeasured(pts, 179, 'at-or-after'), null);
+
+    let e = AB.pickEndpoints(pts, 160, 170);
+    assert.equal(e.a.commit_index, 160); assert.equal(e.b.commit_index, 170); assert.equal(e.aDrift, 0); assert.equal(e.bDrift, 0);
+
+    e = AB.pickEndpoints(pts, 159, 160); // PR mode on a measured commit: A falls back one measured point
+    assert.equal(e.a.commit_index, 158); assert.equal(e.b.commit_index, 160); assert.equal(e.aDrift, 1); assert.equal(e.bDrift, 0);
+
+    e = AB.pickEndpoints(pts, 160, 161); // B unmeasured, nothing in (160,161]: falls forward
+    assert.equal(e.b.commit_index, 162); assert.equal(e.bDrift, 1);
+
+    e = AB.pickEndpoints(pts, 160, 165); // B unmeasured, 164 lies in (160,165]: falls back, never forward
+    assert.equal(e.b.commit_index, 164); assert.equal(e.bDrift, -1);
+
+    assert.equal(AB.pickEndpoints(pts, 50, 160).reason, 'no-a');
+    assert.equal(AB.pickEndpoints(pts, 178, 500).reason, 'no-b');
+    assert.equal(AB.pickEndpoints(pts, 170, 160).reason, 'no-b', 'A after B yields nothing');
+  });
+
+  it('noiseFloor: robust spread of adjacent log-ratios, same-scope only, window and minimum', () => {
+    const pts = AB.normalizePoints(perfSeries(), 'x');
+    const nf = AB.noiseFloor(pts, 178);
+    assert.equal(nf.n, 30);
+    assert.ok(nf.floor > 0.0005 && nf.floor < 0.01, 'floor is a fraction of the ±0.3% wobble, got ' + nf.floor);
+    assert.equal(AB.noiseFloor(pts, 178, 10).n, 10);
+    assert.equal(AB.noiseFloor(pts, 110).n, 5, 'only 5 pairs available at index 110');
+    assert.equal(AB.noiseFloor(pts, 108), null, 'fewer than MIN_WINDOW pairs');
+    assert.equal(AB.noiseFloor(pts, 50), null);
+    // Steps inside the window do not blow up the MAD-based floor.
+    const stepped = AB.normalizePoints(perfSeries({ stepAt: 160, stepPct: 0.5 }), 'x');
+    assert.ok(AB.noiseFloor(stepped, 178).floor < 0.02, 'one 50% step does not inflate a MAD floor');
+    // Scope change truncates the window.
+    const scoped = AB.normalizePoints(perfSeries({ scopeAt: 170 }), 'x');
+    assert.equal(AB.noiseFloor(scoped, 178), null, '170..178 is only 4 pairs in the late scope');
+    assert.equal(AB.noiseFloor(scoped, 168).n, 30, 'window ending before the change is unaffected');
+  });
+
+  it('cellVerdict perf: clears a real step, calls wobble noise, refuses across scope, reports missing', () => {
+    const stepped = AB.normalizePoints(perfSeries({ stepAt: 160, stepPct: 0.05 }), 'instructions-per-req-main');
+    let v = AB.cellVerdict({ points: stepped, metricId: 'instructions-per-req-main', aIndex: 158, bIndex: 160 });
+    assert.equal(v.status, 'clears'); assert.equal(v.test, 'floor'); assert.equal(v.good, false, 'more instructions is bad');
+    assert.ok(Math.abs(v.delta - 0.05) < 0.01); assert.ok(v.floor > 0 && v.floorN >= 5);
+
+    // Pairs that straddle no step: most are inside the floor. Some clear it
+    // by construction (two wobbles can add up), so assert the rate, not a pair.
+    let noise = 0, total = 0;
+    for (let a = 112; a <= 150; a += 2) {
+      const r = AB.cellVerdict({ points: stepped, metricId: 'instructions-per-req-main', aIndex: a, bIndex: a + 8 });
+      if (r.status === 'noise' || r.status === 'clears') { total++; if (r.status === 'noise') noise++; }
+    }
+    assert.ok(total >= 15 && noise / total >= 0.6, `${noise}/${total} step-free pairs read as noise`);
+
+    v = AB.cellVerdict({ points: stepped, metricId: 'instructions-per-req-main', aIndex: 104, bIndex: 108 });
+    assert.equal(v.status, 'unknown', 'no floor available that early'); assert.equal(v.floor, null); assert.ok(typeof v.delta === 'number');
+
+    const scoped = AB.normalizePoints(perfSeries({ scopeAt: 170 }), 'cycles-per-req-main');
+    v = AB.cellVerdict({ points: scoped, metricId: 'cycles-per-req-main', aIndex: 168, bIndex: 170 });
+    assert.equal(v.status, 'scope'); assert.equal(v.from, 'user+kernel'); assert.equal(v.to, 'user+kernel-late'); assert.equal(v.delta, undefined);
+
+    v = AB.cellVerdict({ points: stepped, metricId: 'x', aIndex: 10, bIndex: 20 });
+    assert.equal(v.status, 'missing'); assert.equal(v.reason, 'no-a');
+
+    // IPC direction: a drop is bad, a rise is good.
+    const ipcUp = AB.normalizePoints(perfSeries({ stepAt: 160, stepPct: 0.05 }), 'ipc-main');
+    assert.equal(AB.cellVerdict({ points: ipcUp, metricId: 'ipc-main', aIndex: 158, bIndex: 160 }).good, true);
+  });
+
+  it('cellVerdict throughput: Welch on cv/reps, 1% minimum, falls back to the floor without cv', () => {
+    const tp = AB.normalizePoints(tpSeries('get-x', { stepAt: 160, stepPct: 0.05 }), 'throughput', 'get-x');
+    let v = AB.cellVerdict({ points: tp, metricId: 'throughput', aIndex: 158, bIndex: 160, stats });
+    assert.equal(v.test, 'welch'); assert.equal(v.status, 'clears'); assert.equal(v.good, true); assert.ok(v.pValue < 0.05);
+
+    v = AB.cellVerdict({ points: tp, metricId: 'throughput', aIndex: 140, bIndex: 142, stats });
+    assert.equal(v.status, 'noise', 'a 0.2% wobble at cv 0.5%/8 reps does not clear');
+
+    const tiny = AB.normalizePoints(tpSeries('get-x', { stepAt: 160, stepPct: 0.006 }), 'throughput', 'get-x');
+    const t = tiny.map(p => Object.assign({}, p, { cv: 0.01 }));
+    v = AB.cellVerdict({ points: t, metricId: 'throughput', aIndex: 158, bIndex: 160, stats });
+    assert.equal(v.status, 'noise', 'significant but under the 1% minimum');
+
+    const noCv = tp.map(p => Object.assign({}, p, { cv: null, reps: null }));
+    v = AB.cellVerdict({ points: noCv, metricId: 'throughput', aIndex: 158, bIndex: 160, stats });
+    assert.equal(v.test, 'floor'); assert.equal(v.status, 'clears');
+  });
+
+  it('rowAttribution follows the reading rule', () => {
+    const C = (status, delta) => ({ status, delta, good: delta < 0 });
+    assert.equal(AB.rowAttribution({ 'instructions-per-req-main': C('clears', 0.03), 'cycles-per-req-main': C('clears', 0.04) }).kind, 'code');
+    assert.ok(AB.rowAttribution({ 'instructions-per-req-main': C('clears', 0.03) }).text.includes('+3.0% instructions/request'));
+    const stalls = AB.rowAttribution({ 'instructions-per-req-main': C('clears', -0.018), 'cycles-per-req-main': C('clears', -0.13), 'icache-mpki-main': C('clears', -0.79), 'branch-mpki-main': C('clears', -0.49) });
+    assert.equal(stalls.kind, 'code'); assert.ok(stalls.text.includes('fewer stalls (icache MPKI -79.0%, branch MPKI -49.0%)'), stalls.text);
+    assert.ok(!AB.rowAttribution({ 'instructions-per-req-main': C('clears', -0.05), 'cycles-per-req-main': C('clears', -0.06) }).text.includes('stalls'), 'proportionate move: no stall clause');
+    assert.equal(AB.rowAttribution({ 'instructions-per-req-main': { status: 'missing', reason: 'no-b' }, throughput: { status: 'missing', reason: 'no-b' } }).text, 'not measured for this range');
+    assert.equal(AB.rowAttribution({ 'instructions-per-req-main': { status: 'unknown', delta: 0.01 } }).kind, 'insufficient');
+    assert.equal(AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0.001), 'cycles-per-req-main': C('clears', 0.04), 'icache-mpki-main': C('clears', 0.3) }).kind, 'layout');
+    assert.equal(AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0.001), 'cycles-per-req-main': C('clears', 0.04), 'branch-mpki-main': C('clears', 0.2), 'icache-mpki-main': C('noise', 0) }).kind, 'layout');
+    const data = AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0.001), 'cycles-per-req-main': C('clears', 0.04), 'icache-mpki-main': C('noise', 0), 'branch-mpki-main': C('noise', 0), 'llc-mpki-main': C('clears', 0.5) });
+    assert.equal(data.kind, 'data'); assert.ok(data.text.includes('LLC MPKI +50.0%'));
+    assert.equal(AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0), 'cycles-per-req-main': C('noise', 0) }).kind, 'noise');
+    assert.equal(AB.rowAttribution({ 'cycles-per-req-main': C('clears', 0.04) }).kind, 'data', 'no insn cell degrades to cycles-only');
+    assert.equal(AB.rowAttribution({ throughput: C('clears', -0.05), 'cycles-per-req-main': C('noise', 0) }).kind, 'noise');
+    assert.ok(AB.rowAttribution({ throughput: C('clears', -0.05), 'cycles-per-req-main': C('noise', 0) }).text.includes('IO threads'));
+    assert.equal(AB.rowAttribution({ 'cycles-per-req-main': { status: 'scope', from: 'user', to: 'user+kernel' } }).kind, 'scope');
+    assert.equal(AB.rowAttribution({}).kind, 'insufficient');
+    assert.equal(AB.rowAttribution({ 'instructions-per-req-io': C('clears', 0.02) }, 'io').kind, 'code');
+  });
+
+  it('platformAgreement names agreement or a split', () => {
+    assert.equal(AB.platformAgreement([{ kind: 'code' }, { kind: 'code' }]).agree, true);
+    const s = AB.platformAgreement([{ kind: 'layout' }, { kind: 'code' }, { kind: 'insufficient' }]);
+    assert.equal(s.agree, false); assert.ok(s.text.includes('split'));
+    assert.equal(AB.platformAgreement([]).text, '');
+  });
+
+  it('hash round-trips sha, pr, epoch, platforms, metrics; pr wins over a/b', () => {
+    const st = { a: 'abc123', b: 'def456', epoch: 'v3', platforms: ['arm64', 'intel'], metrics: ['throughput', 'cycles-per-req-main'] };
+    const h = AB.buildHash(st);
+    assert.equal(h, '#a=abc123&b=def456&epoch=v3&platforms=arm64,intel&metrics=throughput,cycles-per-req-main');
+    assert.deepEqual(AB.parseHash(h), Object.assign({ pr: null }, st));
+    assert.equal(AB.buildHash({ pr: 4694, a: 'x', b: 'y' }), '#pr=4694');
+    assert.equal(AB.parseHash('#pr=4694').pr, 4694);
+    assert.equal(AB.parseHash('#pr=abc').pr, null);
+    assert.equal(AB.buildHash({}), '');
+    assert.deepEqual(AB.parseHash(''), { a: null, b: null, pr: null, epoch: null, platforms: null, metrics: null });
+  });
+
+  it('formatters', () => {
+    assert.equal(AB.formatDelta(0.0312), '+3.1%');
+    assert.equal(AB.formatDelta(-0.004, 2), '-0.40%');
+    assert.equal(AB.formatDelta(null), '–');
+    assert.equal(AB.formatValue('throughput', 2334716.2), '2,334,716');
+    assert.equal(AB.formatValue('instructions-per-req-main', 2870.07), '2,870');
+    assert.equal(AB.formatValue('syscalls-per-req-main', 0.1234), '0.12');
+    assert.equal(AB.formatValue('frontend-stall-pct-main', 12.345), '12.3%');
+    assert.equal(AB.formatValue('ipc-main', 2.9123), '2.91');
+    assert.equal(AB.formatValue('x', undefined), '–');
+  });
+});
+
+describe('ab.html wiring', () => {
+  const fs = require('fs'), path = require('path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'ab.html'), 'utf8');
+
+  it('loads the helpers it depends on, in dependency order', () => {
+    const order = ['config.js', 'lib/compare-helpers.js', 'lib/epoch-helpers.js', 'lib/perf-groups.js', 'lib/metric-selector.js', 'lib/ab-helpers.js'];
+    const idx = order.map(f => html.indexOf(`<script src="${f}">`));
+    idx.forEach((i, n) => assert.ok(i > 0, order[n]));
+    for (let i = 1; i < idx.length; i++) assert.ok(idx[i] > idx[i - 1], `${order[i]} after ${order[i - 1]}`);
+  });
+
+  it('verdicts go through AbHelpers with the Welch test injected, hash state through AbHelpers', () => {
+    assert.ok(html.includes('AbHelpers.cellVerdict({ points: pts, metricId, aIndex, bIndex, stats: CompareHelpers })'));
+    assert.ok(html.includes('AbHelpers.rowAttribution(') && html.includes('AbHelpers.platformAgreement('));
+    assert.ok(html.includes('AbHelpers.buildHash(currentState())') && html.includes('AbHelpers.parseHash(location.hash)'));
+  });
+
+  it('skips engine-prefixed and malformed workloads and deep-links into the history view', () => {
+    assert.ok(html.includes('!isEnginePrefixed(id) && isValidWorkloadId(id)'));
+    assert.ok(html.includes("params.set('workload', wl)") && html.includes('EpochHelpers.writeEpochToHash(params, activeEpoch)'));
+  });
+});

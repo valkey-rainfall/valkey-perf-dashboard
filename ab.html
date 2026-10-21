@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valkey Performance — Commit A/B</title>
+  <link rel="icon" href="brand/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+  <style>
+    :root {
+      --bg: #0f1117; --text: #e2e8f0; --card: #1a1d2e; --border: #2d3148;
+      --accent: #6366f1; --muted: #64748b; --ok: #22c55e; --warn: #eab308; --danger: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 1.5rem; }
+    header { position: sticky; top: 0; z-index: 100; background: var(--bg); padding: 0.75rem 1.5rem; margin: -1.5rem -1.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+    h1 { font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .brand-mark { height: 1.3em; width: auto; }
+    header a { color: var(--muted); text-decoration: none; font-size: 0.8rem; }
+    header a:hover { color: var(--text); }
+    header a.primary-link { color: var(--accent); font-weight: 500; }
+    .subtitle { color: var(--muted); font-size: 0.85rem; }
+    .epoch-select { margin-left: auto; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem 0.5rem; font-size: 0.8rem; }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .form-row { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+    .field { display: flex; flex-direction: column; gap: 0.25rem; }
+    .field label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+    .field input { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 0.4rem 0.6rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; width: 14rem; }
+    .field input.pr { width: 7rem; }
+    .or { color: var(--muted); font-size: 0.8rem; padding-bottom: 0.5rem; }
+    button.run { background: var(--accent); color: #fff; border: none; border-radius: 4px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; }
+    button.run:disabled { opacity: 0.5; cursor: default; }
+    .chip-bar { display: flex; gap: 0.4rem; margin-top: 0.75rem; flex-wrap: wrap; align-items: center; }
+    .chip-group-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-right: 0.1rem; }
+    .chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--muted); cursor: pointer; user-select: none; }
+    .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .chip:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+    .chip-sep { width: 1px; height: 16px; background: var(--border); margin: 0 0.35rem; }
+    .hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.6rem; line-height: 1.5; }
+    .hint code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    .resolved { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 1rem; font-size: 0.85rem; align-items: baseline; }
+    .resolved .k { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .sha { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); }
+    .sha a { color: var(--text); text-decoration: none; border-bottom: 1px dotted var(--muted); }
+    .pr-title { color: var(--muted); }
+    .error { color: var(--danger); font-size: 0.85rem; }
+    .loading { color: var(--muted); font-size: 0.85rem; padding: 2rem; text-align: center; }
+
+    .ab-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .ab-table th { text-align: left; color: var(--muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.03em; padding: 0.4rem 0.5rem; border-bottom: 2px solid var(--border); vertical-align: bottom; }
+    .ab-table th.metric { text-align: right; }
+    .ab-table td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .ab-table tr.wl-head td { padding-top: 0.9rem; font-weight: 600; color: var(--text); border-bottom: none; }
+    .ab-table tr.wl-head td .agree { font-weight: 400; color: var(--muted); margin-left: 0.6rem; font-size: 0.75rem; }
+    .ab-table td.plat { color: var(--muted); padding-left: 1.2rem; white-space: nowrap; }
+    .ab-table td.cell { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .ab-table td.cell .vals { color: var(--muted); font-size: 0.72rem; }
+    .ab-table td.cell .delta { font-weight: 600; }
+    .ab-table td.cell.good .delta { color: var(--ok); }
+    .ab-table td.cell.bad .delta { color: var(--danger); }
+    .ab-table td.cell.noise .delta { color: var(--muted); font-weight: 400; }
+    .ab-table td.cell.unknown .delta { color: var(--text); font-weight: 400; }
+    .ab-table td.cell.scope .delta, .ab-table td.cell.missing .delta { color: var(--warn); font-weight: 400; font-size: 0.72rem; }
+    .ab-table td.cell .floor { color: var(--muted); font-size: 0.68rem; }
+    .ab-table td.cell .drift { color: var(--warn); font-size: 0.68rem; }
+    .ab-table td.attr { min-width: 22rem; max-width: 30rem; line-height: 1.4; }
+    .ab-table td.cell { width: 1%; }
+    .ab-table td.attr.code { color: var(--text); }
+    .ab-table td.attr.layout { color: var(--warn); }
+    .ab-table td.attr.data { color: var(--text); }
+    .ab-table td.attr.noise, .ab-table td.attr.insufficient { color: var(--muted); }
+    .ab-table td.attr.scope { color: var(--warn); }
+    .ab-table td .link { color: var(--muted); font-size: 0.72rem; text-decoration: none; white-space: nowrap; }
+    .ab-table td .link:hover { color: var(--text); }
+    .legend { font-size: 0.72rem; color: var(--muted); margin-top: 0.75rem; line-height: 1.6; }
+    .legend b { color: var(--text); font-weight: 500; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1><img class="brand-mark" src="brand/conductress-mark.svg" alt="">Commit A/B</h1>
+      <span class="subtitle">Two commits, every workload × platform × counter, with a noise verdict: did the work per request change, or only the stalls?</span>
+    </div>
+    <a href="index.html" class="primary-link" style="margin-left:auto;">← Dashboard</a>
+    <a href="notable.html">Notable Changes</a>
+    <a href="compare.html">Compare Engines</a>
+    <select id="epochSelect" class="epoch-select" title="Generator epoch"></select>
+  </header>
+
+  <div class="card">
+    <div class="form-row">
+      <div class="field"><label for="shaA">Commit A (older)</label><input id="shaA" placeholder="sha prefix" autocomplete="off" spellcheck="false"></div>
+      <div class="field"><label for="shaB">Commit B (newer)</label><input id="shaB" placeholder="sha prefix" autocomplete="off" spellcheck="false"></div>
+      <span class="or">or</span>
+      <div class="field"><label for="prNum">PR number</label><input id="prNum" class="pr" placeholder="4694" inputmode="numeric" autocomplete="off"></div>
+      <button class="run" id="runBtn">Compare</button>
+    </div>
+    <div class="chip-bar" id="platformChips"></div>
+    <div class="chip-bar" id="metricChips"></div>
+    <div class="hint">
+      A PR is one commit on the swept branch; <code>PR</code> sets B to that commit and A to its parent. When a commit was not measured for a series, the cell uses the nearest measured point on the correct side and marks the drift.
+      Throughput cells use a Welch test on the per-point cv/reps (p &lt; 0.05 and |Δ| ≥ 1%). Perf-counter points carry no per-point spread, so their floor is the robust spread of adjacent-commit ratios over the trailing 30 points of the same counter scope; a cell clears at 2× that floor. Grey means inside the floor.
+    </div>
+  </div>
+
+  <div class="card" id="resolvedCard" style="display:none;"></div>
+  <div class="card" id="resultCard"><div class="loading">Enter two commits or a PR number.</div></div>
+
+  <script src="config.js"></script>
+  <script src="lib/compare-helpers.js"></script>
+  <script src="lib/epoch-helpers.js"></script>
+  <script src="lib/perf-groups.js"></script>
+  <script src="lib/metric-selector.js"></script>
+  <script src="lib/ab-helpers.js"></script>
+  <script>
+    'use strict';
+
+    const GITHUB_COMMIT = 'https://github.com/valkey-io/valkey/commit/';
+    const GITHUB_PR = 'https://github.com/valkey-io/valkey/pull/';
+
+    let epochList = [];
+    let activeEpoch = null;
+    let manifests = {};          // platform -> manifest
+    let catalog = [];            // MetricSelector catalog from the first manifest
+    let metricOptions = [];      // [{id, title}] selectable here: throughput + line metrics
+    let selectedPlatforms = [];
+    let selectedMetrics = [];
+    let runGeneration = 0;
+    const seriesCache = {};
+
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const sha7 = s => String(s || '').slice(0, 7);
+
+    // ---- Manifests and epochs -------------------------------------------
+
+    async function loadManifests(epochId) {
+      const results = await Promise.all(PLATFORMS.map(async p => {
+        try {
+          const r = await fetch(EpochHelpers.manifestUrl(DATA_URL, p, epochId));
+          if (r.ok) return await r.json();
+          if (epochId && epochId !== 'v1') return null;
+          const r2 = await fetch(`${DATA_URL}/manifest-${p}.json`);
+          return r2.ok ? await r2.json() : null;
+        } catch { return null; }
+      }));
+      manifests = {};
+      PLATFORMS.forEach((p, i) => { if (results[i]) manifests[p] = results[i]; });
+    }
+
+    function workloadsFor(platform) {
+      const m = manifests[platform];
+      if (!m || !m.throughput_workloads) return [];
+      return m.throughput_workloads.filter(id => !isEnginePrefixed(id) && isValidWorkloadId(id));
+    }
+
+    function buildMetricOptions() {
+      const first = Object.values(manifests)[0];
+      catalog = first && first.groups ? MetricSelector.buildCatalog(first.groups) : [];
+      metricOptions = [{ id: 'throughput', title: 'Throughput' }]
+        .concat(catalog.filter(e => e.kind === 'line' && e.id !== 'throughput' && e.id !== 'memory').map(e => ({ id: e.id, title: e.title })));
+    }
+
+    function defaultMetrics() {
+      const ids = new Set(metricOptions.map(o => o.id));
+      return ['throughput'].concat(MetricSelector.DEFAULT_METRICS.filter(id => ids.has(id)));
+    }
+
+    // ---- State <-> hash ---------------------------------------------------
+
+    function currentState() {
+      const pr = $('prNum').value.trim();
+      const allPlatforms = selectedPlatforms.length === Object.keys(manifests).length;
+      const defMetrics = defaultMetrics();
+      const sameMetrics = selectedMetrics.length === defMetrics.length && selectedMetrics.every((m, i) => m === defMetrics[i]);
+      return {
+        pr: pr ? parseInt(pr, 10) : null,
+        a: $('shaA').value.trim() || null,
+        b: $('shaB').value.trim() || null,
+        epoch: activeEpoch && activeEpoch !== EpochHelpers.defaultEpochId(epochList) ? activeEpoch : null,
+        platforms: allPlatforms ? null : selectedPlatforms,
+        metrics: sameMetrics ? null : selectedMetrics,
+      };
+    }
+
+    function writeHash() {
+      const h = AbHelpers.buildHash(currentState());
+      if (h !== location.hash) history.replaceState(null, '', h || location.pathname);
+    }
+
+    function applyHash() {
+      const st = AbHelpers.parseHash(location.hash);
+      if (st.pr != null) { $('prNum').value = String(st.pr); $('shaA').value = ''; $('shaB').value = ''; }
+      else { $('prNum').value = ''; $('shaA').value = st.a || ''; $('shaB').value = st.b || ''; }
+      const plats = Object.keys(manifests);
+      selectedPlatforms = st.platforms ? st.platforms.filter(p => plats.includes(p)) : plats.slice();
+      if (!selectedPlatforms.length) selectedPlatforms = plats.slice();
+      const ids = new Set(metricOptions.map(o => o.id));
+      selectedMetrics = st.metrics ? st.metrics.filter(id => ids.has(id)) : defaultMetrics();
+      if (!selectedMetrics.length) selectedMetrics = defaultMetrics();
+      return st;
+    }
+
+    // ---- Chips ------------------------------------------------------------
+
+    function renderChips() {
+      const pc = $('platformChips');
+      pc.innerHTML = '<span class="chip-group-label">Platforms</span>' + Object.keys(manifests).map(p =>
+        `<span class="chip ${selectedPlatforms.includes(p) ? 'active' : ''}" data-platform="${esc(p)}">${esc(PLATFORM_SHORT_LABELS[p] || p)}</span>`).join('');
+      pc.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => {
+        const p = ch.dataset.platform;
+        selectedPlatforms = selectedPlatforms.includes(p) ? selectedPlatforms.filter(x => x !== p) : selectedPlatforms.concat(p);
+        if (!selectedPlatforms.length) selectedPlatforms = [p];
+        renderChips(); writeHash();
+      }));
+
+      const mc = $('metricChips');
+      const defIds = defaultMetrics();
+      mc.innerHTML = '<span class="chip-group-label">Metrics</span>' +
+        `<span class="chip" data-preset="default" title="${esc(defIds.join(', '))}">Default</span><span class="chip-sep"></span>` +
+        metricOptions.map(o => `<span class="chip ${selectedMetrics.includes(o.id) ? 'active' : ''}" data-metric="${esc(o.id)}">${esc(o.title)}</span>`).join('');
+      mc.querySelector('[data-preset]').addEventListener('click', () => { selectedMetrics = defaultMetrics(); renderChips(); writeHash(); });
+      mc.querySelectorAll('[data-metric]').forEach(ch => ch.addEventListener('click', () => {
+        const id = ch.dataset.metric;
+        if (selectedMetrics.includes(id)) selectedMetrics = selectedMetrics.filter(x => x !== id);
+        else selectedMetrics = metricOptions.map(o => o.id).filter(x => selectedMetrics.includes(x) || x === id); // keep catalog order
+        if (!selectedMetrics.length) selectedMetrics = [id];
+        renderChips(); writeHash();
+      }));
+    }
+
+    // ---- Data -------------------------------------------------------------
+
+    async function fetchSeries(platform, workloadId, metricId) {
+      const key = `${activeEpoch}|${platform}|${workloadId}|${metricId}`;
+      if (seriesCache[key] !== undefined) return seriesCache[key];
+      try {
+        const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, workloadId, metricId, activeEpoch));
+        seriesCache[key] = r.ok ? await r.json() : null;
+      } catch { seriesCache[key] = null; }
+      return seriesCache[key];
+    }
+
+    /**
+     * Resolve the request against one platform's commit index.
+     * Returns {aIndex, bIndex, a:{commit,...}, b:{...}} or {error}.
+     */
+    function resolveRequest(index, st) {
+      if (st.pr != null) {
+        const r = AbHelpers.resolvePr(index, st.pr);
+        if (!r.ok) return { error: `PR #${st.pr} ${r.reason === 'not-found' ? 'is not a measured commit on this platform' : 'is not a number'}` };
+        const parent = index.byIndex[r.a_index];
+        return { aIndex: r.a_index, bIndex: r.commit_index, a: parent ? Object.assign({ commit_index: r.a_index }, parent) : { commit_index: r.a_index, commit: null }, b: Object.assign({ commit_index: r.commit_index }, index.byIndex[r.commit_index]) };
+      }
+      const ra = AbHelpers.resolveSha(index, st.a), rb = AbHelpers.resolveSha(index, st.b);
+      const describe = (r, label) => r.reason === 'empty' ? `${label} is empty` : r.reason === 'not-found' ? `${label} matches no measured commit` : `${label} is ambiguous (${r.matches.length} commits: ${r.matches.slice(0, 3).map(sha7).join(', ')}…)`;
+      if (!ra.ok) return { error: describe(ra, 'A') };
+      if (!rb.ok) return { error: describe(rb, 'B') };
+      if (ra.commit_index >= rb.commit_index) return { error: 'A must be older than B (swap them?)' };
+      return { aIndex: ra.commit_index, bIndex: rb.commit_index, a: Object.assign({ commit_index: ra.commit_index }, index.byIndex[ra.commit_index]), b: Object.assign({ commit_index: rb.commit_index }, index.byIndex[rb.commit_index]) };
+    }
+
+    async function run() {
+      const gen = ++runGeneration;
+      const st = currentState();
+      if (st.pr == null && !(st.a && st.b)) { $('resultCard').innerHTML = '<div class="loading">Enter two commits or a PR number.</div>'; $('resolvedCard').style.display = 'none'; return; }
+      writeHash();
+      $('runBtn').disabled = true;
+      $('resultCard').innerHTML = '<div class="loading">Loading series…</div>';
+
+      // Fetch everything up front: platform x workload x metric.
+      const jobs = [];
+      for (const platform of selectedPlatforms) {
+        for (const wl of workloadsFor(platform)) {
+          for (const metricId of selectedMetrics) {
+            jobs.push(fetchSeries(platform, wl, metricId).then(series => ({ platform, wl, metricId, points: AbHelpers.normalizePoints(series, metricId, wl) })));
+          }
+        }
+      }
+      const loaded = await Promise.all(jobs);
+      if (gen !== runGeneration) return;
+      $('runBtn').disabled = false;
+
+      // Per-platform commit index and request resolution.
+      const perPlatform = {};
+      for (const platform of selectedPlatforms) {
+        const lists = loaded.filter(l => l.platform === platform).map(l => l.points);
+        const index = AbHelpers.buildCommitIndex(lists);
+        perPlatform[platform] = { index, resolved: resolveRequest(index, st) };
+      }
+
+      renderResolved(perPlatform);
+      renderTable(loaded, perPlatform);
+    }
+
+    // ---- Rendering --------------------------------------------------------
+
+    function commitHtml(c) {
+      if (!c || !c.commit) return `<span class="sha">commit #${c ? c.commit_index : '?'} (not measured)</span>`;
+      const pr = c.pr != null ? ` <a class="pr-title" href="${GITHUB_PR}${c.pr}" target="_blank" rel="noopener">#${c.pr}</a>` : '';
+      const title = c.pr_title ? ` <span class="pr-title">${esc(c.pr_title)}</span>` : '';
+      return `<span class="sha"><a href="${GITHUB_COMMIT}${esc(c.commit)}" target="_blank" rel="noopener">${esc(sha7(c.commit))}</a></span> <span class="pr-title">${esc(c.date || '')}</span>${pr}${title}`;
+    }
+
+    function renderResolved(perPlatform) {
+      const card = $('resolvedCard');
+      const ok = Object.values(perPlatform).find(p => !p.resolved.error);
+      const errors = Object.entries(perPlatform).filter(([, p]) => p.resolved.error);
+      let html = '';
+      if (ok) {
+        html += `<div class="resolved"><span class="k">A</span><span>${commitHtml(ok.resolved.a)}</span><span class="k">B</span><span>${commitHtml(ok.resolved.b)}</span>`;
+        const span = ok.resolved.bIndex - ok.resolved.aIndex;
+        html += `<span class="k">Span</span><span>${span} commit${span === 1 ? '' : 's'} on the swept branch</span></div>`;
+      }
+      if (errors.length) html += errors.map(([p, r]) => `<div class="error">${esc(PLATFORM_SHORT_LABELS[p] || p)}: ${esc(r.resolved.error)}</div>`).join('');
+      card.innerHTML = html;
+      card.style.display = html ? '' : 'none';
+    }
+
+    function cellHtml(metricId, v) {
+      if (!v) return '<td class="cell missing"><span class="delta">no series</span></td>';
+      if (v.status === 'missing') return `<td class="cell missing" title="${esc(v.reason === 'no-a' ? 'no measurement at or before A' : 'no measurement after A')}"><span class="delta">${v.reason === 'no-a' ? 'no A' : 'no B'}</span></td>`;
+      if (v.status === 'scope') return `<td class="cell scope" title="counter scope ${esc(v.from)} → ${esc(v.to)}: counts not comparable"><span class="delta">scope ${esc(v.from)} → ${esc(v.to)}</span></td>`;
+      const cls = v.status === 'clears' ? (v.good ? 'good' : 'bad') : v.status;
+      const vals = `${AbHelpers.formatValue(metricId, v.a.value)} → ${AbHelpers.formatValue(metricId, v.b.value)}`;
+      let floor = '';
+      if (v.test === 'welch') floor = v.pValue == null ? 'no test' : `p ${v.pValue < 0.001 ? '< 0.001' : '= ' + v.pValue.toFixed(3)}`;
+      else if (v.floor != null) floor = `floor ${AbHelpers.formatDelta(v.floor, 2).replace('+', '')} (n=${v.floorN})`;
+      else floor = 'no floor';
+      let drift = '';
+      if (v.aDrift || v.bDrift) {
+        const parts = [];
+        if (v.aDrift) parts.push(`A ← ${sha7(v.a.commit)} (−${v.aDrift})`);
+        if (v.bDrift) parts.push(`B ${v.bDrift > 0 ? '→' : '←'} ${sha7(v.b.commit)} (${v.bDrift > 0 ? '+' : ''}${v.bDrift})`);
+        drift = `<div class="drift" title="nearest measured commits used">${esc(parts.join(' · '))}</div>`;
+      }
+      const title = `${vals}\n${floor}${v.status === 'unknown' ? '\nno noise estimate; delta shown without a verdict' : ''}`;
+      return `<td class="cell ${cls}" title="${esc(title)}"><div class="delta">${AbHelpers.formatDelta(v.delta)}</div><div class="vals">${esc(vals)}</div><div class="floor">${esc(floor)}</div>${drift}</td>`;
+    }
+
+    // Deep link into the history view with this workload starred; the epoch
+    // travels the same way index.html writes it (EpochHelpers.writeEpochToHash).
+    function indexLink(platform, wl) {
+      const params = new URLSearchParams();
+      params.set('platform', platform);
+      params.set('workload', wl);
+      EpochHelpers.writeEpochToHash(params, activeEpoch);
+      return `index.html#${params.toString()}`;
+    }
+
+    function renderTable(loaded, perPlatform) {
+      const card = $('resultCard');
+      const platforms = selectedPlatforms.filter(p => !perPlatform[p].resolved.error);
+      if (!platforms.length) { card.innerHTML = '<div class="loading">Nothing to compare on the selected platforms.</div>'; return; }
+
+      const byKey = {};
+      loaded.forEach(l => { byKey[`${l.platform}|${l.wl}|${l.metricId}`] = l.points; });
+      const workloads = Array.from(new Set(platforms.flatMap(workloadsFor))).sort();
+      const titleOf = id => (metricOptions.find(o => o.id === id) || { title: id }).title;
+
+      let html = '<table class="ab-table"><thead><tr><th>Workload / platform</th>';
+      html += selectedMetrics.map(m => `<th class="metric">${esc(titleOf(m))}</th>`).join('');
+      html += '<th>Attribution (main thread)</th><th></th></tr></thead><tbody>';
+
+      for (const wl of workloads) {
+        const rows = [];
+        for (const platform of platforms) {
+          if (!workloadsFor(platform).includes(wl)) continue;
+          const { aIndex, bIndex } = perPlatform[platform].resolved;
+          const cells = {};
+          for (const metricId of selectedMetrics) {
+            const pts = byKey[`${platform}|${wl}|${metricId}`];
+            cells[metricId] = pts && pts.length ? AbHelpers.cellVerdict({ points: pts, metricId, aIndex, bIndex, stats: CompareHelpers }) : null;
+          }
+          const attr = AbHelpers.rowAttribution(Object.fromEntries(Object.entries(cells).filter(([, v]) => v)));
+          rows.push({ platform, cells, attr, aIndex, bIndex });
+        }
+        if (!rows.length) continue;
+        const agree = AbHelpers.platformAgreement(rows.map(r => r.attr));
+        html += `<tr class="wl-head"><td colspan="${selectedMetrics.length + 3}">${esc(workloadIdToLabel(wl))} <span class="pr-title">${esc(wl)}</span>${rows.length > 1 && agree.text ? `<span class="agree">${esc(agree.text)}</span>` : ''}</td></tr>`;
+        for (const r of rows) {
+          html += `<tr><td class="plat">${esc(PLATFORM_SHORT_LABELS[r.platform] || r.platform)}</td>`;
+          html += selectedMetrics.map(m => cellHtml(m, r.cells[m])).join('');
+          html += `<td class="attr ${esc(r.attr.kind)}">${esc(r.attr.text)}</td>`;
+          html += `<td><a class="link" href="${indexLink(r.platform, wl)}">history ↗</a></td></tr>`;
+        }
+      }
+      html += '</tbody></table>';
+      html += '<div class="legend"><b>Green/red</b>: cleared the noise floor, moved the good/bad way for that metric. <b>Grey</b>: inside the floor. <b>Amber</b>: counter scope changed between A and B, or an endpoint was not measured and the nearest commit was used (drift shown). <b>Attribution</b> follows the reading rule from the metric help: instructions/request moved → the code path changed; flat with cycles/request and an icache or branch MPKI move → suspect binary layout; flat with cycles/request alone → data side.</div>';
+      card.innerHTML = html;
+    }
+
+    // ---- Init -------------------------------------------------------------
+
+    async function switchEpoch(epochId) {
+      activeEpoch = epochId;
+      await loadManifests(activeEpoch);
+      buildMetricOptions();
+      applyHash();
+      renderChips();
+      $('epochSelect').value = activeEpoch;
+    }
+
+    async function init() {
+      await loadManifests(null);
+      epochList = EpochHelpers.availableEpochs(manifests);
+      const hashed = AbHelpers.parseHash(location.hash);
+      const defaultId = EpochHelpers.defaultEpochId(epochList);
+      const sel = $('epochSelect');
+      sel.innerHTML = epochList.map(e => `<option value="${esc(e.id)}">${esc(EpochHelpers.epochOptionLabel(e))}</option>`).join('');
+      sel.addEventListener('change', async () => { await switchEpoch(sel.value); writeHash(); run(); });
+      await switchEpoch(hashed.epoch && epochList.some(e => e.id === hashed.epoch) ? hashed.epoch : defaultId);
+
+      $('runBtn').addEventListener('click', run);
+      ['shaA', 'shaB', 'prNum'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') run(); }));
+      $('prNum').addEventListener('input', () => { if ($('prNum').value.trim()) { $('shaA').value = ''; $('shaB').value = ''; } });
+      ['shaA', 'shaB'].forEach(id => $(id).addEventListener('input', () => { if ($(id).value.trim()) $('prNum').value = ''; }));
+      window.addEventListener('hashchange', async () => { applyHash(); renderChips(); run(); });
+
+      const st = currentState();
+      if (st.pr != null || (st.a && st.b)) run();
+    }
+
+    init();
+  </script>
+</body>
+</html>
