@@ -3010,6 +3010,7 @@ describe('metric-selector', () => {
     G('cache-main', 'Cache Pressure — Main Thread', ['icache-mpki-main', 'llc-mpki-main'], [{ id: 'left', label: 'misses per 1K instructions', series: ['icache-mpki-main', 'llc-mpki-main'] }]),
     G('tma-main', 'Pipeline Breakdown (TMA) — Main Thread', ['tma-retiring-pct-main', 'tma-fe-bound-pct-main'], [{ id: 'left', label: '% of pipeline slots', series: ['tma-retiring-pct-main', 'tma-fe-bound-pct-main'] }]),
     G('branching-main', 'Branch Prediction — Main Thread', ['branch-mpki-main'], [{ id: 'left', label: 'mispredictions per 1K instructions', series: ['branch-mpki-main'] }]),
+    G('pipeline-main', 'Pipeline Stalls — Main Thread', ['frontend-stall-pct-main', 'backend-stall-pct-main'], [{ id: 'left', label: '% of cycles stalled', series: ['frontend-stall-pct-main', 'backend-stall-pct-main'] }]),
     G('kernel-main', 'Kernel Interaction — Main Thread', ['syscalls-per-req-main', 'context-switches-per-sec-main'],
       [{ id: 'left', label: 'syscalls/request', series: ['syscalls-per-req-main'] }, { id: 'right', label: 'context switches/s', series: ['context-switches-per-sec-main'] }]),
     G('mystery-main', 'Mystery — Main Thread', ['widgets-per-req-main'], [{ id: 'left', label: 'widgets', series: ['widgets-per-req-main'] }]),
@@ -3059,7 +3060,7 @@ describe('metric-selector', () => {
 
     it('groupedCatalog keeps catalog order and group membership', () => {
       const g = MS.groupedCatalog(catalog);
-      assert.deepEqual(g.map(x => x.group), ['efficiency-main', 'efficiency-io', 'cpu-main', 'cpu-io', 'cache-main', 'tma-main', 'branching-main', 'kernel-main', 'mystery-main']);
+      assert.deepEqual(g.map(x => x.group), ['efficiency-main', 'efficiency-io', 'cpu-main', 'cpu-io', 'cache-main', 'pipeline-main', 'tma-main', 'branching-main', 'kernel-main', 'mystery-main']);
       assert.equal(g[0].entries.length, 3);
       assert.equal(g[0].groupTitle, 'Execution Efficiency — Main Thread');
     });
@@ -3110,14 +3111,16 @@ describe('metric-selector', () => {
 
     it('Default is the layout-noise quartet, Efficiency is the old IPC trio, All is the whole catalog', () => {
       assert.deepEqual(byName.Default.metrics, MS.DEFAULT_METRICS);
-      assert.deepEqual(MS.DEFAULT_METRICS, ['instructions-per-req-main', 'cycles-per-req-main', 'icache-mpki-main', 'branch-mpki-main']);
+      assert.deepEqual(MS.DEFAULT_METRICS, ['instructions-per-req-main', 'cycles-per-req-main', 'frontend-stall-pct-main', 'branch-mpki-main']);
+      assert.ok(!MS.DEFAULT_METRICS.includes('icache-mpki-main'), 'icache MPKI is too quantised on Valkey to be the layout tell (calibration 2026-10-22)');
       assert.deepEqual(byName.Efficiency.metrics, ['ipc-main', 'instructions-per-req-main', 'cycles-per-req-main']);
       assert.deepEqual(byName.All.metrics, ids);
       assert.ok(builtins.every(p => p.builtin === true));
     });
 
     it('thread presets hold only line metrics of that thread; Profiles holds the stacked panels', () => {
-      assert.deepEqual(byName['Main thread'].metrics, ['ipc-main', 'instructions-per-req-main', 'cycles-per-req-main', 'icache-mpki-main', 'llc-mpki-main', 'branch-mpki-main', 'syscalls-per-req-main', 'context-switches-per-sec-main', 'widgets-per-req-main']);
+      assert.deepEqual(byName['Main thread'].metrics, catalog.filter(e => e.kind === 'line' && e.thread === 'main').map(e => e.id));
+      assert.ok(byName['Main thread'].metrics.includes('frontend-stall-pct-main') && byName['Main thread'].metrics.includes('icache-mpki-main'));
       assert.deepEqual(byName['IO threads'].metrics, ['ipc-io', 'instructions-per-req-io', 'cycles-per-req-io']);
       assert.deepEqual(byName.Profiles.metrics, ['cpu-main', 'cpu-io', 'tma-main']);
       assert.deepEqual(byName.Cache.metrics, ['icache-mpki-main', 'llc-mpki-main', 'branch-mpki-main']);
@@ -3330,8 +3333,11 @@ describe('metric-help', () => {
   it('layout classes match the default-set rationale', () => {
     assert.equal(MH.HELP['instructions-per-req'].layout, 'immune', 'the arbiter');
     assert.equal(MH.HELP['cycles-per-req'].layout, 'exposed');
-    assert.equal(MH.HELP['icache-mpki'].layout, 'tell');
-    assert.equal(MH.HELP['branch-mpki'].layout, 'tell');
+    assert.equal(MH.HELP['frontend-stall-pct'].layout, 'tell', 'the layout tell, per the 2026-10-22 calibration');
+    assert.equal(MH.HELP['icache-mpki'].layout, 'weak', 'quantisation-dominated at Valkey miss rates');
+    assert.equal(MH.HELP['branch-mpki'].layout, 'weak');
+    assert.ok(MH.HELP['icache-mpki'].read.includes('frontend stall %'), 'icache text redirects to the real tell');
+    assert.ok(MH.HELP['frontend-stall-pct'].read.includes('intel') && MH.HELP['frontend-stall-pct'].read.includes('amd64'), 'platform caveats stated');
     assert.equal(MH.HELP['llc-mpki'].layout, 'immune', 'data side');
     assert.equal(MH.HELP.ipc.direction, 'higher');
     assert.ok(Object.values(MH.HELP).filter(h => h.direction === 'higher').length === 1, 'only IPC is higher-is-better');
@@ -3343,7 +3349,7 @@ describe('metric-help', () => {
     assert.equal(m.thread, 'main');
     assert.ok(m.threadText.startsWith('Main thread'));
     assert.equal(m.directionText, 'Lower is better.');
-    assert.equal(m.layoutText, MH.LAYOUT.tell);
+    assert.equal(m.layoutText, MH.LAYOUT.weak);
     const io = MH.helpFor('ipc-io');
     assert.equal(io.title, 'IPC — IO threads');
     assert.ok(io.threadText.includes('busy-wait'), 'IO text carries the spin caveat');
@@ -3593,17 +3599,53 @@ describe('ab-helpers', () => {
     assert.equal(v.test, 'floor'); assert.equal(v.status, 'clears');
   });
 
-  it('rowAttribution follows the reading rule', () => {
-    const C = (status, delta) => ({ status, delta, good: delta < 0 });
-    assert.equal(AB.rowAttribution({ 'instructions-per-req-main': C('clears', 0.03), 'cycles-per-req-main': C('clears', 0.04) }).kind, 'code');
-    assert.ok(AB.rowAttribution({ 'instructions-per-req-main': C('clears', 0.03) }).text.includes('+3.0% instructions/request'));
-    const stalls = AB.rowAttribution({ 'instructions-per-req-main': C('clears', -0.018), 'cycles-per-req-main': C('clears', -0.13), 'icache-mpki-main': C('clears', -0.79), 'branch-mpki-main': C('clears', -0.49) });
-    assert.equal(stalls.kind, 'code'); assert.ok(stalls.text.includes('fewer stalls (icache MPKI -79.0%, branch MPKI -49.0%)'), stalls.text);
+  it('cellVerdict two tiers: clears at 2x, strong at 3x; throughput strong at p < 0.001', () => {
+    assert.equal(AB.STRONG_MULTIPLIER, 3);
+    const stepped = AB.normalizePoints(perfSeries({ stepAt: 160, stepPct: 0.05 }), 'instructions-per-req-main');
+    const v = AB.cellVerdict({ points: stepped, metricId: 'instructions-per-req-main', aIndex: 158, bIndex: 160 });
+    assert.equal(v.status, 'clears'); assert.equal(v.strong, true, '5% on a sub-percent floor is strong');
+    assert.ok(v.ratio > 3 && isFinite(v.ratio));
+    // Raise the strong bar past the move: still clears, no longer strong.
+    const w = AB.cellVerdict({ points: stepped, metricId: 'instructions-per-req-main', aIndex: 158, bIndex: 160, strongMultiplier: v.ratio + 1 });
+    assert.equal(w.status, 'clears'); assert.equal(w.strong, false);
+    // Lower the clear bar below the move but keep strong above it: the 2-3x band shape.
+    const band = AB.cellVerdict({ points: stepped, metricId: 'instructions-per-req-main', aIndex: 158, bIndex: 160, multiplier: v.ratio - 0.5, strongMultiplier: v.ratio + 0.5 });
+    assert.equal(band.status, 'clears'); assert.equal(band.strong, false);
+    const quiet = AB.cellVerdict({ points: stepped, metricId: 'instructions-per-req-main', aIndex: 120, bIndex: 121 });
+    assert.equal(quiet.strong, false, 'noise cells are never strong');
+    // Throughput: Welch; strong only under p < 0.001.
+    const tpt = AB.normalizePoints(tpSeries('wl', { stepAt: 160, stepPct: 0.10 }), 'throughput', 'wl');
+    const t = AB.cellVerdict({ points: tpt, metricId: 'throughput', aIndex: 158, bIndex: 160, stats: compare });
+    assert.equal(t.status, 'clears'); assert.equal(t.strong, t.pValue < 0.001);
+  });
+
+  it('rowAttribution follows the reading rule, with strength and aligned tells', () => {
+    const C = (status, delta, strong) => ({ status, delta, good: delta < 0, strong: status === 'clears' && (strong !== false) });
+    const W = (delta) => ({ status: 'clears', delta, good: delta < 0, strong: false, ratio: 2.4 });
+    // Strong instructions/req: code path changed.
+    const code = AB.rowAttribution({ 'instructions-per-req-main': C('clears', 0.03), 'cycles-per-req-main': C('clears', 0.04) });
+    assert.equal(code.kind, 'code'); assert.equal(code.confidence, 'strong'); assert.ok(code.text.startsWith('code path changed: +3.0% instructions/request'));
+    // 2-3x instructions/req: still kind code, but hedged.
+    const weak = AB.rowAttribution({ 'instructions-per-req-main': W(0.016), 'cycles-per-req-main': C('clears', 0.02) });
+    assert.equal(weak.kind, 'code'); assert.equal(weak.confidence, 'weak');
+    assert.ok(!weak.text.includes('code path changed') && weak.text.includes('2.4x floor') && weak.text.includes('confirm on another platform'), weak.text);
+    // Stall clause names aligned tells, frontend stall first; icache still listed when it moved.
+    const stalls = AB.rowAttribution({ 'instructions-per-req-main': C('clears', -0.018), 'cycles-per-req-main': C('clears', -0.13), 'frontend-stall-pct-main': C('clears', -0.30), 'icache-mpki-main': C('clears', -0.79), 'branch-mpki-main': C('clears', -0.49) });
+    assert.equal(stalls.kind, 'code'); assert.ok(stalls.text.includes('fewer stalls (frontend stall -30.0%, branch MPKI -49.0%, icache MPKI -79.0%)'), stalls.text);
+    // A tell moving against cycles is not cited as a stall explanation.
+    const against = AB.rowAttribution({ 'instructions-per-req-main': C('clears', -0.018), 'cycles-per-req-main': C('clears', -0.13), 'branch-mpki-main': C('clears', 0.49) });
+    assert.ok(against.text.endsWith('fewer stalls'), against.text);
     assert.ok(!AB.rowAttribution({ 'instructions-per-req-main': C('clears', -0.05), 'cycles-per-req-main': C('clears', -0.06) }).text.includes('stalls'), 'proportionate move: no stall clause');
     assert.equal(AB.rowAttribution({ 'instructions-per-req-main': { status: 'missing', reason: 'no-b' }, throughput: { status: 'missing', reason: 'no-b' } }).text, 'not measured for this range');
     assert.equal(AB.rowAttribution({ 'instructions-per-req-main': { status: 'unknown', delta: 0.01 } }).kind, 'insufficient');
-    assert.equal(AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0.001), 'cycles-per-req-main': C('clears', 0.04), 'icache-mpki-main': C('clears', 0.3) }).kind, 'layout');
+    // Layout: frontend stall aligned with cycles.
+    const layout = AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0.001), 'cycles-per-req-main': C('clears', 0.04), 'frontend-stall-pct-main': C('clears', 0.12) });
+    assert.equal(layout.kind, 'layout'); assert.ok(layout.text.includes('frontend stall +12.0%'), layout.text);
     assert.equal(AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0.001), 'cycles-per-req-main': C('clears', 0.04), 'branch-mpki-main': C('clears', 0.2), 'icache-mpki-main': C('noise', 0) }).kind, 'layout');
+    assert.equal(AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0.001), 'cycles-per-req-main': C('clears', 0.04), 'icache-mpki-main': C('clears', 0.3) }).kind, 'layout', 'icache alone still counts, weakly');
+    // A tell that moved the opposite way from cycles does not make it layout.
+    const opp = AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0.001), 'cycles-per-req-main': C('clears', 0.04), 'frontend-stall-pct-main': C('clears', -0.12) });
+    assert.equal(opp.kind, 'data'); assert.ok(opp.text.includes('no aligned layout tell'), opp.text);
     const data = AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0.001), 'cycles-per-req-main': C('clears', 0.04), 'icache-mpki-main': C('noise', 0), 'branch-mpki-main': C('noise', 0), 'llc-mpki-main': C('clears', 0.5) });
     assert.equal(data.kind, 'data'); assert.ok(data.text.includes('LLC MPKI +50.0%'));
     assert.equal(AB.rowAttribution({ 'instructions-per-req-main': C('noise', 0), 'cycles-per-req-main': C('noise', 0) }).kind, 'noise');

@@ -62,6 +62,9 @@
     .ab-table td.cell.good .delta { color: var(--ok); }
     .ab-table td.cell.bad .delta { color: var(--danger); }
     .ab-table td.cell.noise .delta { color: var(--muted); font-weight: 400; }
+    .ab-table td.cell.strong .delta { font-weight: 800; }
+    .ab-table td.cell.strong .delta::after { content: ' ‼'; font-size: 0.7em; vertical-align: top; }
+    .ab-table td.cell.good:not(.strong) .delta, .ab-table td.cell.bad:not(.strong) .delta { opacity: 0.8; }
     .ab-table td.cell.unknown .delta { color: var(--text); font-weight: 400; }
     .ab-table td.cell.scope .delta, .ab-table td.cell.missing .delta { color: var(--warn); font-weight: 400; font-size: 0.72rem; }
     .ab-table td.cell .floor { color: var(--muted); font-size: 0.68rem; }
@@ -69,6 +72,7 @@
     .ab-table td.attr { min-width: 22rem; max-width: 30rem; line-height: 1.4; }
     .ab-table td.cell { width: 1%; }
     .ab-table td.attr.code { color: var(--text); }
+    .ab-table td.attr.code.weak { color: var(--muted); font-style: italic; }
     .ab-table td.attr.layout { color: var(--warn); }
     .ab-table td.attr.data { color: var(--text); }
     .ab-table td.attr.noise, .ab-table td.attr.insufficient { color: var(--muted); }
@@ -103,7 +107,7 @@
     <div class="chip-bar" id="metricChips"></div>
     <div class="hint">
       A PR is one commit on the swept branch; <code>PR</code> sets B to that commit and A to its parent, and so does leaving A empty. When a commit was not measured for a series, the cell uses the nearest measured point on the correct side and marks the drift.
-      Throughput cells use a Welch test on the per-point cv/reps (p &lt; 0.05 and |Δ| ≥ 1%). Perf-counter points carry no per-point spread, so their floor is the robust spread of adjacent-commit ratios over the trailing 30 points of the same counter scope; a cell clears at 2× that floor. Grey means inside the floor.
+      Throughput cells use a Welch test on the per-point cv/reps (p &lt; 0.05 and |Δ| ≥ 1%). Perf-counter points carry no per-point spread, so their floor is the robust spread of adjacent-commit ratios over the trailing 30 points of the same counter scope. Two tiers: a cell clears at 2× that floor (colour), and is <b>strong</b> (‼) at 3× (p &lt; 0.001 for throughput). Calibration over 24.8k commit pairs: the 2–3× band reproduces on another platform about one time in three, 3× and up about half or better. Grey means inside the floor.
     </div>
   </div>
 
@@ -332,11 +336,11 @@
       if (!v) return '<td class="cell missing"><span class="delta">no series</span></td>';
       if (v.status === 'missing') return `<td class="cell missing" title="${esc(v.reason === 'no-a' ? 'no measurement at or before A' : 'no measurement after A')}"><span class="delta">${v.reason === 'no-a' ? 'no A' : 'no B'}</span></td>`;
       if (v.status === 'scope') return `<td class="cell scope" title="counter scope ${esc(v.from)} → ${esc(v.to)}: counts not comparable"><span class="delta">scope ${esc(v.from)} → ${esc(v.to)}</span></td>`;
-      const cls = v.status === 'clears' ? (v.good ? 'good' : 'bad') : v.status;
+      const cls = v.status === 'clears' ? ((v.good ? 'good' : 'bad') + (v.strong ? ' strong' : '')) : v.status;
       const vals = `${AbHelpers.formatValue(metricId, v.a.value)} → ${AbHelpers.formatValue(metricId, v.b.value)}`;
       let floor = '';
       if (v.test === 'welch') floor = v.pValue == null ? 'no test' : `p ${v.pValue < 0.001 ? '< 0.001' : '= ' + v.pValue.toFixed(3)}`;
-      else if (v.floor != null) floor = `floor ${AbHelpers.formatDelta(v.floor, 2).replace('+', '')} (n=${v.floorN})`;
+      else if (v.floor != null) floor = `floor ${AbHelpers.formatDelta(v.floor, 2).replace('+', '')}${isFinite(v.ratio) ? ` · ${v.ratio.toFixed(1)}×` : ''} (n=${v.floorN})`;
       else floor = 'no floor';
       let drift = '';
       if (v.aDrift || v.bDrift) {
@@ -345,7 +349,8 @@
         if (v.bDrift) parts.push(`B ${v.bDrift > 0 ? '→' : '←'} ${sha7(v.b.commit)} (${v.bDrift > 0 ? '+' : ''}${v.bDrift})`);
         drift = `<div class="drift" title="nearest measured commits used">${esc(parts.join(' · '))}</div>`;
       }
-      const title = `${vals}\n${floor}${v.status === 'unknown' ? '\nno noise estimate; delta shown without a verdict' : ''}`;
+      const tier = v.status === 'clears' ? (v.strong ? `\nstrong: beyond ${AbHelpers.STRONG_MULTIPLIER}× the floor (p < 0.001 for throughput)` : `\nclears ${AbHelpers.DEFAULT_MULTIPLIER}× the floor but not ${AbHelpers.STRONG_MULTIPLIER}×: this band is noise about two times in three`) : '';
+      const title = `${vals}\n${floor}${tier}${v.status === 'unknown' ? '\nno noise estimate; delta shown without a verdict' : ''}`;
       return `<td class="cell ${cls}" title="${esc(title)}"><div class="delta">${AbHelpers.formatDelta(v.delta)}</div><div class="vals">${esc(vals)}</div><div class="floor">${esc(floor)}</div>${drift}</td>`;
     }
 
@@ -392,12 +397,12 @@
         for (const r of rows) {
           html += `<tr><td class="plat">${esc(PLATFORM_SHORT_LABELS[r.platform] || r.platform)}</td>`;
           html += selectedMetrics.map(m => cellHtml(m, r.cells[m])).join('');
-          html += `<td class="attr ${esc(r.attr.kind)}">${esc(r.attr.text)}</td>`;
+          html += `<td class="attr ${esc(r.attr.kind)}${r.attr.confidence === 'weak' ? ' weak' : ''}">${esc(r.attr.text)}</td>`;
           html += `<td><a class="link" href="${indexLink(r.platform, wl)}">history ↗</a></td></tr>`;
         }
       }
       html += '</tbody></table>';
-      html += '<div class="legend"><b>Green/red</b>: cleared the noise floor, moved the good/bad way for that metric. <b>Grey</b>: inside the floor. <b>Amber</b>: counter scope changed between A and B, or an endpoint was not measured and the nearest commit was used (drift shown). <b>Attribution</b> follows the reading rule from the metric help: instructions/request moved → the code path changed; flat with cycles/request and an icache or branch MPKI move → suspect binary layout; flat with cycles/request alone → data side.</div>';
+      html += '<div class="legend"><b>Green/red</b>: cleared the noise floor (2×), moved the good/bad way for that metric; <b>‼</b> marks a strong move (3×). <b>Grey</b>: inside the floor. <b>Amber</b>: counter scope changed between A and B, or an endpoint was not measured and the nearest commit was used (drift shown). <b>Attribution</b> follows the reading rule from the metric help: a strong instructions/request move → the code path changed (a 2–3× move is reported as probable, in italics); flat with cycles/request and a frontend-stall, branch-MPKI or icache move in the same direction → suspect binary layout; flat with cycles/request alone → data side.</div>';
       card.innerHTML = html;
     }
 
