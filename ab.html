@@ -93,7 +93,7 @@
 
   <div class="card">
     <div class="form-row">
-      <div class="field"><label for="shaA">Commit A (older)</label><input id="shaA" placeholder="sha prefix" autocomplete="off" spellcheck="false"></div>
+      <div class="field"><label for="shaA">Commit A (older)</label><input id="shaA" placeholder="sha prefix, or empty = parent of B" autocomplete="off" spellcheck="false"></div>
       <div class="field"><label for="shaB">Commit B (newer)</label><input id="shaB" placeholder="sha prefix" autocomplete="off" spellcheck="false"></div>
       <span class="or">or</span>
       <div class="field"><label for="prNum">PR number</label><input id="prNum" class="pr" placeholder="4694" inputmode="numeric" autocomplete="off"></div>
@@ -102,13 +102,13 @@
     <div class="chip-bar" id="platformChips"></div>
     <div class="chip-bar" id="metricChips"></div>
     <div class="hint">
-      A PR is one commit on the swept branch; <code>PR</code> sets B to that commit and A to its parent. When a commit was not measured for a series, the cell uses the nearest measured point on the correct side and marks the drift.
+      A PR is one commit on the swept branch; <code>PR</code> sets B to that commit and A to its parent, and so does leaving A empty. When a commit was not measured for a series, the cell uses the nearest measured point on the correct side and marks the drift.
       Throughput cells use a Welch test on the per-point cv/reps (p &lt; 0.05 and |Δ| ≥ 1%). Perf-counter points carry no per-point spread, so their floor is the robust spread of adjacent-commit ratios over the trailing 30 points of the same counter scope; a cell clears at 2× that floor. Grey means inside the floor.
     </div>
   </div>
 
   <div class="card" id="resolvedCard" style="display:none;"></div>
-  <div class="card" id="resultCard"><div class="loading">Enter two commits or a PR number.</div></div>
+  <div class="card" id="resultCard"><div class="loading">Enter two commits, a single commit B (compared against its parent), or a PR number.</div></div>
 
   <script src="config.js"></script>
   <script src="lib/compare-helpers.js"></script>
@@ -256,6 +256,13 @@
         const parent = index.byIndex[r.a_index];
         return { aIndex: r.a_index, bIndex: r.commit_index, a: parent ? Object.assign({ commit_index: r.a_index }, parent) : { commit_index: r.a_index, commit: null }, b: Object.assign({ commit_index: r.commit_index }, index.byIndex[r.commit_index]) };
       }
+      if (st.b && !st.a) {
+        // Deep link from a commit popup or notable card: B against its parent.
+        const r = AbHelpers.resolveShaWithParent(index, st.b);
+        if (!r.ok) return { error: r.reason === 'not-found' ? 'B matches no measured commit on this platform' : `B is ambiguous (${r.matches.length} commits: ${r.matches.slice(0, 3).map(sha7).join(', ')}…)` };
+        const parent = index.byIndex[r.a_index];
+        return { aIndex: r.a_index, bIndex: r.commit_index, a: parent ? Object.assign({ commit_index: r.a_index }, parent) : { commit_index: r.a_index, commit: null }, b: Object.assign({ commit_index: r.commit_index }, index.byIndex[r.commit_index]) };
+      }
       const ra = AbHelpers.resolveSha(index, st.a), rb = AbHelpers.resolveSha(index, st.b);
       const describe = (r, label) => r.reason === 'empty' ? `${label} is empty` : r.reason === 'not-found' ? `${label} matches no measured commit` : `${label} is ambiguous (${r.matches.length} commits: ${r.matches.slice(0, 3).map(sha7).join(', ')}…)`;
       if (!ra.ok) return { error: describe(ra, 'A') };
@@ -267,7 +274,7 @@
     async function run() {
       const gen = ++runGeneration;
       const st = currentState();
-      if (st.pr == null && !(st.a && st.b)) { $('resultCard').innerHTML = '<div class="loading">Enter two commits or a PR number.</div>'; $('resolvedCard').style.display = 'none'; return; }
+      if (st.pr == null && !st.b) { $('resultCard').innerHTML = '<div class="loading">Enter two commits, a single commit B (compared against its parent), or a PR number.</div>'; $('resolvedCard').style.display = 'none'; return; }
       writeHash();
       $('runBtn').disabled = true;
       $('resultCard').innerHTML = '<div class="loading">Loading series…</div>';
@@ -422,7 +429,7 @@
       window.addEventListener('hashchange', async () => { applyHash(); renderChips(); run(); });
 
       const st = currentState();
-      if (st.pr != null || (st.a && st.b)) run();
+      if (st.pr != null || st.b) run();
     }
 
     init();

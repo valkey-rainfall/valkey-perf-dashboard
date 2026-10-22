@@ -3482,6 +3482,27 @@ describe('ab-helpers', () => {
     assert.equal(AB.resolvePr(idx, 'abc').reason, 'empty');
   });
 
+  it('resolveShaWithParent: same shape as resolvePr, keyed by sha prefix', () => {
+    const idx = AB.buildCommitIndex([AB.normalizePoints(perfSeries(), 'x')]);
+    const r = AB.resolveShaWithParent(idx, 'c160');
+    assert.equal(r.ok, true); assert.equal(r.commit_index, 160); assert.equal(r.a_index, 159); assert.equal(r.commit, 'c160abcdef');
+    assert.equal(AB.resolveShaWithParent(idx, 'zzz').reason, 'not-found');
+    assert.equal(AB.resolveShaWithParent(idx, 'c1').reason, 'ambiguous');
+    assert.equal(AB.resolveShaWithParent(idx, '').reason, 'empty');
+  });
+
+  it('linkForCommit: pins the A/B pair when the previous point is known, else B alone; round-trips through parseHash', () => {
+    const pair = AB.linkForCommit({ commit: 'bbbb', prevCommit: 'aaaa', epoch: 'v3' });
+    assert.equal(pair, 'ab.html#a=aaaa&b=bbbb&epoch=v3');
+    assert.deepEqual(AB.parseHash(pair.slice(pair.indexOf('#'))), { a: 'aaaa', b: 'bbbb', pr: null, epoch: 'v3', platforms: null, metrics: null });
+    const solo = AB.linkForCommit({ commit: 'bbbb', epoch: 'v3' });
+    assert.equal(solo, 'ab.html#b=bbbb&epoch=v3');
+    assert.equal(AB.linkForCommit({ commit: 'bbbb', prevCommit: 'bbbb' }), 'ab.html#b=bbbb', 'same commit on both sides collapses to B-only');
+    assert.equal(AB.linkForCommit({ commit: 'bbbb' }), 'ab.html#b=bbbb', 'legacy epoch (null) adds no epoch param');
+    assert.equal(AB.linkForCommit({}), null);
+    assert.equal(AB.linkForCommit(null), null);
+  });
+
   it('nearestMeasured and pickEndpoints honour sides, drift, and the (A, B] rule', () => {
     const pts = AB.normalizePoints(perfSeries(), 'x'); // even indices 100..178
     assert.equal(AB.nearestMeasured(pts, 161, 'at-or-before').commit_index, 160);
@@ -3646,5 +3667,47 @@ describe('ab.html wiring', () => {
   it('skips engine-prefixed and malformed workloads and deep-links into the history view', () => {
     assert.ok(html.includes('!isEnginePrefixed(id) && isValidWorkloadId(id)'));
     assert.ok(html.includes("params.set('workload', wl)") && html.includes('EpochHelpers.writeEpochToHash(params, activeEpoch)'));
+  });
+});
+
+describe('ab.html entry points', () => {
+  const fs = require('fs'), path = require('path');
+  const read = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+  const ab = read('ab.html'), index = read('index.html'), notable = read('notable.html'), compare = read('compare.html');
+
+  it('every dashboard page header links to ab.html, and ab.html links back to each', () => {
+    for (const [name, html] of [['index.html', index], ['notable.html', notable], ['compare.html', compare]]) {
+      assert.ok(html.includes('<a href="ab.html">Commit A/B</a>'), `${name} header has the Commit A/B link`);
+    }
+    for (const target of ['index.html', 'notable.html', 'compare.html']) assert.ok(ab.includes(`href="${target}"`), `ab.html links to ${target}`);
+  });
+
+  it('index.html loads ab-helpers and every commit popup carries an A/B link pinned to the popup\'s own comparison pair', () => {
+    assert.ok(index.includes('<script src="lib/ab-helpers.js"></script>'));
+    const defs = index.match(/const abLink = AbHelpers\.linkForCommit\(\{ commit: hash, prevCommit: prevPoint\?\.commit, epoch: activeEpoch \}\);/g) || [];
+    assert.equal(defs.length, 3, 'throughput, memory and latency popups each build the link');
+    const links = index.match(/<a href="\$\{abLink\}"[^>]*>⚖ A\/B table<\/a>/g) || [];
+    assert.equal(links.length, 3, 'each popup renders the link in its links row');
+    for (const fn of ['showCommitPopup', 'showMemoryPopup', 'showLatencyPopup']) {
+      const start = index.indexOf(`function ${fn}(`);
+      const end = index.indexOf('popup.innerHTML = `<div class="cpop"', start);
+      assert.ok(index.slice(start, end).includes('const abLink = AbHelpers.linkForCommit('), `${fn} defines abLink before rendering`);
+    }
+  });
+
+  it('notable.html loads ab-helpers after epoch-helpers and each card links its commit against its parent in the active epoch', () => {
+    const e = notable.indexOf('<script src="lib/epoch-helpers.js"></script>'), a = notable.indexOf('<script src="lib/ab-helpers.js"></script>');
+    assert.ok(e > 0 && a > e);
+    assert.ok(notable.includes('AbHelpers.linkForCommit({ commit: g.commit, epoch: activeEpoch })'));
+    assert.ok(notable.includes('⚖ A/B table'));
+  });
+
+  it('ab.html accepts B alone (compared against its parent) via resolveShaWithParent and says so in the guard and hint', () => {
+    assert.ok(ab.includes('if (st.b && !st.a) {') && ab.includes('AbHelpers.resolveShaWithParent(index, st.b)'));
+    assert.ok(ab.includes('if (st.pr == null && !st.b)'), 'run guard requires only B or a PR');
+    assert.ok(ab.includes('if (st.pr != null || st.b) run();'), 'init auto-runs a B-only deep link');
+    assert.ok(!ab.includes('(st.a && st.b)'), 'no remaining guard demands both A and B');
+    assert.ok(ab.includes('and so does leaving A empty'), 'hint documents the B-only form');
+    assert.ok(ab.includes('placeholder="sha prefix, or empty = parent of B"'));
   });
 });

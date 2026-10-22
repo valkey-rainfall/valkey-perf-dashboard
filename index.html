@@ -367,6 +367,7 @@
     </div>
     <nav class="header-links" aria-label="Dashboard pages">
       <a href="notable.html">Notable Changes</a>
+      <a href="ab.html">Commit A/B</a>
       <a href="compare.html">Compare Engines</a>
       <a href="status.html">Host Status ↗</a>
       <button class="intro-btn" id="introSettingsBtn" onclick="toggleIntroSettings()" title="Sign-on intro settings" aria-label="Sign-on intro settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="introSettings">
@@ -457,6 +458,7 @@
   <script src="lib/selection-helpers.js"></script>
   <script src="lib/scope-badge.js"></script>
   <script src="lib/scope-helpers.js"></script>
+  <script src="lib/ab-helpers.js"></script>
   <script src="lib/axis-ticks.js"></script>
   <script>
     Chart.defaults.scales.linear.afterFit = (axis) => { if (axis.position === 'left' || axis.position === 'right') axis.width = 60; };
@@ -2194,6 +2196,7 @@
       // Platform label
       const platLabel = PLATFORM_LABELS[primaryWorkload?.platform] || '';
 
+      const abLink = AbHelpers.linkForCommit({ commit: hash, prevCommit: prevPoint?.commit, epoch: activeEpoch });
       popup.innerHTML = `<div class="cpop" style="position:relative">
         <button class="cpop-close" onclick="hideCommitPopup()">✕</button>
         <div class="cpop-header">
@@ -2204,6 +2207,7 @@
         <div class="cpop-links">
           ${point.pr ? `<a href="https://github.com/${repo}/pull/${point.pr}" target="_blank">🔗 PR #${point.pr}</a>` : ''}
           <a href="https://github.com/${repo}/commit/${hash}" target="_blank">📄 Commit</a>
+          <a href="${abLink}" title="Open the Commit A/B table: this commit against the previous measured point, every workload × platform × counter">⚖ A/B table</a>
         </div>
         <hr class="cpop-sep">
         <div class="cpop-rps">${rpsStr} <span class="cpop-rps-unit">rps</span></div>
@@ -2317,6 +2321,7 @@
       }
 
       const platLabel = PLATFORM_LABELS[primaryWorkload?.platform] || '';
+      const abLink = AbHelpers.linkForCommit({ commit: hash, prevCommit: prevPoint?.commit, epoch: activeEpoch });
       popup.innerHTML = `<div class="cpop" style="position:relative">
         <button class="cpop-close" onclick="hideCommitPopup()">✕</button>
         <div class="cpop-header">
@@ -2327,6 +2332,7 @@
         <div class="cpop-links">
           ${point.pr ? `<a href="https://github.com/${repo}/pull/${point.pr}" target="_blank">🔗 PR #${point.pr}</a>` : ''}
           <a href="https://github.com/${repo}/commit/${hash}" target="_blank">📄 Commit</a>
+          <a href="${abLink}" title="Open the Commit A/B table: this commit against the previous measured point, every workload × platform × counter">⚖ A/B table</a>
         </div>
         <hr class="cpop-sep">
         <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">${label}</div>
@@ -2430,6 +2436,7 @@
       }
 
       const platLabel = PLATFORM_LABELS[primaryWorkload?.platform] || '';
+      const abLink = AbHelpers.linkForCommit({ commit: hash, prevCommit: prevPoint?.commit, epoch: activeEpoch });
       popup.innerHTML = `<div class="cpop" style="position:relative">
         <button class="cpop-close" onclick="hideCommitPopup()">✕</button>
         <div class="cpop-header">
@@ -2440,6 +2447,7 @@
         <div class="cpop-links">
           ${point.pr ? `<a href="https://github.com/${repo}/pull/${point.pr}" target="_blank">🔗 PR #${point.pr}</a>` : ''}
           <a href="https://github.com/${repo}/commit/${hash}" target="_blank">📄 Commit</a>
+          <a href="${abLink}" title="Open the Commit A/B table: this commit against the previous measured point, every workload × platform × counter">⚖ A/B table</a>
         </div>
         <hr class="cpop-sep">
         <div class="cpop-rps">${formatUs(p99)} <span class="cpop-rps-unit">p99 latency</span></div>
