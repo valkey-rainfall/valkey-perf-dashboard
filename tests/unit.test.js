@@ -957,6 +957,9 @@ describe('status.html renderHost (via VM integration)', () => {
   const statusHelpers = fs.readFileSync(
     require('node:path').join(__dirname, '..', 'lib', 'status-helpers.js'), 'utf8'
   );
+  const periodHelpers = fs.readFileSync(
+    require('node:path').join(__dirname, '..', 'lib', 'period-helpers.js'), 'utf8'
+  );
 
   // Re-create VM context for each describe block to avoid state leakage
   function createContext() {
@@ -977,6 +980,7 @@ describe('status.html renderHost (via VM integration)', () => {
     };
     vm.createContext(context);
     vm.runInContext(statusHelpers, context);
+    vm.runInContext(periodHelpers, context);
     vm.runInContext(script, context);
     return context;
   }
@@ -1074,6 +1078,33 @@ describe('status.html renderHost (via VM integration)', () => {
     }, host, []);
     assert.ok(result.includes('critically low'));
     assert.ok(result.includes('alarm-crit'));
+  });
+
+  it('shows a canary alarm banner and a within reading as meta only', () => {
+    ctx = createContext();
+    const host = { runnerId: 'intelbench', title: 'Test', subtitle: 'sub' };
+    const base = {
+      timestamp: new Date().toISOString(), runner: { state: 'running' },
+      queue: { depth: 0, tasks: [] }, recent_results: [],
+      fleet_control: { mode: 'live', control_reachable: true, pending_outcomes_count: 0 },
+      measurement_isolation: {},
+    };
+    const today = new Date().toISOString().slice(0, 10);
+    const alarm = ctx.renderHost(base, host, [], {
+      runner_id: 'intelbench', series: { phase: 'ready' },
+      latest_observation: { utc_date: today, candidate_signal: 'alarm', delta_pct: 12.3, env_change_annotation: 'kernel_release: a -> b' },
+    });
+    assert.ok(alarm.includes('alarm-crit'));
+    assert.ok(alarm.includes('+12.3% vs the 28-day median, alarm'));
+    assert.ok(alarm.includes('Environment changed: kernel_release'));
+    const within = ctx.renderHost(base, host, [], {
+      runner_id: 'intelbench', series: { phase: 'ready' },
+      latest_observation: { utc_date: today, candidate_signal: 'within', delta_pct: -0.2 },
+    });
+    assert.ok(!within.includes('alarm-'));
+    assert.ok(within.includes('-0.2% vs the 28-day median'));
+    const none = ctx.renderHost(base, host, [], undefined);
+    assert.ok(!none.includes('Canary'));
   });
 
   it('remote feed null shows unavailable, not empty', () => {
@@ -1186,6 +1217,19 @@ describe('HTML structural integrity', () => {
     assert.ok(html.includes('id="epochSelector"'), 'index.html must have epochSelector element');
     assert.ok(html.includes('buildEpochSelector'), 'index.html must call buildEpochSelector');
     assert.ok(html.includes('onEpochChange'), 'index.html must have onEpochChange handler');
+  });
+
+  it('period-helpers.js is loaded where periods, generations and canary state are shown', () => {
+    const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const statusHtml = fs.readFileSync(path.join(root, 'status.html'), 'utf8');
+    assert.ok(indexHtml.includes('<script src="lib/period-helpers.js"></script>'), 'index.html must load period-helpers.js');
+    assert.ok(indexHtml.indexOf('lib/epoch-helpers.js') < indexHtml.indexOf('lib/period-helpers.js'), 'epoch helpers load first');
+    assert.ok(indexHtml.includes('id="generationSelector"') && indexHtml.includes('onGenerationChange'));
+    assert.ok(indexHtml.includes('id="canaryBanner"') && indexHtml.includes('PeriodHelpers.periodMarkers('));
+    assert.ok(statusHtml.includes('<script src="lib/period-helpers.js"></script>'), 'status.html must load period-helpers.js');
+    assert.ok(statusHtml.indexOf('lib/period-helpers.js') < statusHtml.indexOf('function renderHost'));
+    const src = fs.readFileSync(path.join(root, 'config.js'), 'utf8');
+    assert.ok(src.includes('PLATFORM_RUNNERS'), 'config.js maps platforms to runner ids for canary files');
   });
 
   it('compare.html has epoch selector element', () => {

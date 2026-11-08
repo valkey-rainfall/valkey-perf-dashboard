@@ -95,6 +95,7 @@
     <div class="server-banner" id="serverBanner"></div>
     <div class="hosts" id="hosts"></div>
     <script src="lib/status-helpers.js"></script>
+    <script src="lib/period-helpers.js"></script>
     <script>
 const {formatScore, timeAgo, escapeHtml, renderFleetControl, shortSpecifier, formatDuration, queueSummary, taskDescription, renderRemoteTasks, renderLocalTasks, renderRecentResults, fmtBytes, diskTier, computeHostLiveness, terminalRecheckQualifies, createRecheckScheduler} = StatusHelpers;
 
@@ -106,8 +107,9 @@ const HOSTS = [
 ];
 const STATUS_BASE = 'https://data.conductress.rainsupreme.net/status';
 const CONTROL_STATUS_URL = 'https://data.conductress.rainsupreme.net/api/v1/public/dashboard';
+const CANARY_FLEET_URL = 'https://data.conductress.rainsupreme.net/canary/fleet.json';
 
-function renderHost(data, host, remoteTasks) {
+function renderHost(data, host, remoteTasks, canaryEntry) {
     const liveness = computeHostLiveness(data);
     const dotClass = liveness.dotClass;
     const staleWarn = liveness.staleWarn;
@@ -130,9 +132,20 @@ function renderHost(data, host, remoteTasks) {
     }
     const diskMeta = diskFree != null && !stale ? ` · disk ${diskFree}% free` : '';
     const fleetControl = renderFleetControl(data);
-    const worst = staleCrit || diskCls === 'crit' || fleetControl.severity === 'crit'
+    // Canary: the runner's daily fixed-commit measurement against its own
+    // 28-day median. An alarm or a recent environment change gets a banner;
+    // a within-noise reading is only a meta line.
+    const canary = PeriodHelpers.canaryState(canaryEntry, Date.now());
+    let canaryBanner = '';
+    if (canary && canary.banner) {
+        const cls = canary.severity === 'alarm' ? 'crit' : 'warn';
+        canaryBanner = `<div class="card-banner ${cls}">${cls === 'crit' ? '🔴' : '⚠'} ${escapeHtml(canary.text)}</div>`;
+    }
+    const canaryMeta = canary && !canary.banner ? ` · ${escapeHtml(canary.text)}` : '';
+    const canarySeverity = canary && canary.banner ? (canary.severity === 'alarm' ? 'crit' : 'warn') : null;
+    const worst = staleCrit || diskCls === 'crit' || fleetControl.severity === 'crit' || canarySeverity === 'crit'
         ? 'alarm-crit'
-        : staleWarn || diskCls === 'warn' || fleetControl.severity === 'warn'
+        : staleWarn || diskCls === 'warn' || fleetControl.severity === 'warn' || canarySeverity === 'warn'
             ? 'alarm-warn' : '';
     const cardClass = worst ? `host-card ${worst}` : 'host-card';
     const remoteItems = remoteTasks?.remote_tasks ?? remoteTasks;
@@ -153,8 +166,8 @@ function renderHost(data, host, remoteTasks) {
 
     return `<div class="${cardClass}">
         <h2><span class="status-dot ${dotClass}" role="img" aria-label="Status: ${escapeHtml(dotClass)}"></span><span class="host-title">${escapeHtml(host.title)}<span class="host-subtitle">${escapeHtml(host.runnerId)} · ${escapeHtml(host.subtitle)}</span></span></h2>
-        ${staleBanner}${diskBanner}${fleetControl.banner}
-        <div class="meta">${fleetControl.summary} · last boundary ${timeAgo(data.timestamp) || 'unknown'}${diskMeta}</div>
+        ${staleBanner}${diskBanner}${fleetControl.banner}${canaryBanner}
+        <div class="meta">${fleetControl.summary} · last boundary ${timeAgo(data.timestamp) || 'unknown'}${diskMeta}${canaryMeta}</div>
         <div class="task-flow">
             <div class="section remote" aria-label="${escapeHtml(remoteSummary)} in remote mailbox"><div class="section-title"><span>Remote mailbox</span><span class="section-count">${escapeHtml(remoteSummary)}</span></div>${renderRemoteTasks(remoteItems)}${remoteDisclosure}</div>
             <div class="section local" aria-label="${escapeHtml(queueSummary(localCount, localExpected))} in local queue"><div class="section-title"><span>Local queue</span><span class="section-count">${escapeHtml(queueSummary(localCount, localExpected))}</span></div>${renderLocalTasks(data.queue, data.boundary)}</div>
@@ -195,6 +208,7 @@ async function renderServerBanner() {
 // ages past the staleness threshold and escalates to the stale alarm on its own.
 const lastGood = {};
 let lastRemoteByRunner = null;
+let lastCanaryByRunner = {};
 
 function fleetMetricsSnapshot(statusByHost = lastGood, remoteByRunner = lastRemoteByRunner) {
     const statuses = HOSTS.map(host => statusByHost[host.id]).filter(Boolean);
@@ -225,7 +239,7 @@ function renderCachedStatus() {
     const cards = HOSTS.map(host => {
         const data = lastGood[host.id] || {runner: {state: 'unreachable'}, timestamp: new Date().toISOString()};
         const remoteTasks = lastRemoteByRunner === null ? null : (lastRemoteByRunner[host.runnerId] || []);
-        return renderHost(data, host, remoteTasks);
+        return renderHost(data, host, remoteTasks, lastCanaryByRunner[host.runnerId]);
     });
     container.innerHTML = cards.join('');
     renderFleetMetrics();
@@ -240,6 +254,16 @@ async function loadStatus() {
             lastRemoteByRunner = Object.fromEntries(dashboardData.runners.map(runner => [runner.runner_id, runner]));
         }
     } catch { /* feed unavailable — render an explicit unavailable state */ }
+
+    // Static canary status per runner (control service, canary/fleet.json).
+    // A 404 means the service does not publish it yet; keep the last state.
+    try {
+        const resp = await fetch(`${CANARY_FLEET_URL}?t=${Date.now()}`);
+        if (resp.ok) {
+            const fleet = await resp.json();
+            lastCanaryByRunner = Object.fromEntries((fleet.runners || []).map(runner => [runner.runner_id, runner]));
+        }
+    } catch { /* keep the last canary state */ }
 
     for (const host of HOSTS) {
         let data = null;

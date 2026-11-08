@@ -7,6 +7,7 @@ const vm = require('vm');
 const html = fs.readFileSync('status.html', 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const statusHelpers = fs.readFileSync('lib/status-helpers.js', 'utf8');
+const periodHelpers = fs.readFileSync('lib/period-helpers.js', 'utf8');
 const context = {
     console,
     Date,
@@ -24,6 +25,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext(statusHelpers, context);
+vm.runInContext(periodHelpers, context);
 vm.runInContext(script, context);
 
 function assert(condition, message) {

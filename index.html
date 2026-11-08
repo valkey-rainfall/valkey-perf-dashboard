@@ -37,6 +37,16 @@
     .chart-panel--memory { height: 290px; }
     .chart-panel--perf { height: 400px; margin-bottom: 0.75rem; }
 
+    /* Canary notice above the throughput chart: the runner's own daily
+       fixed-commit measurement moved, or its host environment changed. */
+    .canary-banner {
+      font-size: 0.8rem; padding: 0.4rem 1rem; margin-bottom: 0.5rem; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--card); color: var(--text);
+    }
+    .canary-banner.warning { border-color: var(--warn); }
+    .canary-banner.alarm { border-color: var(--danger); }
+    .canary-banner a { color: var(--muted); margin-left: 0.5rem; }
+
     /* Info row: always visible below its chart */
     .info-row {
       font-size: 0.78rem; color: var(--muted); padding: 0.35rem 1rem 0.5rem;
@@ -358,6 +368,7 @@
       <span class="arrow" style="font-size:0.7rem;">▼</span>
     </button>
     <span id="epochSelector" style="display:none;flex:0 0 auto;"></span>
+    <span id="generationSelector" style="display:none;flex:0 0 auto;" title="Closed generations: read-only history of this platform before an operator cut the series at an environment change"></span>
     <div class="zoom-controls">
       <button id="btn-prev-release" onclick="zoomAll('prevRelease')" class="zoom-btn">Since Previous Release</button>
       <button id="btn-last-release" onclick="zoomAll('lastRelease')" class="zoom-btn">Since Last Release</button>
@@ -410,6 +421,7 @@
 
   <!-- Throughput -->
   <div style="display:flex;align-items:center;margin-bottom:0.5rem;"><h2 style="margin:0">Throughput</h2><button class="help-btn" onclick="showHelp('throughput')">?</button></div>
+  <div id="canaryBanner" class="canary-banner" style="display:none" role="status"></div>
   <div class="chart-panel chart-panel--throughput"><canvas id="chart"></canvas></div>
   <div id="chartInfo" class="info-row"></div>
 
@@ -449,6 +461,7 @@
 
   <script src="config.js"></script>
   <script src="lib/epoch-helpers.js"></script>
+  <script src="lib/period-helpers.js"></script>
   <script src="lib/point-helpers.js"></script>
   <script src="lib/perf-groups.js"></script>
   <script src="lib/metric-selector.js"></script>
@@ -501,8 +514,59 @@
       </select>`;
     }
 
+    // A closed generation is a read-only slice of the primary platform's
+    // series under the active epoch (manifest `generations`); null is the
+    // live series. The selector is hidden when the manifest lists none.
+    let activeGeneration = null;
+
+    function buildGenerationSelector() {
+      const container = document.getElementById('generationSelector');
+      if (!container) return;
+      const plat = primaryWorkload?.platform;
+      const platformManifest = (typeof PLATFORM_MANIFESTS !== 'undefined' && plat && PLATFORM_MANIFESTS[plat]) || null;
+      const options = PeriodHelpers.generationOptions(platformManifest);
+      if (activeGeneration && !options.some(o => o.id === activeGeneration)) activeGeneration = null;
+      if (options.length <= 1) { container.style.display = 'none'; return; }
+      container.style.display = '';
+      container.innerHTML = `<select id="generationSelect" onchange="onGenerationChange(this.value)" style="background:var(--card);color:var(--text);border:1px solid var(--border);padding:0.35rem 0.65rem;border-radius:4px;font-size:0.8rem;cursor:pointer;">
+        ${options.map(o => `<option value="${o.id || ''}" ${(o.id || null) === activeGeneration ? 'selected' : ''}>${o.label}</option>`).join('')}
+      </select>`;
+    }
+
+    function onGenerationChange(generationId) {
+      activeGeneration = generationId || null;
+      updateHashState();
+      if (selectedWorkloads.length > 0) renderAll();
+      loadNotableTeaser();
+    }
+
+    // Canary notice for the primary platform's runner: shown when the latest
+    // daily observation is a warning or alarm, or the host environment changed
+    // in the last week. A missing file (runner not under the control service)
+    // simply hides the banner.
+    async function loadCanaryBanner(platform) {
+      const banner = document.getElementById('canaryBanner');
+      if (!banner) return;
+      const runnerId = (typeof PLATFORM_RUNNERS !== 'undefined' && PLATFORM_RUNNERS[platform]) || null;
+      let state = null;
+      if (runnerId) {
+        try {
+          const resp = await fetch(`${DATA_URL}/canary/${runnerId}.json?t=${Math.floor(Date.now() / 300000)}`);
+          if (resp.ok) state = PeriodHelpers.canaryState(await resp.json(), Date.now());
+        } catch { state = null; }
+      }
+      if (!state || !state.banner) { banner.style.display = 'none'; banner.textContent = ''; return; }
+      banner.className = `canary-banner ${state.severity}`;
+      banner.textContent = `${PLATFORM_SHORT_LABELS[platform] || platform}: ${state.text}`;
+      const link = document.createElement('a');
+      link.href = 'status.html'; link.textContent = 'Host status';
+      banner.appendChild(link);
+      banner.style.display = '';
+    }
+
     function onEpochChange(epochId) {
       activeEpoch = epochId;
+      activeGeneration = null;
       updateHashState();
       // Re-discover workloads for new epoch, then re-render
       discoverWorkloadsForEpoch(activeEpoch).then(() => {
@@ -999,6 +1063,7 @@
         zoom: params.get('zoom')?.split(',').map(Number),
         commit: params.get('commit'),
         epoch: EpochHelpers.parseEpochFromHash(params),
+        generation: params.get('gen') || null,
       };
     }
 
@@ -1020,6 +1085,7 @@
       const metricsParam = MetricSelector.hashValue(metricSelection, metricCatalog);
       if (metricsParam) params.set('metrics', metricsParam);
       EpochHelpers.writeEpochToHash(params, activeEpoch);
+      if (activeGeneration) params.set('gen', activeGeneration);
       if (chart && chart.options.scales.x.min > 0) {
         const min = Math.round(chart.options.scales.x.min);
         const max = Math.round(chart.options.scales.x.max);
@@ -1084,6 +1150,7 @@
 
     // Format an info row item: <span class="info-val">value</span> label
     function infoItem(label, value) { return `<span><span class="info-val">${value}</span> ${label}</span>`; }
+    function escapeHtmlText(text) { const d = document.createElement('div'); d.textContent = String(text); return d.innerHTML; }
 
     // Common chart options
     // Shared x axis: commit index under the hood, marked at release landmarks
@@ -1104,7 +1171,7 @@
       };
     }
 
-    function baseChartOpts(totalCommits, landmarks) {
+    function baseChartOpts(totalCommits, landmarks, periods) {
       const annotations = {};
       (landmarks || []).forEach((lm, i) => {
         if (lm.commit_index != null) annotations[`lm${i}`] = {
@@ -1112,6 +1179,9 @@
           borderColor: 'rgba(100,116,139,0.5)', borderWidth: 1, borderDash: [4, 3],
         };
       });
+      // Environment period boundaries (series.json `periods`, exporter v4):
+      // where the runner's kernel, libraries, microcode or boot changed.
+      Object.assign(annotations, PeriodHelpers.periodMarkers(periods));
       return {
         responsive: true, maintainAspectRatio: false,
         interaction: { intersect: false, mode: 'index' },
@@ -1142,6 +1212,8 @@
         activeEpoch = EpochHelpers.defaultEpochId(epochList); // default to first live epoch
       }
       buildEpochSelector();
+      // Validated against the primary platform's manifest in buildGenerationSelector().
+      activeGeneration = hashState.generation;
 
       // If epoch was restored from hash and differs from legacy, re-discover workloads
       if (activeEpoch && activeEpoch !== 'v1') {
@@ -1201,9 +1273,11 @@
 
     async function render(platform, initialCommit) {
       const gen = ++renderGeneration;
+      buildGenerationSelector();
+      loadCanaryBanner(platform);
       // Fetch primary workload data (drives sub-charts + page title)
       const primaryFileId = getWorkloadId();
-      const resp = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, primaryFileId, 'throughput', activeEpoch));
+      const resp = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, primaryFileId, 'throughput', activeEpoch, activeGeneration));
       if (renderIsStale(gen)) return;
       if (!resp.ok) {
         // No data for this selection — clear all charts
@@ -1249,6 +1323,7 @@
         infoItem('peak', (maxRps/1e6).toFixed(3)+'M'),
         infoItem('range', '±'+(((maxRps-minRps)/((maxRps+minRps)/2))*50).toFixed(1)+'%'),
         infoItem('annotations', data.annotations.length),
+        PeriodHelpers.periodCount(data.periods, false) > 1 ? infoItem('env periods', PeriodHelpers.periodCount(data.periods, false)) : '',
       ].join('');
       document.getElementById('chartInfo').innerHTML = defaultInfo;
 
@@ -1273,7 +1348,7 @@
           sData = data; sWorkload = workload; sPoints = points;
         } else {
           try {
-            const r2 = await fetch(EpochHelpers.seriesUrl(DATA_URL, sel.platform, fileId, 'throughput', activeEpoch));
+            const r2 = await fetch(EpochHelpers.seriesUrl(DATA_URL, sel.platform, fileId, 'throughput', activeEpoch, activeGeneration));
             if (renderIsStale(gen)) return;
             if (!r2.ok) continue;
             sData = await r2.json();
@@ -1338,7 +1413,7 @@
         });
       }
 
-      const opts = baseChartOpts(globalMaxCommits, data.landmarks);
+      const opts = baseChartOpts(globalMaxCommits, data.landmarks, data.periods);
       opts.plugins.legend = { display: selectedWorkloads.length > 1, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, color: '#94a3b8', filter: item => !['CV+','CV-','range+','range-'].includes(item.text) } };
       opts.scales.y = { title: { display: true, text: 'M ops/sec', color: '#64748b' }, ticks: { color: '#64748b', callback: v => (v/1e6).toFixed(1)+'M' }, grid: { color: 'var(--border)' } };
       opts.onClick = (evt, els) => {
@@ -1408,7 +1483,7 @@
       for (const workloadId of MEMORY_WORKLOADS) {
         try {
           const fileId = getEngine() === 'valkey' ? workloadId : workloadId.replace('memory-', `memory-${getEngine()}-`);
-          const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, fileId, 'memory', activeEpoch));
+          const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, fileId, 'memory', activeEpoch, activeGeneration));
           if (renderIsStale(gen)) return;
           if (!r.ok) continue;
           const memData = await r.json();
@@ -1436,7 +1511,7 @@
           container.appendChild(div);
 
           globalMaxCommits = Math.max(globalMaxCommits, memData.metadata.total_commits);
-          const opts = baseChartOpts(memData.metadata.total_commits, memData.landmarks);
+          const opts = baseChartOpts(memData.metadata.total_commits, memData.landmarks, memData.periods);
           opts.plugins.legend = { display: hasBreakdown, position: 'bottom', labels: { boxWidth: 10, font: { size: 9 }, color: '#94a3b8', padding: 8, filter: (item, data) => data.datasets[item.datasetIndex].data.some(d => d.y > 0) } };
           const yMax = hasBreakdown ? Math.max(...pts.map(p => Object.values(p.breakdown || {}).reduce((s,v)=>s+v,0))) : Math.max(...pts.map(p => p.results[wk].rps));
           opts.scales.y = { stacked: hasBreakdown, beginAtZero: true, suggestedMax: yMax * 1.05, title: { display: true, text: 'B/key', color: '#64748b' }, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'var(--border)' } };
@@ -1524,7 +1599,7 @@
 
       async function fetchSeries(plat, fileId, metricId) {
         try {
-          const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, plat, fileId, metricId, activeEpoch));
+          const r = await fetch(EpochHelpers.seriesUrl(DATA_URL, plat, fileId, metricId, activeEpoch, activeGeneration));
           if (!r.ok) return null;
           const sd = await r.json();
           const pts = (sd.points || []).slice().sort((a, b) => a.commit_index - b.commit_index);
@@ -1705,7 +1780,7 @@
       const latencyFileId = LatencyHelpers.latencySeriesId(platformManifest?.latency_workloads, command, engine);
       if (!latencyFileId) { section.style.display = 'none'; return; }
       let resp;
-      try { resp = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, latencyFileId, 'latency', activeEpoch)); } catch { section.style.display = 'none'; return; }
+      try { resp = await fetch(EpochHelpers.seriesUrl(DATA_URL, platform, latencyFileId, 'latency', activeEpoch, activeGeneration)); } catch { section.style.display = 'none'; return; }
       if (renderIsStale(gen)) return;
       if (!resp.ok) { section.style.display = 'none'; return; }
       const data = await resp.json();
@@ -1756,7 +1831,7 @@
       ].join('');
       document.getElementById('latencyInfo').innerHTML = defaultInfo;
 
-      const opts = baseChartOpts(totalCommits, data.landmarks);
+      const opts = baseChartOpts(totalCommits, data.landmarks, data.periods);
       opts.plugins.legend = { display: true, position: 'bottom', labels: { boxWidth: 14, font: { size: 10 }, color: '#94a3b8', filter: item => ['p50','p99','p99.9'].includes(item.text) } };
       opts.scales.y = { type: 'linear', ticks: { color: '#64748b', callback: v => formatUs(v) }, grid: { color: 'var(--border)' } };
       opts.plugins.tooltip = { enabled: false };
@@ -1803,7 +1878,7 @@
       const el = document.getElementById('annotations');
       const results = await Promise.all(PLATFORMS.map(async p => {
         try {
-          const r = await fetch(EpochHelpers.notableUrl(DATA_URL, p, activeEpoch));
+          const r = await fetch(EpochHelpers.notableUrl(DATA_URL, p, activeEpoch, p === primaryWorkload?.platform ? activeGeneration : null));
           if (!r.ok) return null;
           return { platform: p, annotations: (await r.json()).annotations || [] };
         } catch { return null; }
@@ -2143,6 +2218,10 @@
         }
         const sign = delta > 0 ? '+' : '';
         deltaHtml = `<div class="cpop-delta ${cls}"><span>${arrow} ${sign}${delta.toFixed(1)}% ±${unc.toFixed(1)}%</span><span class="cpop-badge ${badgeCls}">${badgeText}</span><span style="color:var(--muted);font-weight:400;font-size:12px">${gapText}</span></div>`;
+        // The two points were measured under different host environments
+        // (series `periods`); the delta may be the host, not the commit.
+        const periodNote = PeriodHelpers.periodWarning(point, prevPoint, currentData.periods);
+        if (periodNote) deltaHtml += `<div class="cpop-cv" style="color:var(--warn)">${escapeHtmlText(periodNote)}</div>`;
       }
 
       // Score range + client saturation (v3)
