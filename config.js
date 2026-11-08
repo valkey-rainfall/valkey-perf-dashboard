@@ -19,6 +19,8 @@ const PLATFORMS = ['amd64', 'arm64', 'graviton4', 'intel'];
 const PLATFORM_LABELS = { arm64: 'ARM (Graviton 3)', graviton4: 'ARM (Graviton 4)', amd64: 'AMD (EPYC 9R14)', intel: 'Intel (Sapphire Rapids)' };
 // Short labels for filter chips / compact displays (distinct per ARM generation).
 const PLATFORM_SHORT_LABELS = { arm64: 'ARM G3', graviton4: 'ARM G4', amd64: 'AMD', intel: 'Intel' };
+// Control-service runner id per platform; keys the static canary files at DATA_URL/canary/<runner>.json.
+const PLATFORM_RUNNERS = { arm64: 'armbench', graviton4: 'g4bench', amd64: 'bench', intel: 'intelbench' };
 // Raw per-platform manifests, populated by discoverWorkloads(); used for perf/cpu chart group definitions.
 let PLATFORM_MANIFESTS = {};
 // Fallback workloads (used if manifest fetch fails)
