@@ -17,7 +17,6 @@
 
     header { position: sticky; top: 0; z-index: 100; background: var(--bg); padding: 0.75rem 1.5rem; margin: -1.5rem -1.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
     header a { color: var(--muted); font-size: 0.8rem; text-decoration: none; }
-    header a.primary-link { color: var(--accent); font-weight: 500; }
 
     .chip-bar { display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
     .chip-group-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-right: 0.1rem; }
@@ -65,10 +64,7 @@
       <h1 style="font-size:1.1rem;margin:0;"><img class="brand-mark" src="brand/conductress-mark.svg" alt="">Notable Changes</h1>
       <span style="color:var(--muted);font-size:0.85rem;">Pinpointed throughput &amp; memory changes across all platforms and workloads — newest first</span>
     </div>
-    <a href="index.html" class="primary-link" style="margin-left:auto;">← Dashboard</a>
-    <a href="ab.html">Commit A/B</a>
-    <a href="compare.html">Compare Engines</a>
-    <a href="status.html">Host Status ↗</a>
+    <div data-site-menu></div>
   </header>
 
   <div class="chip-bar" id="chipBar"></div>
@@ -76,6 +72,8 @@
   <div class="cards" id="cards"><div class="empty-note">Loading…</div></div>
 
   <script src="config.js"></script>
+  <script src="lib/period-helpers.js"></script>
+  <script src="lib/site-menu.js"></script>
   <script src="lib/epoch-helpers.js"></script>
   <script src="lib/ab-helpers.js"></script>
   <script>

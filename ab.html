@@ -19,7 +19,6 @@
     .brand-mark { height: 1.3em; width: auto; }
     header a { color: var(--muted); text-decoration: none; font-size: 0.8rem; }
     header a:hover { color: var(--text); }
-    header a.primary-link { color: var(--accent); font-weight: 500; }
     .subtitle { color: var(--muted); font-size: 0.85rem; }
     .epoch-select { margin-left: auto; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem 0.5rem; font-size: 0.8rem; }
 
@@ -85,10 +84,8 @@
       <h1><img class="brand-mark" src="brand/conductress-mark.svg" alt="">Commit A/B</h1>
       <span class="subtitle">Two commits, every workload × platform × counter, with a noise verdict: did the work per request change, or only the stalls?</span>
     </div>
-    <a href="index.html" class="primary-link" style="margin-left:auto;">← Dashboard</a>
-    <a href="notable.html">Notable Changes</a>
-    <a href="compare.html">Compare Engines</a>
     <select id="epochSelect" class="epoch-select" title="Generator epoch"></select>
+    <div data-site-menu></div>
   </header>
 
   <div class="card">
@@ -111,6 +108,8 @@
   <div class="card" id="resultCard"><div class="loading">Enter two commits, a single commit B (compared against its parent), or a PR number.</div></div>
 
   <script src="config.js"></script>
+  <script src="lib/period-helpers.js"></script>
+  <script src="lib/site-menu.js"></script>
   <script src="lib/compare-helpers.js"></script>
   <script src="lib/epoch-helpers.js"></script>
   <script src="lib/perf-groups.js"></script>
