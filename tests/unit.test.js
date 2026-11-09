@@ -1107,6 +1107,29 @@ describe('status.html renderHost (via VM integration)', () => {
     assert.ok(!none.includes('Canary'));
   });
 
+  it('a harness-only change does not colour the card and shows no SHAs', () => {
+    ctx = createContext();
+    const host = { runnerId: 'intelbench', title: 'Test', subtitle: 'sub' };
+    const base = {
+      timestamp: new Date().toISOString(), runner: { state: 'running' },
+      queue: { depth: 0, tasks: [] }, recent_results: [],
+      fleet_control: { mode: 'live', control_reachable: true, pending_outcomes_count: 0 },
+      measurement_isolation: {},
+    };
+    const today = new Date().toISOString().slice(0, 10);
+    const sha1 = '5466d250765a099f6834ae56acfca7c5950213c4';
+    const sha2 = '9ba063dee3d204aa4c1ec6d416e40cec8dea806c';
+    const out = ctx.renderHost(base, host, [], {
+      runner_id: 'intelbench', series: { phase: 'observation' },
+      latest_observation: { utc_date: today, candidate_signal: 'within', delta_pct: -0.5,
+        env_change_annotation: "conductress_revision: '" + sha1 + "' -> '" + sha2 + "'" },
+    });
+    assert.ok(!out.includes('alarm-'), 'no warn or crit card');
+    assert.ok(!out.includes('card-banner'), 'no canary banner');
+    assert.ok(out.includes('harness revision changed'));
+    assert.ok(!out.includes(sha1) && !out.includes(sha2), 'no revision SHAs on the page');
+  });
+
   it('remote feed null shows unavailable, not empty', () => {
     ctx = createContext();
     const result = ctx.StatusHelpers.renderRemoteTasks(null);
@@ -1225,7 +1248,10 @@ describe('HTML structural integrity', () => {
     assert.ok(indexHtml.includes('<script src="lib/period-helpers.js"></script>'), 'index.html must load period-helpers.js');
     assert.ok(indexHtml.indexOf('lib/epoch-helpers.js') < indexHtml.indexOf('lib/period-helpers.js'), 'epoch helpers load first');
     assert.ok(indexHtml.includes('id="generationSelector"') && indexHtml.includes('onGenerationChange'));
-    assert.ok(indexHtml.includes('id="canaryBanner"') && indexHtml.includes('PeriodHelpers.periodMarkers('));
+    assert.ok(indexHtml.includes('id="canaryLink"') && indexHtml.includes('PeriodHelpers.canaryLinkState('));
+    assert.ok(!indexHtml.includes('canaryBanner') && !indexHtml.includes('periodMarkers') && !indexHtml.includes('periodWarning'),
+      'main charts carry no period markers, no canary banner and no delta period warning');
+    assert.ok(indexHtml.indexOf('id="canaryLink"') < indexHtml.indexOf('href="status.html"'), 'canary link sits next to Host Status');
     assert.ok(statusHtml.includes('<script src="lib/period-helpers.js"></script>'), 'status.html must load period-helpers.js');
     assert.ok(statusHtml.indexOf('lib/period-helpers.js') < statusHtml.indexOf('function renderHost'));
     const src = fs.readFileSync(path.join(root, 'config.js'), 'utf8');
@@ -3753,5 +3779,148 @@ describe('ab.html entry points', () => {
     assert.ok(!ab.includes('(st.a && st.b)'), 'no remaining guard demands both A and B');
     assert.ok(ab.includes('and so does leaving A empty'), 'hint documents the B-only form');
     assert.ok(ab.includes('placeholder="sha prefix, or empty = parent of B"'));
+  });
+});
+
+// ===========================================================================
+// period-helpers.js (generations and canary state)
+// ===========================================================================
+
+const periodHelpers = require('../lib/period-helpers.js');
+
+describe('generationOptions', () => {
+  const manifest = { generations: [
+    { id: '2026-09-01', until: '2026-09-01T00:00:00Z', label: 'old' },
+    { id: '2026-11-06', until: '2026-11-06T16:14:23Z', label: 'kernel 6.1.170 -> 6.1.189, glibc, microcode' },
+  ] };
+  it('lists the live series first, then generations newest first, with short labels', () => {
+    const options = periodHelpers.generationOptions(manifest);
+    assert.deepEqual(options.map(o => o.id), [null, '2026-11-06', '2026-09-01']);
+    assert.deepEqual(options.map(o => o.label), ['Live series', 'Before 2026-11-06', 'Before 2026-09-01']);
+  });
+  it('keeps the long text in the title', () => {
+    const options = periodHelpers.generationOptions(manifest);
+    assert.equal(options[1].title, 'Archived history before 2026-11-06 (kernel 6.1.170 -> 6.1.189, glibc, microcode)');
+    assert.equal(options[0].title, 'Live series');
+  });
+  it('is only the live series without generations', () => {
+    assert.deepEqual(periodHelpers.generationOptions({}).map(o => o.id), [null]);
+    assert.deepEqual(periodHelpers.generationOptions(null).map(o => o.id), [null]);
+  });
+  it('suffixes the exporter file names and the epoch URL helpers accept a generation', () => {
+    assert.equal(periodHelpers.generationFilename('series-intel-get-throughput.epoch-v3.json', '2026-11-06'),
+      'series-intel-get-throughput.epoch-v3.gen-2026-11-06.json');
+    assert.equal(periodHelpers.generationFilename('x.json', null), 'x.json');
+    assert.equal(epochHelpers.seriesUrl('https://d', 'intel', 'get', 'throughput', 'v3', '2026-11-06'),
+      'https://d/series-intel-get-throughput.epoch-v3.gen-2026-11-06.json');
+    assert.equal(epochHelpers.seriesUrl('https://d', 'intel', 'get', 'throughput', 'v3'),
+      'https://d/series-intel-get-throughput.epoch-v3.json');
+    assert.equal(epochHelpers.notableUrl('https://d', 'intel', 'v3', '2026-11-06'), 'https://d/notable-intel.epoch-v3.gen-2026-11-06.json');
+    assert.equal(epochHelpers.manifestUrl('https://d', 'intel', 'v3', '2026-11-06'), 'https://d/manifest-intel.epoch-v3.gen-2026-11-06.json');
+    assert.equal(epochHelpers.manifestUrl('https://d', 'intel', 'v1', '2026-11-06'), 'https://d/manifest-intel.gen-2026-11-06.json');
+  });
+});
+
+describe('generationHasSeries', () => {
+  const manifest = { generations: [{ id: '2026-11-06', workloads: ['get-k16-v16-t7-p10', 'get-k16-v16-t7-p1-r100k'] }] };
+  const has = (gen, fileId, metric) => periodHelpers.generationHasSeries(manifest, gen, fileId, metric);
+  it('fetches every series for the live view', () => {
+    assert.equal(has(null, 'anything', 'memory'), true);
+    assert.equal(has('', 'anything', 'cpu-main'), true);
+  });
+  it('fetches only throughput and latency of listed workloads in a generation', () => {
+    assert.equal(has('2026-11-06', 'get-k16-v16-t7-p10', 'throughput'), true);
+    assert.equal(has('2026-11-06', 'get-k16-v16-t7-p1-r100k', 'latency'), true);
+    assert.equal(has('2026-11-06', 'set-k16-v16-t7-p10', 'throughput'), false);
+    assert.equal(has('2026-11-06', 'get-k16-v16-t7-p10', 'memory'), false);
+    assert.equal(has('2026-11-06', 'get-k16-v16-t7-p10', 'ipc'), false);
+  });
+  it('fetches nothing for a generation the manifest does not list', () => {
+    assert.equal(has('2025-01-01', 'get-k16-v16-t7-p10', 'throughput'), false);
+    assert.equal(periodHelpers.generationHasSeries(null, '2026-11-06', 'get-k16-v16-t7-p10', 'throughput'), false);
+    assert.equal(periodHelpers.generationHasSeries({ generations: [{ id: '2026-11-06' }] }, '2026-11-06', 'x', 'throughput'), false);
+  });
+});
+
+describe('envChangeLabel', () => {
+  const sha1 = '5466d250765a099f6834ae56acfca7c5950213c4';
+  const sha2 = '9ba063dee3d204aa4c1ec6d416e40cec8dea806c';
+  it('turns private keys into phrases', () => {
+    assert.equal(periodHelpers.envChangeLabel("conductress_revision: '" + sha1 + "' -> '" + sha2 + "'"), 'harness revision changed');
+    assert.equal(periodHelpers.envChangeLabel('cachecannon_commit: a -> b'), 'load generator changed');
+    assert.equal(periodHelpers.envChangeLabel('boot_id: x -> y'), 'reboot');
+    assert.equal(periodHelpers.envChangeLabel('instance_id: i-1 -> i-2; host_fingerprint: a -> b'), 'host replaced');
+  });
+  it('keeps other keys with values cut to 24 characters', () => {
+    assert.equal(periodHelpers.envChangeLabel("kernel_release: '6.1.170' -> '6.1.189'; boot_id: a -> b"),
+      'kernel_release: 6.1.170 -> 6.1.189; reboot');
+    const out = periodHelpers.envChangeLabel('glibc_version: ' + sha1 + ' -> 2.34');
+    assert.equal(out, 'glibc_version: 5466d250765a099f6834a... -> 2.34');
+    assert.ok(!out.includes(sha1));
+  });
+  it('returns null for an empty annotation', () => {
+    assert.equal(periodHelpers.envChangeLabel(null), null);
+    assert.equal(periodHelpers.envChangeLabel(' ; '), null);
+  });
+});
+
+describe('canaryState', () => {
+  const now = Date.parse('2026-11-08T12:00:00Z');
+  const entry = (latest, phase) => ({ runner: { runner_id: 'intelbench', series: { phase: phase || 'ready' }, latest_observation: latest } });
+  it('reads an alarm with its delta and the sanitized environment change', () => {
+    const state = periodHelpers.canaryState(entry({
+      utc_date: '2026-11-07', candidate_signal: 'alarm', delta_pct: 12.3,
+      env_change_annotation: "kernel_release: '6.1.170' -> '6.1.189'; cpu_microcode: '0x2b000603' -> '0x2b000685'",
+    }), now);
+    assert.equal(state.severity, 'alarm');
+    assert.equal(state.banner, true);
+    assert.equal(state.text, 'Canary 2026-11-07: +12.3% vs the 28-day median, alarm. Environment changed: kernel_release: 6.1.170 -> 6.1.189; cpu_microcode: 0x2b000603 -> 0x2b000685');
+  });
+  it('a within observation is informational and shows no banner', () => {
+    const state = periodHelpers.canaryState(entry({ utc_date: '2026-11-08', candidate_signal: 'within', delta_pct: 0.4 }), now);
+    assert.equal(state.severity, 'info');
+    assert.equal(state.banner, false);
+    assert.equal(state.text, 'Canary 2026-11-08: +0.4% vs the 28-day median');
+  });
+  it('an environment change alone never raises a banner', () => {
+    const fresh = periodHelpers.canaryState(entry({ utc_date: '2026-11-08', candidate_signal: 'within', delta_pct: -0.5,
+      env_change_annotation: 'conductress_revision: a -> b' }), now);
+    assert.equal(fresh.banner, false);
+    assert.equal(fresh.severity, 'info');
+    assert.match(fresh.text, /Environment changed: harness revision changed$/);
+    const old = periodHelpers.canaryState(entry({ utc_date: '2026-10-01', candidate_signal: 'within', delta_pct: 0.1, env_change_annotation: 'x: 1 -> 2' }), now);
+    assert.ok(!old.text.includes('Environment changed'));
+  });
+  it('a warning raises a banner', () => {
+    assert.equal(periodHelpers.canaryState(entry({ utc_date: '2026-11-08', candidate_signal: 'warning', delta_pct: 6 }), now).banner, true);
+  });
+  it('names an uncalibrated phase and handles empty files', () => {
+    const state = periodHelpers.canaryState(entry({ utc_date: '2026-11-08', candidate_signal: 'insufficient-data' }, 'observation'), now);
+    assert.equal(state.text, 'Canary 2026-11-08: observation phase');
+    assert.equal(periodHelpers.canaryState(null, now), null);
+    assert.equal(periodHelpers.canaryState({ runner: { runner_id: 'x', latest_observation: null } }, now), null);
+  });
+});
+
+describe('canaryLinkState', () => {
+  const now = Date.parse('2026-11-09T12:00:00Z');
+  const at = hoursAgo => new Date(now - hoursAgo * 3600000).toISOString();
+  it('shows the open count from a fresh findings file', () => {
+    assert.deepEqual(periodHelpers.canaryLinkState({ generated_at: at(1), open_count: 3 }, now), { text: 'Canary: 3 open findings', muted: false });
+    assert.deepEqual(periodHelpers.canaryLinkState({ generated_at: at(1), open_count: 1 }, now), { text: 'Canary: 1 open finding', muted: false });
+    assert.deepEqual(periodHelpers.canaryLinkState({ generated_at: at(1), open_count: 0 }, now), { text: 'Canary: no open findings', muted: false });
+  });
+  it('a findings file older than 26 h gives a muted plain link', () => {
+    assert.deepEqual(periodHelpers.canaryLinkState({ generated_at: at(25.9), open_count: 2 }, now).muted, false);
+    assert.deepEqual(periodHelpers.canaryLinkState({ generated_at: at(26.1), open_count: 2 }, now), { text: 'Canary', muted: true });
+  });
+  it('a missing or broken file gives a muted plain link', () => {
+    assert.deepEqual(periodHelpers.canaryLinkState(null, now), { text: 'Canary', muted: true });
+    assert.deepEqual(periodHelpers.canaryLinkState({ open_count: 2 }, now), { text: 'Canary', muted: true });
+    assert.deepEqual(periodHelpers.canaryLinkState({ generated_at: at(1), open_count: 'x' }, now), { text: 'Canary', muted: true });
+  });
+  it('links to the canary page for a runner', () => {
+    assert.equal(periodHelpers.canaryPageHref('intelbench'), 'canary.html#runner=intelbench');
+    assert.equal(periodHelpers.canaryPageHref(null), 'canary.html');
   });
 });

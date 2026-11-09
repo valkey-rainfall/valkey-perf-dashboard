@@ -29,7 +29,7 @@
         .status-dot.stale { background: #d29922; }
         .host-card.alarm-warn { border-color: #d29922; }
         .host-card.alarm-crit { border-color: #f85149; }
-        .card-banner { padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.8rem; margin-top: 0.65rem; font-weight: 600; }
+        .card-banner { padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.8rem; margin-top: 0.65rem; font-weight: 600; overflow-wrap: anywhere; }
         .card-banner.warn { background: rgba(210,153,34,0.15); color: #d29922; border: 1px solid #d29922; }
         .card-banner.crit { background: rgba(248,81,73,0.15); color: #f85149; border: 1px solid #f85149; }
         .server-banner { padding: 0.6rem 0.9rem; border-radius: 8px; font-size: 0.9rem; margin-bottom: 1rem; font-weight: 600; display: none; }
@@ -133,8 +133,9 @@ function renderHost(data, host, remoteTasks, canaryEntry) {
     const diskMeta = diskFree != null && !stale ? ` · disk ${diskFree}% free` : '';
     const fleetControl = renderFleetControl(data);
     // Canary: the runner's daily fixed-commit measurement against its own
-    // 28-day median. An alarm or a recent environment change gets a banner;
-    // a within-noise reading is only a meta line.
+    // 28-day median. Only a warning or alarm signal gets a banner and colours
+    // the card; any other reading, including an environment change such as a
+    // harness deploy, is only a meta line with a sanitized change label.
     const canary = PeriodHelpers.canaryState(canaryEntry, Date.now());
     let canaryBanner = '';
     if (canary && canary.banner) {
