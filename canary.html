@@ -54,6 +54,7 @@
     .effect-ci { color: var(--muted); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
     .ci-bar { display: block; width: 160px; max-width: 100%; height: 14px; flex: 0 0 100%; }
     .note { grid-column: 2 / -1; color: var(--muted); font-size: 0.74rem; }
+    .changed, .why { display: block; color: var(--muted); font-size: 0.74rem; overflow-wrap: anywhere; }
     .lbl { display: none; color: var(--faint); font-size: 0.7rem; margin-right: 0.25rem; }
 
     /* State badges: always a word; the colour only repeats it. */
@@ -135,7 +136,7 @@
     <div class="controls">
       <fieldset>
         <legend>Show</legend>
-        <label><input type="radio" name="scope" value="open" id="scopeOpen" checked> open and not enough data</label>
+        <label><input type="radio" name="scope" value="open" id="scopeOpen" checked> open findings and recent events still collecting data</label>
         <label><input type="radio" name="scope" value="all" id="scopeAll"> all events</label>
       </fieldset>
       <label>Runner <select id="runnerSelect"><option value="">All runners</option></select></label>
@@ -266,7 +267,10 @@ function eventSummary(ev, rank, scale) {
   sum.appendChild(el('span', null, [badge(ev.state, ev.below_floor_shift)]));
   sum.appendChild(el('span', null, [el('span', { class: 'lbl', text: 'Runner' }), el('span', { text: fleet ? 'Fleet' : runnerName(ev.runner_id) })]));
   sum.appendChild(el('span', { class: 'num' }, [el('span', { class: 'lbl', text: 'Date' }), el('span', { text: ev.date || 'n/a' })]));
-  sum.appendChild(el('span', null, [el('span', { class: 'lbl', text: 'Event' }), el('span', { text: ev.kind || 'change' })]));
+  var what = el('span', null, [el('span', { class: 'lbl', text: 'Event' }), el('span', { text: ev.kind || 'change' })]);
+  var changed = C.fieldsSummary(ev, 140);
+  if (changed) what.appendChild(el('span', { class: 'changed', text: changed }));
+  sum.appendChild(what);
   var eff = el('span', { class: 'effect' });
   eff.appendChild(el('span', { class: 'lbl', text: 'Effect' }));
   if (fleet) {
@@ -280,7 +284,9 @@ function eventSummary(ev, rank, scale) {
   }
   sum.appendChild(eff);
   sum.appendChild(el('span', { class: 'num' }, [el('span', { class: 'lbl', text: 'Confidence' }), el('span', { text: fleet ? 'n/a' : C.formatConfidence(ev.confidence) })]));
-  sum.appendChild(el('span', null, [el('span', { class: 'lbl', text: 'Evidence' }), el('span', { text: C.evidenceText(ev) })]));
+  var evidence = el('span', null, [el('span', { class: 'lbl', text: 'Evidence' }), el('span', { text: C.evidenceText(ev) })]);
+  if (ev.reason) evidence.appendChild(el('span', { class: 'why', text: ev.reason }));
+  sum.appendChild(evidence);
   if (ev.attribution_note) sum.appendChild(el('span', { class: 'note', text: ev.attribution_note }));
   return sum;
 }
@@ -296,7 +302,7 @@ function renderList() {
     return [];
   }
   var all = C.sortEvents(f.events);
-  var rows = C.filterEvents(all, { scope: page.scope, runner: page.runner });
+  var rows = C.filterEvents(all, { scope: page.scope, runner: page.runner, now: Date.parse(f.generated_at) });
   var scale = C.ciScale(rows.filter(function (e) { return !C.isFleet(e); }));
   shown.textContent = 'Showing ' + rows.length + ' of ' + all.length + ' events. Bar scale: -' + scale.toFixed(1) + '% to +' + scale.toFixed(1) + '%.';
   if (!rows.length) {
@@ -412,6 +418,7 @@ function eventDetail(ev) {
       d.appendChild(el('p', { text: 'Operator note: ' + ev.manual_labels.join('; ') }));
     }
     if (ev.attribution_note) d.appendChild(el('p', { text: ev.attribution_note }));
+    if (ev.generation_closed) d.appendChild(el('p', { text: 'A closed sweep generation already cuts the series at this event; the paired tests below come from it.' }));
 
     var plot = plotSvg(ev);
     if (plot) {
@@ -510,7 +517,7 @@ function applyHash() {
   page.runner = h.runner && page.names[h.runner] ? h.runner : '';
   var evs = page.findings && Array.isArray(page.findings.events) ? page.findings.events : [];
   var target = h.event ? evs.filter(function (e) { return e && e.event_id === h.event; })[0] : null;
-  if (target && !C.filterEvents([target], { scope: page.scope, runner: page.runner }).length) {
+  if (target && !C.filterEvents([target], { scope: page.scope, runner: page.runner, now: Date.parse((page.findings || {}).generated_at) }).length) {
     page.scope = 'all';
     if (!C.filterEvents([target], { scope: 'all', runner: page.runner }).length) page.runner = '';
   }

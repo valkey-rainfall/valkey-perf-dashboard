@@ -109,9 +109,27 @@ describe('filterEvents and runnerOptions', () => {
     ev({ event_id: 'd', state: 'explained' }),
     fleetEv({ event_id: 'e' }),
   ];
-  it('open scope keeps open, not enough data and fleet rows', () => {
-    assert.deepEqual(C.filterEvents(list, { scope: 'open' }).map(e => e.event_id), ['a', 'c', 'e']);
-    assert.deepEqual(C.filterEvents(list).map(e => e.event_id), ['a', 'c', 'e']);
+  const NOW = Date.parse('2026-11-09T18:00:00Z');
+  it('open scope keeps open findings and recent events still collecting data', () => {
+    assert.deepEqual(C.filterEvents(list, { scope: 'open', now: NOW }).map(e => e.event_id), ['a', 'c', 'e']);
+    assert.deepEqual(C.filterEvents(list, { now: NOW }).map(e => e.event_id), ['a', 'c', 'e']);
+  });
+  it('open scope drops old not-enough-data and old fleet rows, never an open finding', () => {
+    const old = [
+      ev({ event_id: 'old-open', state: 'suspected', date: '2026-09-01' }),
+      ev({ event_id: 'old-short', state: 'insufficient-data', date: '2026-09-25' }),
+      fleetEv({ event_id: 'old-fleet', date: '2026-09-19' }),
+      ev({ event_id: 'edge', state: 'insufficient-data', date: '2026-10-27' }),
+      ev({ event_id: 'undated', state: 'insufficient-data', date: '' }),
+    ];
+    assert.deepEqual(C.filterEvents(old, { scope: 'open', now: NOW }).map(e => e.event_id), ['old-open', 'edge']);
+    assert.equal(C.filterEvents(old, { scope: 'all', now: NOW }).length, 5);
+  });
+  it('isRecent counts RECENT_DAYS back from now', () => {
+    assert.equal(C.RECENT_DAYS, 14);
+    assert.equal(C.isRecent(ev({ date: '2026-10-27' }), NOW), true);
+    assert.equal(C.isRecent(ev({ date: '2026-10-26' }), NOW), false);
+    assert.equal(C.isRecent(ev({ date: 'not a date' }), NOW), false);
   });
   it('all scope keeps every event', () => {
     assert.equal(C.filterEvents(list, { scope: 'all' }).length, 5);
@@ -197,6 +215,16 @@ describe('evidence, fields, tests', () => {
     assert.equal(C.evidenceText(ev({ tests: [Object.assign({}, tests[0], { n_after: 1 })] })), '1 day after');
     assert.equal(C.evidenceText(ev({ tests: [] })), 'no tests');
     assert.equal(C.evidenceText(fleetEv()), '2 runners');
+  });
+  it('fieldsSummary lists every field on one line and cuts with +N more', () => {
+    const e = ev({ fields: [
+      { label: 'kernel', old: '6.1.170-213.321', new: '6.1.189-236.400' },
+      { label: 'glibc' }, { label: 'microcode_ctl' }, { label: 'reboot' },
+    ] });
+    assert.equal(C.fieldsSummary(e), 'kernel: 6.1.170-213.321 -> 6.1.189-236.400; glibc; microcode_ctl; reboot');
+    assert.equal(C.fieldsSummary(e, 50), 'kernel: 6.1.170-213.321 -> 6.1.189-236.400; glibc (+2 more)');
+    assert.equal(C.fieldsSummary(ev()), '');
+    assert.equal(C.fieldsSummary(null), '');
   });
   it('fieldText shows old -> new only when given', () => {
     assert.equal(C.fieldText({ label: 'kernel', old: 'k-3', new: 'k-2' }), 'kernel: k-3 -> k-2');
