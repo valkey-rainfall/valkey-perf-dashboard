@@ -114,7 +114,7 @@ describe('filterEvents and runnerOptions', () => {
     assert.deepEqual(C.filterEvents(list, { scope: 'open', now: NOW }).map(e => e.event_id), ['a', 'c', 'e']);
     assert.deepEqual(C.filterEvents(list, { now: NOW }).map(e => e.event_id), ['a', 'c', 'e']);
   });
-  it('open scope drops old not-enough-data and old fleet rows, never an open finding', () => {
+  it('open scope drops old not-enough-data rows, never an open finding or a fleet-wide suspected row', () => {
     const old = [
       ev({ event_id: 'old-open', state: 'suspected', date: '2026-09-01' }),
       ev({ event_id: 'old-short', state: 'insufficient-data', date: '2026-09-25' }),
@@ -122,7 +122,7 @@ describe('filterEvents and runnerOptions', () => {
       ev({ event_id: 'edge', state: 'insufficient-data', date: '2026-10-27' }),
       ev({ event_id: 'undated', state: 'insufficient-data', date: '' }),
     ];
-    assert.deepEqual(C.filterEvents(old, { scope: 'open', now: NOW }).map(e => e.event_id), ['old-open', 'edge']);
+    assert.deepEqual(C.filterEvents(old, { scope: 'open', now: NOW }).map(e => e.event_id), ['old-open', 'old-fleet', 'edge']);
     assert.equal(C.filterEvents(old, { scope: 'all', now: NOW }).length, 5);
   });
   it('isRecent counts RECENT_DAYS back from now', () => {
