@@ -27,6 +27,9 @@ jobs:
       - name: Run unit tests
         run: node --test tests/unit.test.js
 
+      - name: Run canary page tests
+        run: node --test tests/canary.test.js
+
   legacy-test:
     name: Legacy Status Tests
     runs-on: ubuntu-latest
@@ -65,7 +68,7 @@ jobs:
       - name: Check HTML structure
         run: |
           echo "Checking HTML files for lang and viewport..."
-          for f in index.html status.html notable.html compare.html; do
+          for f in index.html status.html notable.html compare.html canary.html; do
             [ -f "$f" ] || continue
             grep -q 'lang=' "$f" || { echo "$f missing lang attribute"; exit 1; }
             grep -q 'viewport' "$f" || { echo "$f missing viewport meta"; exit 1; }
