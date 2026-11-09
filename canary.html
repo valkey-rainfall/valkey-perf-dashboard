@@ -26,7 +26,6 @@
     .summary { font-size: 0.85rem; color: var(--text); }
     .summary .sep { color: var(--faint); margin: 0 0.35rem; }
     .summary .not-current { color: var(--muted); }
-    .header-links { margin-left: auto; display: flex; gap: 0.8rem; font-size: 0.78rem; }
     .intro { color: var(--muted); font-size: 0.8rem; max-width: 70em; margin-bottom: 1rem; }
     .panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.2rem; }
     .controls { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-size: 0.8rem; margin-bottom: 0.7rem; }
@@ -110,7 +109,6 @@
     @media (max-width: 600px) {
       body { padding: 0.75rem; }
       h1 { white-space: normal; }
-      .header-links { margin-left: 0; }
       .controls .shown { margin-left: 0; }
       .detail { padding: 0.4rem 0.2rem 0.8rem; }
       .cards { grid-template-columns: 1fr; }
@@ -122,10 +120,7 @@
   <header class="page-header">
     <h1><img class="brand-mark" src="brand/conductress-mark.svg" alt="">Canary findings</h1>
     <span class="summary" id="summary" aria-live="polite">Loading...</span>
-    <nav class="header-links" aria-label="Dashboard pages">
-      <a href="index.html">Dashboard</a>
-      <a href="status.html">Host Status</a>
-    </nav>
+    <div data-site-menu></div>
   </header>
   <p class="intro">Each runner measures one fixed commit every day. An event is an environment change between two
     daily measurements (for example a kernel update or a harness deploy). Each event is tested against the daily
@@ -177,6 +172,8 @@
 <noscript><p class="message">This page needs JavaScript to read the canary files.</p></noscript>
 
 <script src="config.js"></script>
+<script src="lib/period-helpers.js"></script>
+<script src="lib/site-menu.js"></script>
 <script src="lib/canary-helpers.js"></script>
 <script>
 // Canary page. All data text goes in through textContent / createElement.
