@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conductress - Canary findings</title>
+  <link rel="icon" href="brand/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+  <style>
+    :root {
+      --bg: #0f1117; --text: #e2e8f0; --card: #1a1d2e; --border: #2d3148;
+      --accent: #6366f1; --muted: #94a3b8; --faint: #64748b; --ok: #22c55e; --warn: #eab308; --danger: #ef4444;
+      --fleet: #7dd3fc; --explained: #c4b5fd;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 1.5rem; line-height: 1.4; }
+    a { color: #a5b4fc; text-decoration: none; }
+    a:hover, a:focus-visible { text-decoration: underline; }
+    h1 { font-size: 1.15rem; margin: 0; white-space: nowrap; }
+    h2 { font-size: 1rem; margin: 0 0 0.6rem; }
+    h3 { font-size: 0.82rem; margin: 0.9rem 0 0.35rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .page { max-width: 1400px; margin: 0 auto; }
+    .page-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 0.9rem; margin-bottom: 0.4rem; }
+    .brand-mark { width: 22px; height: 22px; vertical-align: -5px; margin-right: .4rem; }
+    .summary { font-size: 0.85rem; color: var(--text); }
+    .summary .sep { color: var(--faint); margin: 0 0.35rem; }
+    .summary .not-current { color: var(--muted); }
+    .header-links { margin-left: auto; display: flex; gap: 0.8rem; font-size: 0.78rem; }
+    .intro { color: var(--muted); font-size: 0.8rem; max-width: 70em; margin-bottom: 1rem; }
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.2rem; }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-size: 0.8rem; margin-bottom: 0.7rem; }
+    .controls fieldset { border: 0; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+    .controls legend { float: left; margin-right: 0.4rem; color: var(--muted); }
+    .controls select { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
+    .controls .shown { color: var(--muted); margin-left: auto; }
+    .message { color: var(--muted); font-size: 0.85rem; padding: 0.6rem 0; }
+
+    /* Ranked list: one details element per event; the summary is a grid row. */
+    .cols, .event > summary { display: grid; grid-template-columns: 2.2rem 11.5rem 7.5rem 6.3rem minmax(8rem, 1fr) 15rem 4.2rem 9rem; gap: 0.6rem; align-items: center; }
+    .cols { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; padding: 0 0.6rem 0.35rem; border-bottom: 1px solid var(--border); }
+    .event { border-bottom: 1px solid var(--border); }
+    .event > summary { list-style: none; cursor: pointer; padding: 0.5rem 0.6rem; font-size: 0.82rem; }
+    .event > summary::-webkit-details-marker { display: none; }
+    .event > summary:hover, .event > summary:focus-visible { background: rgba(255,255,255,0.03); outline: none; }
+    .event > summary:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+    .event[open] > summary { background: rgba(99,102,241,0.08); }
+    .rank { color: var(--faint); font-variant-numeric: tabular-nums; }
+    .rank::before { content: '\25B8'; margin-right: 0.25rem; color: var(--faint); }
+    .event[open] .rank::before { content: '\25BE'; }
+    .num { font-variant-numeric: tabular-nums; }
+    .effect { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.5rem; }
+    .effect-text { font-variant-numeric: tabular-nums; }
+    .effect-ci { color: var(--muted); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+    .ci-bar { display: block; width: 160px; max-width: 100%; height: 14px; flex: 0 0 100%; }
+    .note { grid-column: 2 / -1; color: var(--muted); font-size: 0.74rem; }
+    .lbl { display: none; color: var(--faint); font-size: 0.7rem; margin-right: 0.25rem; }
+
+    /* State badges: always a word; the colour only repeats it. */
+    .badge { display: inline-block; padding: 0.05rem 0.45rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; border: 1px solid currentColor; white-space: nowrap; }
+    .badge.confirmed { color: #fca5a5; background: rgba(239,68,68,0.16); }
+    .badge.suspected { color: #fde047; background: rgba(234,179,8,0.14); }
+    .badge.insufficient { color: var(--muted); border-style: dashed; font-weight: 500; }
+    .badge.fleet { color: var(--fleet); font-weight: 500; }
+    .badge.explained { color: var(--explained); font-weight: 500; }
+    .badge.cleared { color: #86efac; font-weight: 500; }
+    .badge.cleared-shift { color: #86efac; font-weight: 500; border-style: dotted; }
+    .badge.unknown { color: var(--muted); }
+
+    .detail { padding: 0.4rem 0.9rem 1rem 3rem; font-size: 0.8rem; }
+    .detail p { margin: 0.25rem 0; max-width: 75em; }
+    .detail ul { margin: 0.2rem 0 0.2rem 1.2rem; }
+    .plot { width: 100%; max-width: 720px; height: auto; display: block; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; }
+    .plot-caption { color: var(--muted); font-size: 0.74rem; }
+    .table-wrap { overflow-x: auto; max-width: 100%; }
+    table { border-collapse: collapse; font-size: 0.76rem; min-width: 32rem; }
+    th, td { text-align: left; padding: 0.25rem 0.7rem 0.25rem 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; }
+    td.num, th.num { text-align: right; }
+    pre.proposal { white-space: pre-wrap; overflow-wrap: anywhere; font-family: ui-monospace, monospace; font-size: 0.74rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.7rem; max-width: 75em; }
+    .footer-id { margin-top: 0.8rem; color: var(--faint); font-size: 0.7rem; font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+
+    /* Consistency panel */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.8rem; }
+    .card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.7rem 0.8rem; font-size: 0.78rem; min-width: 0; }
+    .card h3 { margin: 0 0 0.4rem; text-transform: none; letter-spacing: 0; color: var(--text); font-size: 0.9rem; }
+    .card p { margin: 0.2rem 0; overflow-wrap: anywhere; }
+    .sig::before { display: inline-block; width: 1.1em; font-weight: 700; }
+    .sig.cleared::before { content: '+'; color: #86efac; }
+    .sig.insufficient::before { content: '?'; color: var(--muted); }
+    .sig.neutral::before { content: '-'; color: var(--faint); }
+    .sig.fleet::before { content: '~'; color: var(--fleet); }
+    .sig.insufficient { color: var(--muted); }
+    .fleet-line { margin-top: 0.8rem; font-size: 0.8rem; }
+    .legend { font-size: 0.74rem; color: var(--muted); }
+    .legend li { margin: 0.15rem 0 0.15rem 1.2rem; }
+    .brand-footer { margin-top: 2rem; padding-top: .75rem; border-top: 1px solid var(--border); font-size: .75rem; color: var(--faint); }
+    .brand-footer a { color: inherit; display: inline-flex; align-items: center; gap: .4rem; }
+    .brand-footer img { width: 14px; height: 14px; }
+
+    @media (max-width: 1100px) {
+      .cols { display: none; }
+      .event > summary { grid-template-columns: 2rem 1fr; gap: 0.25rem 0.6rem; }
+      .event > summary > * { grid-column: 2; }
+      .event > summary > .rank { grid-column: 1; grid-row: 1; }
+      .lbl { display: inline; }
+      .detail { padding-left: 0.9rem; }
+    }
+    @media (max-width: 600px) {
+      body { padding: 0.75rem; }
+      h1 { white-space: normal; }
+      .header-links { margin-left: 0; }
+      .controls .shown { margin-left: 0; }
+      .detail { padding: 0.4rem 0.2rem 0.8rem; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="page-header">
+    <h1><img class="brand-mark" src="brand/conductress-mark.svg" alt="">Canary findings</h1>
+    <span class="summary" id="summary" aria-live="polite">Loading...</span>
+    <nav class="header-links" aria-label="Dashboard pages">
+      <a href="index.html">Dashboard</a>
+      <a href="status.html">Host Status</a>
+    </nav>
+  </header>
+  <p class="intro">Each runner measures one fixed commit every day. An event is an environment change between two
+    daily measurements (for example a kernel update or a harness deploy). Each event is tested against the daily
+    scores and against paired sweep results. "No evidence of change" and "not enough data" are different results.</p>
+
+  <section class="panel" aria-labelledby="eventsTitle">
+    <h2 id="eventsTitle">Ranked events</h2>
+    <div class="controls">
+      <fieldset>
+        <legend>Show</legend>
+        <label><input type="radio" name="scope" value="open" id="scopeOpen" checked> open and not enough data</label>
+        <label><input type="radio" name="scope" value="all" id="scopeAll"> all events</label>
+      </fieldset>
+      <label>Runner <select id="runnerSelect"><option value="">All runners</option></select></label>
+      <span class="shown" id="shownCount" aria-live="polite"></span>
+    </div>
+    <div class="cols" aria-hidden="true">
+      <span>#</span><span>State</span><span>Runner</span><span>Date</span><span>Event</span>
+      <span>Effect, 95% interval</span><span>Conf.</span><span>Evidence</span>
+    </div>
+    <div id="events"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="consistencyTitle">
+    <h2 id="consistencyTitle">Consistency</h2>
+    <div class="cards" id="consistency"></div>
+    <p class="fleet-line" id="fleetLine"></p>
+  </section>
+
+  <section class="panel legend" aria-labelledby="legendTitle">
+    <h2 id="legendTitle">States</h2>
+    <ul>
+      <li><b>confirmed</b>: enough data, the interval excludes zero, q below 0.05 and the effect reaches the runner floor.</li>
+      <li><b>suspected</b>: a signal that is not confirmed yet.</li>
+      <li><b>not enough data</b>: too few days or pairs, or an interval still too wide to tell.</li>
+      <li><b>suspected (fleet-wide)</b>: several runners moved the same way on the same day; not counted as open.</li>
+      <li><b>explained</b>: an operator wrote an explanation; the numbers stay visible.</li>
+      <li><b>no evidence of change</b>: the interval is inside the runner floor. "Small shift below the floor" means a real but small shift.</li>
+    </ul>
+    <p>Effect is the change of the median daily score after the event against the median before it. The bar shows the
+      95% interval (line), the effect (dot), zero (tick) and the runner floor (shaded); its scale is shown in the
+      shown-count line. The data cannot tell which of several fields that changed together caused an effect.</p>
+  </section>
+
+  <footer class="brand-footer">
+    <a href="intro.html"><img src="brand/conductress-mark.svg" alt="">Conductress</a>
+  </footer>
+</div>
+<noscript><p class="message">This page needs JavaScript to read the canary files.</p></noscript>
+
+<script src="config.js"></script>
+<script src="lib/canary-helpers.js"></script>
+<script>
+// Canary page. All data text goes in through textContent / createElement.
+var C = CanaryHelpers;
+var SVG_NS = 'http://www.w3.org/2000/svg';
+var page = { findings: null, consistency: null, names: {}, scope: 'open', runner: '', now: null };
+
+function el(tag, attrs, kids) {
+  var n = document.createElement(tag);
+  setAttrs(n, attrs);
+  append(n, kids);
+  return n;
+}
+function svg(tag, attrs) {
+  var n = document.createElementNS(SVG_NS, tag);
+  setAttrs(n, attrs);
+  return n;
+}
+function setAttrs(n, attrs) {
+  if (!attrs) return;
+  Object.keys(attrs).forEach(function (k) {
+    var v = attrs[k];
+    if (v === null || v === undefined || v === false) return;
+    if (k === 'text') n.textContent = String(v);
+    else if (k === 'class') n.setAttribute('class', v);
+    else n.setAttribute(k, String(v));
+  });
+}
+function append(n, kids) {
+  if (kids === null || kids === undefined) return;
+  (Array.isArray(kids) ? kids : [kids]).forEach(function (k) {
+    if (k === null || k === undefined || k === false) return;
+    if (typeof k === 'string' || typeof k === 'number') n.appendChild(el('span', { text: String(k) }));
+    else n.appendChild(k);
+  });
+}
+function clear(n) { n.textContent = ''; }
+function badge(state, shift) {
+  var s = C.stateInfo(state, shift);
+  return el('span', { class: 'badge ' + s.cls, text: s.word });
+}
+function runnerName(id) { return page.names[id] || id || 'Fleet'; }
+
+// ------------------------------------------------------------- header
+
+function renderSummary(findings, now) {
+  var box = document.getElementById('summary');
+  clear(box);
+  if (!findings) {
+    box.appendChild(el('span', { class: 'not-current', text: 'The canary findings file is not published yet, or it could not be read.' }));
+    return;
+  }
+  var stale = C.isStale(findings.generated_at, now);
+  var open = C.openCountText(findings);
+  if (open) box.appendChild(el('span', { text: open }));
+  box.appendChild(el('span', { class: 'sep', text: ' - ' }));
+  var at = el('span', { class: stale ? 'not-current' : null, text: 'analysis ' + C.formatUtc(findings.generated_at) + (stale ? ' (not current)' : '') });
+  if (stale) at.setAttribute('title', 'The analysis is older than 26 hours.');
+  box.appendChild(at);
+  var counts = C.stateCountsText(findings.state_counts);
+  if (counts) {
+    box.appendChild(el('span', { class: 'sep', text: ' - ' }));
+    box.appendChild(el('span', { class: 'not-current', text: counts }));
+  }
+}
+
+// ------------------------------------------------------------- list
+
+function ciBarSvg(ev, scale) {
+  var g = C.ciBar(ev.ci_pct, ev.effect_pct, ev.floor_pct, scale, 160);
+  if (!g) return null;
+  var s = svg('svg', { class: 'ci-bar', viewBox: '0 0 160 14', 'aria-hidden': 'true', focusable: 'false' });
+  if (g.floor0 !== null) s.appendChild(svg('rect', { x: g.floor0, y: 2, width: Math.max(0, g.floor1 - g.floor0), height: 10, fill: 'rgba(148,163,184,0.18)' }));
+  s.appendChild(svg('line', { x1: 0, x2: 160, y1: 7, y2: 7, stroke: '#2d3148', 'stroke-width': 1 }));
+  s.appendChild(svg('line', { x1: g.zero, x2: g.zero, y1: 1, y2: 13, stroke: '#94a3b8', 'stroke-width': 1 }));
+  var colour = ev.state === 'confirmed' ? '#fca5a5' : ev.state === 'suspected' ? '#fde047' : '#a5b4fc';
+  if (g.x0 !== null) s.appendChild(svg('line', { x1: g.x0, x2: g.x1, y1: 7, y2: 7, stroke: colour, 'stroke-width': 3, 'stroke-linecap': 'round' }));
+  if (g.dot !== null) s.appendChild(svg('circle', { cx: g.dot, cy: 7, r: 3, fill: colour }));
+  if (g.clipRight) s.appendChild(svg('path', { d: 'M154 2 L160 7 L154 12 Z', fill: colour }));
+  if (g.clipLeft) s.appendChild(svg('path', { d: 'M6 2 L0 7 L6 12 Z', fill: colour }));
+  return s;
+}
+
+function eventSummary(ev, rank, scale) {
+  var fleet = C.isFleet(ev);
+  var sum = el('summary');
+  sum.appendChild(el('span', { class: 'rank', text: String(rank) }));
+  sum.appendChild(el('span', null, [badge(ev.state, ev.below_floor_shift)]));
+  sum.appendChild(el('span', null, [el('span', { class: 'lbl', text: 'Runner' }), el('span', { text: fleet ? 'Fleet' : runnerName(ev.runner_id) })]));
+  sum.appendChild(el('span', { class: 'num' }, [el('span', { class: 'lbl', text: 'Date' }), el('span', { text: ev.date || 'n/a' })]));
+  sum.appendChild(el('span', null, [el('span', { class: 'lbl', text: 'Event' }), el('span', { text: ev.kind || 'change' })]));
+  var eff = el('span', { class: 'effect' });
+  eff.appendChild(el('span', { class: 'lbl', text: 'Effect' }));
+  if (fleet) {
+    eff.appendChild(el('span', { class: 'effect-text', text: 'pooled Z ' + C.formatZ(ev.fleet.z) }));
+    if (ev.fleet.same_direction) eff.appendChild(el('span', { class: 'effect-ci', text: ev.fleet.same_direction + ' same way' }));
+  } else {
+    eff.appendChild(el('span', { class: 'effect-text', text: C.formatPct(ev.effect_pct) }));
+    eff.appendChild(el('span', { class: 'effect-ci', text: C.formatCi(ev.ci_pct) }));
+    var bar = ciBarSvg(ev, scale);
+    if (bar) eff.appendChild(bar);
+  }
+  sum.appendChild(eff);
+  sum.appendChild(el('span', { class: 'num' }, [el('span', { class: 'lbl', text: 'Confidence' }), el('span', { text: fleet ? 'n/a' : C.formatConfidence(ev.confidence) })]));
+  sum.appendChild(el('span', null, [el('span', { class: 'lbl', text: 'Evidence' }), el('span', { text: C.evidenceText(ev) })]));
+  if (ev.attribution_note) sum.appendChild(el('span', { class: 'note', text: ev.attribution_note }));
+  return sum;
+}
+
+function renderList() {
+  var box = document.getElementById('events');
+  clear(box);
+  var f = page.findings;
+  var shown = document.getElementById('shownCount');
+  if (!f || !Array.isArray(f.events)) {
+    shown.textContent = '';
+    box.appendChild(el('p', { class: 'message', text: 'No findings to show.' }));
+    return [];
+  }
+  var all = C.sortEvents(f.events);
+  var rows = C.filterEvents(all, { scope: page.scope, runner: page.runner });
+  var scale = C.ciScale(rows.filter(function (e) { return !C.isFleet(e); }));
+  shown.textContent = 'Showing ' + rows.length + ' of ' + all.length + ' events. Bar scale: -' + scale.toFixed(1) + '% to +' + scale.toFixed(1) + '%.';
+  if (!rows.length) {
+    box.appendChild(el('p', { class: 'message', text: page.scope === 'open'
+      ? 'No open events and no events waiting for data. Choose "all events" to see cleared and explained events.'
+      : 'No events for this runner.' }));
+  }
+  rows.forEach(function (ev, i) {
+    var d = el('details', { class: 'event', 'data-event': ev.event_id });
+    d.appendChild(eventSummary(ev, i + 1, scale));
+    var filled = false;
+    d.addEventListener('toggle', function () {
+      if (d.open && !filled) { d.appendChild(eventDetail(ev)); filled = true; }
+      if (d.open) setHash(ev.event_id);
+      else if (C.parseHash(location.hash).event === ev.event_id) setHash(null);
+    });
+    box.appendChild(d);
+  });
+  return rows;
+}
+
+// ------------------------------------------------------------- detail
+
+function table(head, rows, numCols) {
+  var t = el('table');
+  var tr = el('tr');
+  head.forEach(function (h, i) { tr.appendChild(el('th', { scope: 'col', class: numCols && numCols.indexOf(i) >= 0 ? 'num' : null, text: h })); });
+  t.appendChild(el('thead', null, [tr]));
+  var body = el('tbody');
+  rows.forEach(function (r) {
+    var row = el('tr');
+    r.forEach(function (c, i) {
+      var td = el('td', { class: numCols && numCols.indexOf(i) >= 0 ? 'num' : null });
+      if (c && typeof c === 'object') td.appendChild(c); else td.textContent = String(c);
+      row.appendChild(td);
+    });
+    body.appendChild(row);
+  });
+  t.appendChild(body);
+  return el('div', { class: 'table-wrap' }, [t]);
+}
+
+function plotSvg(ev) {
+  var W = 640, H = 220;
+  var g = C.plotGeometry(ev.plot, ev.ci_pct, W, H);
+  if (!g) return null;
+  var before = g.points.filter(function (p) { return p.side === 'before'; }).length;
+  var after = g.points.length - before;
+  var label = 'Daily canary scores: ' + before + ' days before and ' + after + ' after the event.' +
+    (g.before ? ' Median before ' + C.formatScore(g.before.value) + '.' : '') +
+    (g.after ? ' Median after ' + C.formatScore(g.after.value) + '.' : '');
+  var s = svg('svg', { class: 'plot', viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': label });
+  [g.yMin + (g.yMax - g.yMin) * 0.1, (g.yMin + g.yMax) / 2, g.yMax - (g.yMax - g.yMin) * 0.1].forEach(function (v) {
+    var y = g.y(v);
+    s.appendChild(svg('line', { x1: 56, x2: W - 12, y1: y, y2: y, stroke: '#2d3148', 'stroke-width': 1 }));
+    var t = svg('text', { x: 50, y: y + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#94a3b8' });
+    t.textContent = C.formatScore(v);
+    s.appendChild(t);
+  });
+  if (g.band) s.appendChild(svg('rect', { x: g.band.x0, y: g.band.y0, width: Math.max(0, g.band.x1 - g.band.x0), height: Math.max(1, g.band.y1 - g.band.y0), fill: 'rgba(99,102,241,0.22)' }));
+  g.cuts.forEach(function (c) {
+    s.appendChild(svg('line', { x1: c.x, x2: c.x, y1: 8, y2: H - 26, stroke: '#eab308', 'stroke-width': 1, 'stroke-dasharray': '4 3' }));
+  });
+  if (g.before) s.appendChild(svg('line', { x1: g.before.x0, x2: g.before.x1, y1: g.before.y, y2: g.before.y, stroke: '#94a3b8', 'stroke-width': 2 }));
+  if (g.after) s.appendChild(svg('line', { x1: g.after.x0, x2: g.after.x1, y1: g.after.y, y2: g.after.y, stroke: '#a5b4fc', 'stroke-width': 2 }));
+  g.points.forEach(function (p) {
+    var c = svg('circle', { cx: p.x, cy: p.y, r: 3.2, fill: p.side === 'before' ? '#94a3b8' : '#a5b4fc' });
+    var tt = svg('title');
+    tt.textContent = p.date + ': ' + C.formatScore(p.score);
+    c.appendChild(tt);
+    s.appendChild(c);
+  });
+  var first = g.points[0], last = g.points[g.points.length - 1];
+  [[first.x, first.date, 'start'], [last.x, last.date, 'end']].forEach(function (a) {
+    var t = svg('text', { x: a[0], y: H - 8, 'text-anchor': a[2], 'font-size': 11, fill: '#94a3b8' });
+    t.textContent = a[1];
+    s.appendChild(t);
+  });
+  // Step labels sit at the top, left of the line, so they never cover the axis dates.
+  g.cuts.forEach(function (c) {
+    var t = svg('text', { x: c.x - 4, y: 20, 'text-anchor': 'end', 'font-size': 11, fill: '#eab308' });
+    t.textContent = 'step ' + c.date;
+    s.appendChild(t);
+  });
+  return s;
+}
+
+function eventDetail(ev) {
+  var d = el('div', { class: 'detail' });
+  var fleet = C.isFleet(ev);
+  var st = C.stateInfo(ev.state, ev.below_floor_shift);
+  var head = 'State: ' + st.word;
+  if (ev.state === 'explained' && ev.state_before_explanation) head += ' (before the explanation: ' + C.stateInfo(ev.state_before_explanation).word + ')';
+  d.appendChild(el('p', { text: head + '.' }));
+
+  if (fleet) {
+    d.appendChild(el('p', { text: 'Harness deploy on several runners within 48 hours. Pooled Z ' + C.formatZ(ev.fleet.z) +
+      (ev.fleet.same_direction ? ', ' + ev.fleet.same_direction + ' runners moved the same way' : '') +
+      '. A one-day move on all runners is shown low in the list and is never an alarm.' }));
+    var rs = Array.isArray(ev.fleet.runners) ? ev.fleet.runners : [];
+    d.appendChild(el('h3', { text: 'Runners' }));
+    d.appendChild(table(['Runner', 'Effect', 'Z', 'Days after', 'Runner event'], rs.map(function (r) {
+      var link = r.event_id ? el('a', { href: C.buildHash({ event: r.event_id }), text: 'open' }) : 'n/a';
+      return [runnerName(r.runner_id), C.formatPct(r.effect_pct), C.formatZ(r.z), r.n_after == null ? 'n/a' : r.n_after, link];
+    }), [1, 2, 3]));
+  } else {
+    var fields = Array.isArray(ev.fields) ? ev.fields : [];
+    if (fields.length) {
+      d.appendChild(el('h3', { text: 'What changed' }));
+      d.appendChild(el('ul', null, fields.map(function (f) { return el('li', { text: C.fieldText(f) }); })));
+    }
+    if (Array.isArray(ev.manual_labels) && ev.manual_labels.length) {
+      d.appendChild(el('p', { text: 'Operator note: ' + ev.manual_labels.join('; ') }));
+    }
+    if (ev.attribution_note) d.appendChild(el('p', { text: ev.attribution_note }));
+
+    var plot = plotSvg(ev);
+    if (plot) {
+      d.appendChild(el('h3', { text: 'Daily canary scores' }));
+      d.appendChild(plot);
+      d.appendChild(el('p', { class: 'plot-caption', text: 'Grey dots: days before the event. Blue dots: days after. Lines: the two medians. Shaded: the 95% interval of the effect. Dashed: located step dates.' }));
+    }
+    d.appendChild(el('p', { text: 'Effect ' + C.formatPct(ev.effect_pct) + ', 95% interval ' + C.formatCi(ev.ci_pct) +
+      ', q ' + C.formatQ(ev.q) + ', confidence ' + C.formatConfidence(ev.confidence) +
+      ', runner floor ' + (typeof ev.floor_pct === 'number' ? ev.floor_pct.toFixed(2) + '%' : 'n/a') + '.' }));
+    var strict = C.strictText(ev);
+    if (strict) d.appendChild(el('p', { text: 'Strict window (cut at the next event of any kind): ' + strict + '.' }));
+    if (Array.isArray(ev.alternative_dates) && ev.alternative_dates.length) {
+      d.appendChild(el('p', { text: 'Other dates that fit the step almost as well: ' + ev.alternative_dates.join(', ') + '.' }));
+    }
+
+    d.appendChild(el('h3', { text: 'All tests' }));
+    d.appendChild(table(['Series', 'n', 'Effect', '95% interval', 'q', 'State', 'Same direction'],
+      C.testRows(ev).map(function (r) {
+        return [r.series, r.n, r.effect, r.ci, r.q, el('span', { class: 'badge ' + r.stateCls, text: r.state }), r.sameDirection];
+      }), [2, 4, 6]));
+
+    var cr = Array.isArray(ev.cross_runner) ? ev.cross_runner : [];
+    if (cr.length) {
+      d.appendChild(el('h3', { text: 'Other runners over the same dates' }));
+      d.appendChild(table(['Runner', 'Effect', 'Z (robust sd)', 'Days'], cr.map(function (r) {
+        return [runnerName(r.runner_id), C.formatPct(r.effect_pct), C.formatZ(r.z), r.n_days == null ? 'n/a' : r.n_days];
+      }), [1, 2, 3]));
+    }
+  }
+
+  if (ev.explanation && typeof ev.explanation === 'object' && ev.explanation.text) {
+    d.appendChild(el('h3', { text: 'Explanation' }));
+    d.appendChild(el('p', { text: String(ev.explanation.text) + (ev.explanation.event_date ? ' (for ' + ev.explanation.event_date + ')' : '') }));
+  }
+  if (ev.proposal) {
+    d.appendChild(el('h3', { text: 'Proposed action (a person decides)' }));
+    d.appendChild(el('pre', { class: 'proposal', text: String(ev.proposal) }));
+  }
+  d.appendChild(el('p', { class: 'footer-id', text: 'Event id: ' + ev.event_id }));
+  return d;
+}
+
+// ------------------------------------------------------------- consistency
+
+function renderConsistency(cons) {
+  var box = document.getElementById('consistency');
+  var line = document.getElementById('fleetLine');
+  clear(box);
+  clear(line);
+  if (!cons || !Array.isArray(cons.runners)) {
+    box.appendChild(el('p', { class: 'message', text: 'The consistency file is not published yet, or it could not be read.' }));
+    return;
+  }
+  cons.runners.forEach(function (r) {
+    if (!r) return;
+    var card = el('div', { class: 'card' });
+    card.appendChild(el('h3', { text: r.display_name || r.runner_id || 'Runner' }));
+    var streak = C.streakText(r);
+    card.appendChild(el('p', { class: 'sig ' + streak.cls, text: streak.text }));
+    card.appendChild(el('p', { class: 'sig neutral', text: C.sdText(r) }));
+    card.appendChild(el('p', { class: 'sig neutral', text: C.eventsText(r) }));
+    card.appendChild(el('p', { class: 'sig neutral', text: C.missingText(r) }));
+    card.appendChild(el('p', { class: 'sig neutral', text: C.confirmationText(r) }));
+    if (r.first_date || r.last_date) {
+      card.appendChild(el('p', { class: 'sig neutral', text: 'History ' + (r.first_date || 'n/a') + ' to ' + (r.last_date || 'n/a') +
+        (typeof r.accepted_days === 'number' ? ', ' + r.accepted_days + ' accepted days' : '') }));
+    }
+    box.appendChild(card);
+  });
+  var f = C.fleetText(cons.fleet);
+  line.appendChild(el('span', { class: 'sig ' + f.cls, text: f.text }));
+}
+
+// ------------------------------------------------------------- filters and hash
+
+function setHash(eventId) {
+  var h = C.buildHash({ runner: page.runner || null, event: eventId || null });
+  if (typeof history !== 'undefined' && history.replaceState) {
+    history.replaceState(null, '', h || location.pathname + location.search);
+  }
+}
+
+function renderRunnerSelect() {
+  var sel = document.getElementById('runnerSelect');
+  clear(sel);
+  sel.appendChild(el('option', { value: '', text: 'All runners' }));
+  C.runnerOptions(page.findings && page.findings.events, page.consistency).forEach(function (o) {
+    sel.appendChild(el('option', { value: o.id, text: o.name }));
+  });
+  sel.value = page.runner;
+}
+
+function applyHash() {
+  var h = C.parseHash(location.hash);
+  page.runner = h.runner && page.names[h.runner] ? h.runner : '';
+  var evs = page.findings && Array.isArray(page.findings.events) ? page.findings.events : [];
+  var target = h.event ? evs.filter(function (e) { return e && e.event_id === h.event; })[0] : null;
+  if (target && !C.filterEvents([target], { scope: page.scope, runner: page.runner }).length) {
+    page.scope = 'all';
+    if (!C.filterEvents([target], { scope: 'all', runner: page.runner }).length) page.runner = '';
+  }
+  document.getElementById(page.scope === 'all' ? 'scopeAll' : 'scopeOpen').checked = true;
+  renderRunnerSelect();
+  renderList();
+  if (target) {
+    var nodes = document.querySelectorAll('details.event');
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].getAttribute('data-event') === target.event_id) {
+        nodes[i].open = true;
+        nodes[i].scrollIntoView({ block: 'start' });
+        break;
+      }
+    }
+  }
+}
+
+function renderPage(findings, consistency, now) {
+  page.findings = findings;
+  page.consistency = consistency;
+  page.now = now;
+  page.names = C.runnerNames(findings && findings.events, consistency);
+  renderSummary(findings, now);
+  renderConsistency(consistency);
+  renderRunnerSelect();
+  return renderList();
+}
+
+async function getJson(url) {
+  try {
+    var r = await fetch(url, { cache: 'no-cache' });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) {
+    return null;
+  }
+}
+
+async function init() {
+  var base = DATA_URL + '/canary/';
+  var res = await Promise.all([getJson(base + 'findings.json'), getJson(base + 'consistency.json')]);
+  renderPage(res[0], res[1], new Date());
+  applyHash();
+  document.getElementById('scopeOpen').addEventListener('change', function () { page.scope = 'open'; renderList(); setHash(null); });
+  document.getElementById('scopeAll').addEventListener('change', function () { page.scope = 'all'; renderList(); setHash(null); });
+  document.getElementById('runnerSelect').addEventListener('change', function (e) { page.runner = e.target.value; renderList(); setHash(null); });
+  window.addEventListener('hashchange', applyHash);
+}
+
+if (typeof window !== 'undefined' && window.document) init();
+</script>
+</body>
+</html>
