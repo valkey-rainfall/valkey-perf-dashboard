@@ -30,6 +30,9 @@ jobs:
       - name: Run canary page tests
         run: node --test tests/canary.test.js
 
+      - name: Run site menu tests
+        run: node --test tests/site-menu.test.js
+
   legacy-test:
     name: Legacy Status Tests
     runs-on: ubuntu-latest

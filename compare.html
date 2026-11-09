@@ -94,8 +94,7 @@
       <button class="mode-btn" onclick="setMode('head')" id="mode-head">Current HEAD</button>
     </div>
     <span id="epochSelector" style="display:none;"></span>
-    <a href="ab.html">Commit A/B</a>
-    <a href="index.html">← Performance History</a>
+    <div data-site-menu></div>
   </header>
 
   <div class="legend">
@@ -106,6 +105,8 @@
   <div id="content"><div class="loading">Loading comparison data...</div></div>
 
   <script src="config.js"></script>
+  <script src="lib/period-helpers.js"></script>
+  <script src="lib/site-menu.js"></script>
   <script src="lib/compare-helpers.js"></script>
   <script src="lib/epoch-helpers.js"></script>
   <script src="lib/compare-manifest.js"></script>
