@@ -2700,6 +2700,51 @@ describe('axis-ticks.js', () => {
   });
 });
 
+describe('axis-ticks.js y-axis labels', () => {
+  const axis = require('../lib/axis-ticks.js');
+  const labels = (values, unit) => {
+    const ticks = values.map(value => ({ value }));
+    return values.map(v => axis.valueTickLabel(v, ticks, unit));
+  };
+  it('a narrow throughput range gets distinct, evenly stepped labels', () => {
+    // The live throughput axis read 1.6M, 1.6M, 1.5M x5, 1.4M, 1.4M with one decimal.
+    const values = [1.4e6, 1.425e6, 1.45e6, 1.475e6, 1.5e6, 1.525e6, 1.55e6, 1.575e6, 1.6e6];
+    const out = labels(values, 'M');
+    assert.deepEqual(out, ['1.400M', '1.425M', '1.450M', '1.475M', '1.500M', '1.525M', '1.550M', '1.575M', '1.600M']);
+    assert.equal(new Set(out).size, out.length);
+  });
+  it('a narrow perf-counter range gets distinct labels', () => {
+    // toPrecision(3) wrote 3.00k four times for these ticks.
+    const out = labels([2996, 2998, 3000, 3002, 3004], 'auto');
+    assert.deepEqual(out, ['2.996k', '2.998k', '3.000k', '3.002k', '3.004k']);
+  });
+  it('wide ranges keep short labels', () => {
+    assert.deepEqual(labels([0, 500000, 1000000, 1500000], 'M'), ['0.0M', '0.5M', '1.0M', '1.5M']);
+    assert.deepEqual(labels([1890, 1900, 1910, 1920], 'auto'), ['1.89k', '1.90k', '1.91k', '1.92k']);
+    assert.deepEqual(labels([0, 0.5, 1, 1.5], 'auto'), ['0.0', '0.5', '1.0', '1.5']);
+    assert.deepEqual(labels([10, 20, 30], 'auto'), ['10', '20', '30']);
+  });
+  it('labels stay distinct when no decimal count writes the ticks exactly', () => {
+    const out = labels([1 / 3, 2 / 3, 1], 'auto');
+    assert.equal(new Set(out).size, 3);
+  });
+  it('single tick, missing ticks and non-finite values', () => {
+    assert.equal(axis.valueTickLabel(1.5e6, [{ value: 1.5e6 }], 'M'), '1.5M');
+    assert.equal(axis.valueTickLabel(2.5, undefined, 'auto'), '2.50');
+    assert.equal(axis.valueTickLabel(NaN, [], 'M'), '');
+    assert.equal(axis.decimalsForTicks([1.4e6, 1.425e6], 1e6), 3);
+  });
+});
+
+describe('index.html y-axis label wiring', () => {
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+  it('throughput and perf-counter axes format ticks through AxisTicks.valueTickLabel', () => {
+    assert.ok(html.includes("AxisTicks.valueTickLabel(v, ticks, 'M')"));
+    assert.ok(html.includes("AxisTicks.valueTickLabel(v, ticks, 'auto')"));
+    assert.ok(!html.includes("(v/1e6).toFixed(1)+'M'"), 'one-decimal throughput labels are back');
+  });
+});
+
 describe('index.html release-marked axis wiring', () => {
   const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
   it('loads the helper and every x axis goes through xAxisOpts', () => {
