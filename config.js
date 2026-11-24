@@ -115,6 +115,7 @@ const MEMORY_WORKLOADS = ['memory-set-k16-v64', 'memory-set-k16-v64-expire', 'me
 const MEMORY_USER_DATA = {
   'memory-set-k16-v64': 80, 'memory-set-k16-v64-expire': 80,
   'memory-zadd-m20': 28, 'memory-sadd-m20': 20, 'memory-hset-f64-v64': 128,
+  'memory-set-k16-v16': 32, 'memory-set-k16-v16-expire': 32, 'memory-hset-f16-v16': 32,
 };
 
 const CATEGORY_COLORS = {
