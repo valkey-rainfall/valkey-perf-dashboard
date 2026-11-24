@@ -45,6 +45,12 @@
     .summary-header { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1fr 1.5fr; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 2px solid var(--border); font-size: 0.75rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
     .summary-row { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1fr 1.5fr; gap: 0.5rem; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
     .summary-row:last-child { border-bottom: none; }
+    .mem-header, .mem-row { grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr 1.4fr; }
+    .mem-date { display: block; font-size: 0.68rem; color: var(--muted); }
+    .mem-nodata { color: var(--muted); font-style: italic; }
+    .mem-hidden { border-bottom: 2px dotted var(--warn); font-style: italic; }
+    .mem-note { font-size: 0.75rem; color: var(--muted); margin: 0.5rem 0 0; line-height: 1.4; }
+    .toggle-btn.active { background: var(--border); color: var(--text); }
     .summary-label { color: var(--text); font-weight: 500; }
     .summary-val { font-weight: 600; text-align: right; }
     .summary-num { color: var(--text); font-variant-numeric: tabular-nums; }
@@ -92,6 +98,7 @@
     <div class="comparison-mode">
       <button class="mode-btn active" onclick="setMode('release')" id="mode-release">At Releases</button>
       <button class="mode-btn" onclick="setMode('head')" id="mode-head">Current HEAD</button>
+      <button class="mode-btn toggle-btn" onclick="toggleHidden()" id="toggle-hidden" title="Show memory points that are hidden by default: not settled, no date, or measured before settling was exported">Show hidden points</button>
     </div>
     <span id="epochSelector" style="display:none;"></span>
     <a href="ab.html">Commit A/B</a>
@@ -107,6 +114,7 @@
 
   <script src="config.js"></script>
   <script src="lib/compare-helpers.js"></script>
+  <script src="lib/memory-helpers.js"></script>
   <script src="lib/epoch-helpers.js"></script>
   <script src="lib/compare-manifest.js"></script>
   <script src="lib/point-helpers.js"></script>
@@ -123,6 +131,7 @@
 
     let activePlatform = PLATFORMS[0];
     let mode = 'release'; // 'release' or 'head'
+    let showHidden = false; // memory: also show points hidden by default
     let cache = {};
     let epochList = [];
     let activeEpoch = null;
@@ -284,6 +293,29 @@
         range: PointHelpers.scoreRange(lastResult), client: PointHelpers.clientState(lastResult) };
     }
 
+    // --- Memory ---
+    // One definition for every engine (see lib/memory-helpers.js): overhead is
+    // the measured bytes per item, total is the exported total or overhead plus
+    // user data. The heap-profile breakdown is only a split inside the total.
+    // Result: { m, status, hiddenReason } where m is null when there is no data.
+    function memoryAtRelease(series, engine, workloadId, landmark) {
+      const rp = MemoryHelpers.releasePoint(series, landmark, engine, workloadId, showHidden);
+      if (!rp.point) return { m: null, status: 'none', hiddenReason: rp.hiddenReason || null };
+      return { m: MemoryHelpers.summarize([rp.point], series, workloadId, MEMORY_USER_DATA), status: rp.status, hiddenReason: rp.hiddenReason };
+    }
+
+    function memoryLatest(series, engine, workloadId) {
+      const lp = MemoryHelpers.latestPoint(series, ENGINE_SCOPE[engine], engine, workloadId, showHidden, FreshnessHelpers.headPoint);
+      if (!lp.points) return { m: null, status: 'none', hiddenReason: lp.hiddenReason || null };
+      return { m: MemoryHelpers.summarize(lp.points, series, workloadId, MEMORY_USER_DATA), status: lp.status, hiddenReason: lp.hiddenReason };
+    }
+
+    function memoryFor(data, engine, w, landmark) {
+      return landmark
+        ? memoryAtRelease(data[engine][w], engine, w, landmark)
+        : memoryLatest(data[engine][w], engine, w);
+    }
+
     // --- Latency (p99, microseconds; lower is better) ---
     // A latency point carries per-percentile values in `histogram` (index 7 is
     // p99) with `p99_us` as a fallback field. Absent -> null so the row shows
@@ -330,6 +362,12 @@
       el.innerHTML = PLATFORMS.map(p =>
         `<button class="platform-tab ${p === activePlatform ? 'active' : ''}" onclick="setPlatform('${p}')">${PLATFORM_LABELS[p]}</button>`
       ).join('');
+    }
+
+    function toggleHidden() {
+      showHidden = !showHidden;
+      document.getElementById('toggle-hidden').classList.toggle('active', showHidden);
+      render();
     }
 
     function setPlatform(p) { activePlatform = p; renderPlatformTabs(); render(); }
@@ -461,7 +499,7 @@
       html += renderThroughputTable(throughputData, latestValkey, latestRedis);
       html += '</div>';
 
-      html += '<div class="section"><h2>Memory (bytes/key, total allocation)</h2>';
+      html += '<div class="section"><h2>Memory (overhead bytes per item, total in second column)</h2>';
       html += '<div class="chart-grid">';
       html += `<div class="chart-card"><h3>Memory by Workload</h3><canvas id="memory-bars"></canvas></div>`;
       html += '</div>';
@@ -496,7 +534,7 @@
       html += renderThroughputTableHead(throughputData);
       html += '</div>';
 
-      html += '<div class="section"><h2>Memory (bytes/key, total allocation)</h2>';
+      html += '<div class="section"><h2>Memory (overhead bytes per item, total in second column)</h2>';
       html += '<div class="chart-grid">';
       html += `<div class="chart-card"><h3>Memory by Workload</h3><canvas id="memory-bars"></canvas></div>`;
       html += '</div>';
@@ -545,34 +583,47 @@
       return `<div class="summary-card">${rows}</div>`;
     }
 
-    function renderMemoryTable(data, vRelease, rRelease) {
-      let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primaryEngine().id)}</span><span>${engineLabel(comparisonEngine() ? comparisonEngine().id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
+    const MEMORY_NOTE = '<p class="mem-note">Overhead is the measured bytes per item, and the percent difference is on overhead only. '
+      + 'Total = overhead + user data (or the exported total). TTL bytes count as overhead. '
+      + 'Values are for the stated item count only. Each value shows the date of its point. '
+      + 'Points not settled, without a date, or measured before settling was exported are hidden by default.</p>';
+
+    function memCell(res, field, emptyText) {
+      const m = res.m;
+      const v = m ? m[field] : null;
+      if (v === null || v === undefined) return `<span class="mem-nodata">${emptyText}</span>`;
+      const hid = res.status === 'hidden';
+      const date = m.date ? m.date.slice(0, 10) : 'no date';
+      const label = hid ? `<span class="mem-date">hidden: ${res.hiddenReason}</span>` : '';
+      return `<span class="summary-num ${hid ? 'mem-hidden' : ''}">${v.toFixed(1)} B<span class="mem-date">${date}</span>${label}</span>`;
+    }
+
+    function renderMemoryRows(data, landmarks) {
+      const pe = primaryEngine().id, ce = comparisonEngine() ? comparisonEngine().id : '';
+      const none = landmarks ? 'no data for this release' : 'no data';
+      let rows = `<div class="summary-header mem-header"><span>Workload</span><span>${engineLabel(pe)} overhead</span><span>${engineLabel(pe)} total</span><span>${engineLabel(ce)} overhead</span><span>${engineLabel(ce)} total</span><span>Overhead difference</span></div>`;
       for (const w of COMPARE_MEMORY) {
-        const v = getValueAtCommitIndex(data.valkey[w], vRelease.commit_index, w);
-        const r = getValueAtCommitIndex(data.redis[w], rRelease.commit_index, w);
-        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w)}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">—</span></div>`; continue; }
-        const pct = ((v.value - r.value) / r.value * 100);
-        const cls = pct < -1 ? 'positive' : pct > 1 ? 'negative' : 'neutral';
-        const verdict = pct < -1 ? `${Math.abs(pct).toFixed(1)}% less` : pct > 1 ? `${pct.toFixed(1)}% more` : 'Equal';
-        const diff = (v.value - r.value).toFixed(1);
-        rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w)}</span><span class="summary-num">${v.value.toFixed(1)} B</span><span class="summary-num">${r.value.toFixed(1)} B</span><span class="summary-num ${cls}">${diff > 0 ? '+' : ''}${diff} B</span><span class="summary-val ${cls}">${verdict}</span></div>`;
+        const v = memoryFor(data, 'valkey', w, landmarks && landmarks.valkey);
+        const r = memoryFor(data, 'redis', w, landmarks && landmarks.redis);
+        const pct = MemoryHelpers.overheadPct(v.m, r.m);
+        let diff = '<span class="mem-nodata">no data</span>';
+        if (pct !== null) {
+          const cls = pct < -1 ? 'positive' : pct > 1 ? 'negative' : 'neutral';
+          const verdict = pct < -1 ? `${Math.abs(pct).toFixed(1)}% less overhead` : pct > 1 ? `${pct.toFixed(1)}% more overhead` : 'Equal overhead';
+          const d = (v.m.overhead - r.m.overhead).toFixed(1);
+          diff = `<span class="summary-val ${cls}">${verdict}<span class="mem-date">${d > 0 ? '+' : ''}${d} B/item</span></span>`;
+        }
+        rows += `<div class="summary-row mem-row"><span class="summary-label">${workloadLabel(w)}</span>${memCell(v, 'overhead', none)}${memCell(v, 'total', v.m ? 'no data' : none)}${memCell(r, 'overhead', none)}${memCell(r, 'total', r.m ? 'no data' : none)}${diff}</div>`;
       }
-      return `<div class="summary-card">${rows}</div>`;
+      return `<div class="summary-card">${rows}</div>${MEMORY_NOTE}`;
+    }
+
+    function renderMemoryTable(data, vRelease, rRelease) {
+      return renderMemoryRows(data, { valkey: vRelease, redis: rRelease });
     }
 
     function renderMemoryTableHead(data) {
-      let rows = `<div class="summary-header"><span>Workload</span><span>${engineLabel(primaryEngine().id)}</span><span>${engineLabel(comparisonEngine() ? comparisonEngine().id : '')}</span><span>Δ</span><span>Verdict</span></div>`;
-      for (const w of COMPARE_MEMORY) {
-        const v = getLatestValue(data.valkey[w], w, ENGINE_SCOPE.valkey);
-        const r = getLatestValue(data.redis[w], w, ENGINE_SCOPE.redis);
-        if (!v || !r) { rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w)}</span><span>—</span><span>—</span><span>—</span><span class="summary-val neutral">— (insufficient data)</span></div>`; continue; }
-        const pct = ((v.value - r.value) / r.value * 100);
-        const cls = pct < -1 ? 'positive' : pct > 1 ? 'negative' : 'neutral';
-        const verdict = pct < -1 ? `${Math.abs(pct).toFixed(1)}% less` : pct > 1 ? `${pct.toFixed(1)}% more` : 'Equal';
-        const diff = (v.value - r.value).toFixed(1);
-        rows += `<div class="summary-row"><span class="summary-label">${workloadLabel(w)}</span><span class="summary-num">${v.value.toFixed(1)} B</span><span class="summary-num">${r.value.toFixed(1)} B</span><span class="summary-num ${cls}">${diff > 0 ? '+' : ''}${diff} B</span><span class="summary-val ${cls}">${verdict}</span></div>`;
-      }
-      return `<div class="summary-card">${rows}</div>`;
+      return renderMemoryRows(data, null);
     }
 
     // Latency p99 tables: lower is better, so a lower primary value is the
@@ -636,6 +687,7 @@
       const labels = workloads.map(w => type === 'throughput' ? workloadLabel(w.id) : workloadLabel(w));
       const valkeyVals = [], redisVals = [], valkeyErr = [], redisErr = [];
       const valkeyClient = [], redisClient = [], valkeyRange = [], redisRange = [];
+      const memV = [], memR = [];
 
       const valkeySource = Object.values(data.valkey).find(d => d);
       const redisSource = Object.values(data.redis).find(d => d);
@@ -647,6 +699,19 @@
       for (const w of workloads) {
         const wId = type === 'throughput' ? w.id : w;
         let v, r;
+        if (type === 'memory') {
+          const rel = mode === 'release' && latestV && latestR;
+          const vm = memoryFor(data, 'valkey', wId, rel ? latestV : null);
+          const rm = memoryFor(data, 'redis', wId, rel ? latestR : null);
+          memV.push(vm); memR.push(rm);
+          // Bar end = total when known, else overhead alone (no user-data band).
+          const err = (x) => x.m && x.m.reps > 1 && isFinite(x.m.cv) ? ci95(x.m.overhead, x.m.cv, x.m.reps) : 0;
+          valkeyVals.push(vm.m ? (vm.m.total !== null ? vm.m.total : vm.m.overhead) : null);
+          redisVals.push(rm.m ? (rm.m.total !== null ? rm.m.total : rm.m.overhead) : null);
+          valkeyErr.push(err(vm)); redisErr.push(err(rm));
+          valkeyClient.push(null); redisClient.push(null); valkeyRange.push(null); redisRange.push(null);
+          continue;
+        }
         if (mode === 'release' && latestV && latestR) {
           v = getValueAtCommitIndex(data.valkey[wId], latestV.commit_index, wId);
           r = getValueAtCommitIndex(data.redis[wId], latestR.commit_index, wId);
@@ -730,14 +795,18 @@
       // For memory charts, split into user data base + overhead
       let datasets;
       if (type === 'memory') {
-        const userData = workloads.map(w => MEMORY_USER_DATA[w] || 0);
-        const vOverhead = valkeyVals.map((v, i) => v !== null ? v - userData[i] : null);
-        const rOverhead = redisVals.map((v, i) => v !== null ? v - userData[i] : null);
+        // The user-data band is drawn only where user data and a measured
+        // overhead are both known; an unknown value leaves no band, not a zero band.
+        const bandOf = (x) => x.m && x.m.total !== null ? x.m.userData : null;
+        const vUser = memV.map(bandOf), rUser = memR.map(bandOf);
+        const vOverhead = memV.map(x => x.m ? x.m.overhead : null);
+        const rOverhead = memR.map(x => x.m ? x.m.overhead : null);
+        const fade = (arr, solid, faint) => arr.map(x => x.status === 'hidden' ? faint : solid);
         datasets = [
-          { label: 'User Data', data: userData, backgroundColor: 'rgba(100,116,139,0.35)', borderWidth: 0, stack: 'valkey' },
-          { label: 'Valkey Overhead', data: vOverhead, backgroundColor: 'rgba(99,102,241,0.75)', borderColor: '#6366f1', borderWidth: 1, stack: 'valkey' },
-          { label: 'User Data', data: userData, backgroundColor: 'rgba(100,116,139,0.35)', borderWidth: 0, stack: 'redis' },
-          { label: 'Redis Overhead', data: rOverhead, backgroundColor: 'rgba(239,68,68,0.75)', borderColor: '#ef4444', borderWidth: 1, stack: 'redis' },
+          { label: 'User Data', data: vUser, backgroundColor: 'rgba(100,116,139,0.35)', borderWidth: 0, stack: 'valkey' },
+          { label: 'Valkey Overhead', data: vOverhead, backgroundColor: fade(memV, 'rgba(99,102,241,0.75)', 'rgba(99,102,241,0.25)'), borderColor: '#6366f1', borderWidth: 1, stack: 'valkey' },
+          { label: 'User Data', data: rUser, backgroundColor: 'rgba(100,116,139,0.35)', borderWidth: 0, stack: 'redis' },
+          { label: 'Redis Overhead', data: rOverhead, backgroundColor: fade(memR, 'rgba(239,68,68,0.75)', 'rgba(239,68,68,0.25)'), borderColor: '#ef4444', borderWidth: 1, stack: 'redis' },
         ];
       } else {
         datasets = [
@@ -760,10 +829,13 @@
           plugins: {
             legend: { labels: { color: '#e2e8f0', boxWidth: 12, filter: (item) => type === 'memory' ? !item.text.startsWith('User Data') || item.datasetIndex === 0 : true } },
             tooltip: { callbacks: { label: ctx => {
-              if (type === 'memory' && ctx.dataset.label === 'User Data') return `User Data: ${ctx.raw.toFixed(1)} B/key`;
+              if (type === 'memory' && ctx.dataset.label === 'User Data') return ctx.raw === null ? 'User data: no data' : `User data: ${ctx.raw.toFixed(1)} B/item`;
               if (type === 'memory') {
+                const x = (ctx.datasetIndex <= 1 ? memV : memR)[ctx.dataIndex];
+                if (!x.m) return 'No data';
                 const err = ctx.datasetIndex <= 1 ? valkeyErr[ctx.dataIndex] : redisErr[ctx.dataIndex];
-                return ctx.raw !== null ? `${ctx.dataset.label.replace(' Overhead', '')}: ${ctx.raw.toFixed(1)} B overhead ±${err.toFixed(1)}` : 'No data';
+                const tot = x.m.total !== null ? `, total ${x.m.total.toFixed(1)} B` : ', total: no data';
+                return `${ctx.dataset.label.replace(' Overhead', '')}: ${x.m.overhead.toFixed(1)} B overhead${err ? ' ±' + err.toFixed(1) : ''}${tot} (${x.m.date ? x.m.date.slice(0, 10) : 'no date'})${x.status === 'hidden' ? ' [hidden: ' + x.hiddenReason + ']' : ''}`;
               }
               return ctx.raw !== null ? `${ctx.dataset.label}: ${fmtRps(ctx.raw)} ±${fmtRps(ctx.datasetIndex === 0 ? valkeyErr[ctx.dataIndex] : redisErr[ctx.dataIndex])}` : 'No data';
             },
@@ -781,7 +853,7 @@
           },
           scales: {
             x: { stacked: type === 'memory', grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', callback: v => type === 'throughput' ? fmtRps(v) : v + ' B' },
-              title: { display: true, text: type === 'throughput' ? 'Requests/sec' : 'Bytes/key (total)', color: '#64748b', font: { size: 11 } }
+              title: { display: true, text: type === 'throughput' ? 'Requests/sec' : 'Bytes per item (overhead + user data)', color: '#64748b', font: { size: 11 } }
             },
             y: { stacked: type === 'memory', grid: { display: false }, ticks: { color: '#e2e8f0', font: { size: 11 } } }
           }
