@@ -80,3 +80,102 @@ test('overhead percent', () => {
   assert.strictEqual(M.overheadPct({ overhead: 90 }, { overhead: 100 }), -10);
   assert.strictEqual(M.overheadPct(null, { overhead: 100 }), null);
 });
+
+test('latest tip: the picked tip, with its exported total, RSS and N', () => {
+  const tipOf = (s) => ({ point: s.points[s.points.length - 1] });
+  const mem = { settled: true, profiled: false, total_bytes_per_item: 43.9, rss_bytes_per_item: 44.4, n: 5000000 };
+  const s = { points: [
+    pt({ commit: 'r', date: '2026-11-22', sample: 'release' }),
+    pt({ commit: 't', date: '2026-11-25', sample: 'tip', memory: mem }),
+  ] };
+  const r = M.latestPoint(s, 'release-and-tip', 'redis', W, false, tipOf);
+  assert.strictEqual(r.status, 'ok');
+  assert.strictEqual(r.points.length, 1);
+  assert.strictEqual(r.points[0].commit, 't');
+  const m = M.summarize(r.points, s, W, FB);
+  assert.strictEqual(m.total, 43.9);
+  assert.strictEqual(m.rss, 44.4);
+  assert.strictEqual(m.n, 5000000);
+  assert.strictEqual(m.date, '2026-11-25');
+});
+
+test('latest tip: an unsettled tip is not shown, the previous shown point is', () => {
+  const tipOf = (s) => ({ point: s.points[s.points.length - 1] });
+  const s = { points: [
+    pt({ commit: 'a', date: '2026-11-24', sample: 'tip' }),
+    pt({ commit: 'b', date: '2026-11-25', sample: 'tip', memory: { settled: false } }),
+  ] };
+  const r = M.latestPoint(s, 'release-and-tip', 'redis', W, false, tipOf);
+  assert.strictEqual(r.points[0].commit, 'a');
+  assert.strictEqual(M.latestPoint(s, 'release-and-tip', 'redis', W, true, tipOf).points[0].commit, 'b');
+});
+
+test('release: no nearest-point fallback, a hidden release point needs the toggle', () => {
+  const s = { points: [
+    pt({ commit: 'a', commit_index: 10, date: '2026-11-20' }),
+    pt({ commit: 'c', commit_index: 12, date: '2026-11-24' }),
+  ] };
+  // The landmark sits between two measured commits: nothing is shown.
+  assert.strictEqual(M.releasePoint(s, { commit: 'b', commit_index: 11 }, 'redis', W).status, 'none');
+  // A Redis release point measured before settling was exported is hidden by default.
+  const old = { points: [pt({ commit: 'r', commit_index: 3, date: '2026-10-01' })] };
+  const l = { commit: 'r', commit_index: 3 };
+  const r = M.releasePoint(old, l, 'redis', W, false);
+  assert.strictEqual(r.status, 'none');
+  assert.strictEqual(r.hiddenReason, 'measured before settling was exported');
+  assert.strictEqual(M.releasePoint(old, l, 'redis', W, true).status, 'hidden');
+});
+
+test('Redis before 2026-10-20: hidden on the five pre-exporter series only', () => {
+  const p = pt({ date: '2026-10-19' });
+  M.PRE_EXPORTER_SERIES.forEach((w) => assert.ok(M.hiddenReason(p, 'redis', w), w));
+  ['memory-set-k16-v16', 'memory-set-k16-v16-expire', 'memory-hset-f16-v16']
+    .forEach((w) => assert.strictEqual(M.hiddenReason(p, 'redis', w), null, w));
+  assert.strictEqual(M.hiddenReason(pt({ date: '2026-10-19', memory: { settled: true } }), 'redis', W), null);
+});
+
+test('latest tip: a Redis tip from before 2026-10-20 with unknown settle is not shown', () => {
+  const tipOf = (s) => (s.points.length ? { point: s.points[s.points.length - 1] } : null);
+  const s = { points: [pt({ commit: 'z', date: '2026-10-19', sample: 'tip', memory: { settled: null } })] };
+  const r = M.latestPoint(s, 'release-and-tip', 'redis', W, false, tipOf);
+  assert.strictEqual(r.status, 'none');
+  assert.strictEqual(r.hiddenReason, 'measured before settling was exported');
+});
+
+test('headline: total is the exported used_memory delta, not the heap profile sum', () => {
+  const p = pt({
+    results: { [W]: { rps: 30.93, cv: 0, reps: 1 } },
+    memory: { total_bytes_per_item: 110.93 },
+    breakdown: { robj_embval: 80.5, hashtable: 31.2 },
+  });
+  const m = M.pointMemory(p, {}, W, FB);
+  assert.strictEqual(m.total, 110.93);
+  assert.strictEqual(m.overhead, 30.93);
+  // The same definition for an engine without a profile or an exported total.
+  const r = M.pointMemory(pt({ results: { [W]: { rps: 54.93 } } }), {}, W, FB);
+  assert.strictEqual(r.total, 54.93 + 80);
+});
+
+// config.js is a browser script; read its user-data table in a sandbox.
+function configUserData() {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'config.js'), 'utf8');
+  const ctx = { module: undefined, console };
+  require('vm').createContext(ctx);
+  require('vm').runInContext(src + '\n;this.__ud = MEMORY_USER_DATA;', ctx);
+  return ctx.__ud;
+}
+
+test('grey band: every memory workload, the v16 shapes included, has user data', () => {
+  const ud = configUserData();
+  const want = {
+    'memory-set-k16-v64': 80, 'memory-set-k16-v64-expire': 80, 'memory-zadd-m20': 28,
+    'memory-sadd-m20': 20, 'memory-hset-f64-v64': 128,
+    'memory-set-k16-v16': 32, 'memory-set-k16-v16-expire': 32, 'memory-hset-f16-v16': 32,
+  };
+  Object.keys(want).forEach((w) => assert.strictEqual(ud[w], want[w], w));
+  // A v16 point without an exported total still gets a total, so the band is drawn.
+  const w = 'memory-set-k16-v16';
+  const m = M.pointMemory(pt({ results: { [w]: { rps: 38.93 } } }), {}, w, ud);
+  assert.strictEqual(m.userData, 32);
+  assert.strictEqual(m.total, 38.93 + 32);
+});
