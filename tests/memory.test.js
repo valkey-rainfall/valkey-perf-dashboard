@@ -27,23 +27,6 @@ test('total: exported total wins, else overhead + user data, else null', () => {
   assert.strictEqual(u.overhead, 7);
 });
 
-test('hidden: unsettled, empty date, pre-exporter Redis only', () => {
-  assert.strictEqual(M.hiddenReason(pt({ memory: { settled: false } }), 'valkey', W), 'not settled');
-  assert.strictEqual(M.hiddenReason(pt({ date: '' }), 'valkey', W), 'no date');
-  assert.ok(M.hiddenReason(pt({ date: '2026-10-19' }), 'redis', W));
-  assert.strictEqual(M.hiddenReason(pt({ date: '2026-10-20' }), 'redis', W), null);
-  assert.strictEqual(M.hiddenReason(pt({ date: '2026-10-19' }), 'valkey', W), null);
-  assert.strictEqual(M.hiddenReason(pt({ date: '2026-10-19', memory: { settled: true } }), 'redis', W), null);
-  assert.strictEqual(M.hiddenReason(pt({ date: '2026-10-19' }), 'redis', 'memory-set-k16-v16'), null);
-});
-
-test('settled null is unknown: old Redis rule applies, valkey shown', () => {
-  const m = { settled: null };
-  assert.ok(M.hiddenReason(pt({ date: '2026-10-19', memory: m }), 'redis', W));
-  assert.strictEqual(M.hiddenReason(pt({ date: '2026-10-19', memory: m }), 'valkey', W), null);
-  assert.strictEqual(M.hiddenReason(pt({ date: '2026-11-01', memory: m }), 'redis', W), null);
-});
-
 test('rss: shown only when exported and not null', () => {
   assert.strictEqual(M.pointMemory(pt({ memory: { rss_bytes_per_item: 150.5 } }), {}, W, FB).rss, 150.5);
   assert.strictEqual(M.pointMemory(pt({ memory: { rss_bytes_per_item: null } }), {}, W, FB).rss, null);
@@ -57,28 +40,47 @@ test('release: only distance 0', () => {
   assert.strictEqual(M.releasePoint(s, { commit: 'a', commit_index: 10 }, 'valkey', W).status, 'ok');
   assert.strictEqual(M.releasePoint(s, { commit: 'z', commit_index: 11 }, 'valkey', W).status, 'none');
   assert.strictEqual(M.releasePoint(s, { commit: 'z', commit_index: 98 }, 'valkey', W).point.commit, 'b');
-});
-
-test('release: hidden point needs the toggle', () => {
-  const s = { points: [pt({ commit: 'a', commit_index: 10, memory: { settled: false } })] };
-  const l = { commit: 'a', commit_index: 10 };
-  assert.strictEqual(M.releasePoint(s, l, 'valkey', W, false).status, 'none');
-  assert.strictEqual(M.releasePoint(s, l, 'valkey', W, true).status, 'hidden');
-});
-
-test('latest history: median of last five shown points', () => {
-  const pts = [1, 2, 3, 4, 5, 6].map(i => pt({ commit: 'c' + i, results: { [W]: { rps: i * 10, cv: 1, reps: 3 } } }));
-  pts[5].memory = { settled: false };
-  const r = M.latestPoint({ points: pts }, 'history', 'valkey', W, false);
-  assert.strictEqual(r.points.length, 5);
-  const m = M.summarize(r.points, {}, W, FB);
-  assert.strictEqual(m.overhead, 30);
-  assert.strictEqual(m.total, 110);
+  // A landmark between two measured commits shows nothing: no nearest-point fallback.
+  assert.strictEqual(M.releasePoint(s, { commit: 'q', commit_index: 50 }, 'valkey', W).status, 'none');
 });
 
 test('overhead percent', () => {
   assert.strictEqual(M.overheadPct({ overhead: 90 }, { overhead: 100 }), -10);
   assert.strictEqual(M.overheadPct(null, { overhead: 100 }), null);
+});
+
+test('every stored point is shown: no point is dropped by date or settle flag', () => {
+  const odd = [
+    pt({ commit: 'a', commit_index: 1, date: '2026-10-01' }),
+    pt({ commit: 'b', commit_index: 2, date: '2026-10-19', memory: { settled: null } }),
+    pt({ commit: 'c', commit_index: 3, date: '' }),
+    pt({ commit: 'd', commit_index: 4, date: '2026-11-02', memory: { settled: false } }),
+  ];
+  const s = { points: odd };
+  ['redis', 'valkey'].forEach((eng) => {
+    const r = M.latestPoint(s, 'history', eng, W);
+    assert.strictEqual(r.status, 'ok');
+    assert.deepStrictEqual(r.points.map(p => p.commit), ['a', 'b', 'c', 'd']);
+    odd.forEach((p) => assert.strictEqual(M.releasePoint(s, p, eng, W).status, 'ok'));
+  });
+  assert.strictEqual(M.hiddenReason, undefined);
+  assert.strictEqual(M.latestPoint({ points: odd.concat(odd) }, 'history', 'redis', W).points.length, 5);
+});
+
+test('page code has no hiding rule', () => {
+  const read = (f) => require('fs').readFileSync(require('path').join(__dirname, '..', f), 'utf8');
+  [read('compare.html'), read('lib/memory-helpers.js')].forEach((src) => {
+    assert.ok(!/hiddenReason|showHidden|toggleHidden|Show hidden/.test(src));
+  });
+});
+
+test('latest history: median of the last five points', () => {
+  const pts = [1, 2, 3, 4, 5, 6].map(i => pt({ commit: 'c' + i, results: { [W]: { rps: i * 10, cv: 1, reps: 3 } } }));
+  const r = M.latestPoint({ points: pts }, 'history', 'valkey', W);
+  assert.strictEqual(r.points.length, 5);
+  const m = M.summarize(r.points, {}, W, FB);
+  assert.strictEqual(m.overhead, 40);
+  assert.strictEqual(m.total, 120);
 });
 
 test('latest tip: the picked tip, with its exported total, RSS and N', () => {
@@ -88,7 +90,7 @@ test('latest tip: the picked tip, with its exported total, RSS and N', () => {
     pt({ commit: 'r', date: '2026-11-22', sample: 'release' }),
     pt({ commit: 't', date: '2026-11-25', sample: 'tip', memory: mem }),
   ] };
-  const r = M.latestPoint(s, 'release-and-tip', 'redis', W, false, tipOf);
+  const r = M.latestPoint(s, 'release-and-tip', 'redis', W, tipOf);
   assert.strictEqual(r.status, 'ok');
   assert.strictEqual(r.points.length, 1);
   assert.strictEqual(r.points[0].commit, 't');
@@ -97,49 +99,6 @@ test('latest tip: the picked tip, with its exported total, RSS and N', () => {
   assert.strictEqual(m.rss, 44.4);
   assert.strictEqual(m.n, 5000000);
   assert.strictEqual(m.date, '2026-11-25');
-});
-
-test('latest tip: an unsettled tip is not shown, the previous shown point is', () => {
-  const tipOf = (s) => ({ point: s.points[s.points.length - 1] });
-  const s = { points: [
-    pt({ commit: 'a', date: '2026-11-24', sample: 'tip' }),
-    pt({ commit: 'b', date: '2026-11-25', sample: 'tip', memory: { settled: false } }),
-  ] };
-  const r = M.latestPoint(s, 'release-and-tip', 'redis', W, false, tipOf);
-  assert.strictEqual(r.points[0].commit, 'a');
-  assert.strictEqual(M.latestPoint(s, 'release-and-tip', 'redis', W, true, tipOf).points[0].commit, 'b');
-});
-
-test('release: no nearest-point fallback, a hidden release point needs the toggle', () => {
-  const s = { points: [
-    pt({ commit: 'a', commit_index: 10, date: '2026-11-20' }),
-    pt({ commit: 'c', commit_index: 12, date: '2026-11-24' }),
-  ] };
-  // The landmark sits between two measured commits: nothing is shown.
-  assert.strictEqual(M.releasePoint(s, { commit: 'b', commit_index: 11 }, 'redis', W).status, 'none');
-  // A Redis release point measured before settling was exported is hidden by default.
-  const old = { points: [pt({ commit: 'r', commit_index: 3, date: '2026-10-01' })] };
-  const l = { commit: 'r', commit_index: 3 };
-  const r = M.releasePoint(old, l, 'redis', W, false);
-  assert.strictEqual(r.status, 'none');
-  assert.strictEqual(r.hiddenReason, 'measured before settling was exported');
-  assert.strictEqual(M.releasePoint(old, l, 'redis', W, true).status, 'hidden');
-});
-
-test('Redis before 2026-10-20: hidden on the five pre-exporter series only', () => {
-  const p = pt({ date: '2026-10-19' });
-  M.PRE_EXPORTER_SERIES.forEach((w) => assert.ok(M.hiddenReason(p, 'redis', w), w));
-  ['memory-set-k16-v16', 'memory-set-k16-v16-expire', 'memory-hset-f16-v16']
-    .forEach((w) => assert.strictEqual(M.hiddenReason(p, 'redis', w), null, w));
-  assert.strictEqual(M.hiddenReason(pt({ date: '2026-10-19', memory: { settled: true } }), 'redis', W), null);
-});
-
-test('latest tip: a Redis tip from before 2026-10-20 with unknown settle is not shown', () => {
-  const tipOf = (s) => (s.points.length ? { point: s.points[s.points.length - 1] } : null);
-  const s = { points: [pt({ commit: 'z', date: '2026-10-19', sample: 'tip', memory: { settled: null } })] };
-  const r = M.latestPoint(s, 'release-and-tip', 'redis', W, false, tipOf);
-  assert.strictEqual(r.status, 'none');
-  assert.strictEqual(r.hiddenReason, 'measured before settling was exported');
 });
 
 test('headline: total is the exported used_memory delta, not the heap profile sum', () => {
