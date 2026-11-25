@@ -584,7 +584,7 @@
     }
 
     const MEMORY_NOTE = '<p class="mem-note">Overhead is the measured bytes per item, and the percent difference is on overhead only. '
-      + 'Total = overhead + user data (or the exported total). TTL bytes count as overhead. '
+      + 'Total = overhead + user data (or the exported total). TTL bytes count as overhead. RSS (resident memory per item) is shown only when exported. '
       + 'Values are for the stated item count only. Each value shows the date of its point. '
       + 'Points not settled, without a date, or measured before settling was exported are hidden by default.</p>';
 
@@ -593,7 +593,7 @@
       const v = m ? m[field] : null;
       if (v === null || v === undefined) return `<span class="mem-nodata">${emptyText}</span>`;
       const hid = res.status === 'hidden';
-      const date = m.date ? m.date.slice(0, 10) : 'no date';
+      const date = (m.date ? m.date.slice(0, 10) : 'no date') + (m.n ? ' - N=' + m.n.toLocaleString('en-US') : '');
       const label = hid ? `<span class="mem-date">hidden: ${res.hiddenReason}</span>` : '';
       return `<span class="summary-num ${hid ? 'mem-hidden' : ''}">${v.toFixed(1)} B<span class="mem-date">${date}</span>${label}</span>`;
     }
@@ -614,6 +614,12 @@
           diff = `<span class="summary-val ${cls}">${verdict}<span class="mem-date">${d > 0 ? '+' : ''}${d} B/item</span></span>`;
         }
         rows += `<div class="summary-row mem-row"><span class="summary-label">${workloadLabel(w)}</span>${memCell(v, 'overhead', none)}${memCell(v, 'total', v.m ? 'no data' : none)}${memCell(r, 'overhead', none)}${memCell(r, 'total', r.m ? 'no data' : none)}${diff}</div>`;
+        // RSS row: only when an engine exported a non-null RSS per item.
+        const hasRss = (x) => x.m && x.m.rss !== null && x.m.rss !== undefined;
+        if (hasRss(v) || hasRss(r)) {
+          const rssCell = (x) => hasRss(x) ? memCell(x, 'rss', '') : '<span class="mem-nodata">no data</span>';
+          rows += `<div class="summary-row mem-row mem-rss"><span class="summary-label mem-nodata">RSS per item (resident)</span><span></span>${rssCell(v)}<span></span>${rssCell(r)}<span></span></div>`;
+        }
       }
       return `<div class="summary-card">${rows}</div>${MEMORY_NOTE}`;
     }
