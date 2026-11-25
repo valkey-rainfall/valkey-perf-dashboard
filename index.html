@@ -45,8 +45,6 @@
     }
     /* Empty section in an archived generation that does not carry it. */
     .generation-absent { grid-column: 1 / -1; padding: 1rem; text-align: center; color: var(--muted); font-size: 0.85rem; border: 1px dashed var(--border); border-radius: 8px; }
-    /* Header link to the canary page; muted when no fresh findings file. */
-    .header-links a.canary-link.muted { color: var(--muted); font-weight: 400; }
 
     /* Info row: always visible below its chart */
     .info-row {
@@ -69,8 +67,6 @@
     .header-title #workload-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .zoom-controls, .header-links { display: flex; align-items: center; gap: 0.35rem; flex: 0 0 auto; white-space: nowrap; }
     .header-links { margin-left: auto; gap: 0.7rem; }
-    .header-links a { color: var(--accent); font-size: 0.76rem; text-decoration: none; font-weight: 500; }
-    .header-links a:last-of-type { color: var(--muted); font-weight: 400; }
     .controls select, .controls button { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 0.35rem 0.65rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
     .zoom-btn { font-size: 0.8rem; padding: 3px 10px; cursor: pointer; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px; }
     .zoom-btn:hover { background: var(--border); }
@@ -378,12 +374,7 @@
       <button onclick="zoomAll('reset')" class="zoom-btn">Reset Zoom</button>
       <span id="visibleRange" class="visible-range" title="Visible commit-index window"></span>
     </div>
-    <nav class="header-links" aria-label="Dashboard pages">
-      <a href="notable.html">Notable Changes</a>
-      <a href="ab.html">Commit A/B</a>
-      <a href="compare.html">Compare Engines</a>
-      <a href="canary.html" id="canaryLink" class="canary-link muted" title="Daily fixed-commit canary measurements per host">Canary</a>
-      <a href="status.html">Host Status ↗</a>
+    <div class="header-links">
       <button class="intro-btn" id="introSettingsBtn" onclick="toggleIntroSettings()" title="Sign-on intro settings" aria-label="Sign-on intro settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="introSettings">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
           <path d="M2 6h3l4-3v10l-4-3H2z" fill="currentColor" stroke="none"/>
@@ -391,7 +382,8 @@
           <path class="intro-icon-off" d="M11 6l4 4M15 6l-4 4"/>
         </svg>
       </button>
-    </nav>
+    </div>
+    <div data-site-menu></div>
     <!-- Sign-on intro settings. Sound defaults to "auto": with sound only when the browser already
          lets audio start without a click (it learns that from habit), silent otherwise, never a nag.
          The score is always Cosmos and there is no CRT overlay (Rain, Oct 19 2026). -->
@@ -464,6 +456,7 @@
   <script src="config.js"></script>
   <script src="lib/epoch-helpers.js"></script>
   <script src="lib/period-helpers.js"></script>
+  <script src="lib/site-menu.js"></script>
   <script src="lib/point-helpers.js"></script>
   <script src="lib/perf-groups.js"></script>
   <script src="lib/metric-selector.js"></script>
@@ -576,24 +569,11 @@
       loadNotableTeaser();
     }
 
-    // Header link to the canary page for the primary platform's runner. The
-    // findings file is read once per page load; a missing or stale file
-    // leaves a plain muted 'Canary' link.
-    let canaryFindings = null;
+    // The site menu's canary link (lib/site-menu.js) opens the canary page
+    // at the primary platform's runner.
     function updateCanaryLink(platform) {
-      const link = document.getElementById('canaryLink');
-      if (!link) return;
       const runnerId = (typeof PLATFORM_RUNNERS !== 'undefined' && PLATFORM_RUNNERS[platform]) || null;
-      link.href = PeriodHelpers.canaryPageHref(runnerId);
-      if (!canaryFindings) {
-        canaryFindings = fetch(`${DATA_URL}/canary/findings.json?t=${Math.floor(Date.now() / 300000)}`)
-          .then(r => (r.ok ? r.json() : null)).catch(() => null);
-      }
-      canaryFindings.then(findings => {
-        const state = PeriodHelpers.canaryLinkState(findings, Date.now());
-        link.textContent = state.text;
-        link.classList.toggle('muted', state.muted);
-      });
+      if (typeof SiteMenu !== 'undefined') SiteMenu.setCanaryRunner(runnerId);
     }
 
     function onEpochChange(epochId) {

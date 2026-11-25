@@ -1248,10 +1248,11 @@ describe('HTML structural integrity', () => {
     assert.ok(indexHtml.includes('<script src="lib/period-helpers.js"></script>'), 'index.html must load period-helpers.js');
     assert.ok(indexHtml.indexOf('lib/epoch-helpers.js') < indexHtml.indexOf('lib/period-helpers.js'), 'epoch helpers load first');
     assert.ok(indexHtml.includes('id="generationSelector"') && indexHtml.includes('onGenerationChange'));
-    assert.ok(indexHtml.includes('id="canaryLink"') && indexHtml.includes('PeriodHelpers.canaryLinkState('));
+    // The canary count link lives in the shared site menu (lib/site-menu.js).
+    assert.ok(indexHtml.includes('data-site-menu') && indexHtml.includes('SiteMenu.setCanaryRunner('));
+    assert.ok(fs.readFileSync(path.join(root, 'lib', 'site-menu.js'), 'utf8').includes('canaryLinkState('));
     assert.ok(!indexHtml.includes('canaryBanner') && !indexHtml.includes('periodMarkers') && !indexHtml.includes('periodWarning'),
       'main charts carry no period markers, no canary banner and no delta period warning');
-    assert.ok(indexHtml.indexOf('id="canaryLink"') < indexHtml.indexOf('href="status.html"'), 'canary link sits next to Host Status');
     assert.ok(statusHtml.includes('<script src="lib/period-helpers.js"></script>'), 'status.html must load period-helpers.js');
     assert.ok(statusHtml.indexOf('lib/period-helpers.js') < statusHtml.indexOf('function renderHost'));
     const src = fs.readFileSync(path.join(root, 'config.js'), 'utf8');
@@ -3745,11 +3746,12 @@ describe('ab.html entry points', () => {
   const read = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   const ab = read('ab.html'), index = read('index.html'), notable = read('notable.html'), compare = read('compare.html');
 
-  it('every dashboard page header links to ab.html, and ab.html links back to each', () => {
-    for (const [name, html] of [['index.html', index], ['notable.html', notable], ['compare.html', compare]]) {
-      assert.ok(html.includes('<a href="ab.html">Commit A/B</a>'), `${name} header has the Commit A/B link`);
+  it('every dashboard page reaches ab.html, and ab.html reaches each, through the shared site menu', () => {
+    for (const [name, html] of [['index.html', index], ['notable.html', notable], ['compare.html', compare], ['ab.html', ab]]) {
+      assert.ok(html.includes('<div data-site-menu></div>') && html.includes('<script src="lib/site-menu.js"></script>'), `${name} has the site menu`);
     }
-    for (const target of ['index.html', 'notable.html', 'compare.html']) assert.ok(ab.includes(`href="${target}"`), `ab.html links to ${target}`);
+    const hrefs = require('../lib/site-menu.js').PAGES.map(p => p.href);
+    for (const target of ['ab.html', 'index.html', 'notable.html', 'compare.html']) assert.ok(hrefs.includes(target), `menu links to ${target}`);
   });
 
   it('index.html loads ab-helpers and every commit popup carries an A/B link pinned to the popup\'s own comparison pair', () => {
