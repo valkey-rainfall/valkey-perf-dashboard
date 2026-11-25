@@ -24,14 +24,8 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Run unit tests
-        run: node --test tests/unit.test.js
-
-      - name: Run canary page tests
-        run: node --test tests/canary.test.js
-
-      - name: Run memory helper tests
-        run: node --test tests/memory.test.js
+      - name: Run all test files
+        run: node --test tests/*.test.js
 
   legacy-test:
     name: Legacy Status Tests
