@@ -27,19 +27,6 @@ jobs:
       - name: Run all test files
         run: node --test tests/*.test.js
 
-  legacy-test:
-    name: Legacy Status Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Run status monitoring tests
-        run: node tests/status-monitoring.test.js
-
   lint:
     name: Static Checks
     runs-on: ubuntu-latest
